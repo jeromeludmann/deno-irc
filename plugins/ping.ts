@@ -5,11 +5,13 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface Options {
   replies?: {
+    /** Replies to CTCP PING. */
     ping?: boolean;
   };
 }
 
 export interface Commands {
+  /** Pings a `target`. */
   ping(target?: string): void;
 }
 
@@ -21,18 +23,25 @@ export interface Events {
 }
 
 export interface Ping {
+  /** Keys of the PING. */
   keys: string[];
 }
 
 export interface Pong {
+  /** Server that sent the PONG. */
   origin: string;
+  /** Daemon of the PONG. */
   daemon: string;
+  /** Key of the PONG. */
   key: string;
 }
 
 export interface CtcpPing {
+  /** User who sent the CTCP PING (query or reply). */
   origin: UserMask;
+  /** Target who received the CTCP PING (query or reply). */
   target: string;
+  /** Key of the CTCP PING (query or reply). */
   key: string;
 }
 

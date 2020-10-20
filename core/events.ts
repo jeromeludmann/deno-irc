@@ -10,6 +10,7 @@ type InferredPayload<
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
 
+  /** Calls all the listeners of the `eventName` with the `eventPayload`. */
   emit<T extends keyof TEvents>(
     eventName: T,
     eventPayload: InferredPayload<TEvents, T>,
@@ -23,6 +24,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
+  /** Adds a `listener` for the `eventName`. */
   on<T extends keyof TEvents>(
     eventName: T,
     listener: Listener<InferredPayload<TEvents, T>>,
@@ -32,11 +34,13 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     return () => this.off(eventName, listener);
   }
 
+  /** Adds a one-time `listener` for the `eventName`. */
   once<T extends keyof TEvents>(
     eventName: T,
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void;
 
+  /** Promise-based version of `.once(eventName, listener)`. */
   once<T extends keyof TEvents>(
     eventName: T,
   ): Promise<InferredPayload<TEvents, T>>;
@@ -60,6 +64,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
+  /** Removes the `listener` of the `eventName`. */
   off<T extends keyof TEvents>(
     eventName: T,
     listener?: Listener<InferredPayload<TEvents, T>>,
@@ -72,6 +77,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
+  /** Counts the number of listeners bound to the `eventName`. */
   listenerCount<T extends keyof TEvents>(eventName: T): number {
     return eventName in this.listeners ? this.listeners[eventName].length : 0;
   }

@@ -2,7 +2,10 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Commands {
-  topic(channel: string, topic?: string): void;
+  /** Gets the `topic` of a `channel`. */
+  topic(channel: string): void;
+  /** Changes the `topic` of a `channel`. */
+  topic(channel: string, topic: string): void;
 }
 
 export interface Events {
@@ -12,19 +15,27 @@ export interface Events {
 }
 
 export interface TopicChange {
+  /** User who changed the topic. */
   origin: UserMask;
+  /** Channel where the topic is changed. */
   channel: string;
+  /** New topic of the channel. */
   topic: string;
 }
 
 export interface TopicSet {
+  /** Channel where the topic is set. */
   channel: string;
+  /** New topic of the channel. */
   topic?: string;
 }
 
 export interface TopicSetBy {
+  /** Channel where the topic is set. */
   channel: string;
+  /** User who set the topic. */
   who: string; // can be a nick or an unparsed mask, depending on the server
+  /** Date time of the topic. */
   time: Date;
 }
 

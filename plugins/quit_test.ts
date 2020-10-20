@@ -44,14 +44,14 @@ Deno.test("quit events", async () => {
   const msg1 = await client.once("quit");
   assertEquals(msg1, {
     origin: { nick: "nick", username: "user", userhost: "host" },
-    message: undefined,
+    comment: undefined,
   });
 
   server.send(":nick!user@host QUIT :Goodbye!");
   const msg2 = await client.once("quit");
   assertEquals(msg2, {
     origin: { nick: "nick", username: "user", userhost: "host" },
-    message: "Goodbye!",
+    comment: "Goodbye!",
   });
 
   await sanitize();

@@ -3,6 +3,7 @@ import { createPlugin, isChannel, parseUserMask } from "../core/mod.ts";
 import { isCtcp } from "./ctcp.ts";
 
 export interface Commands {
+  /** Sends a message `text` to a `target`. */
   msg(target: string, text: string): void;
 }
 
@@ -13,19 +14,27 @@ export interface Events {
 }
 
 export interface Msg {
+  /** User who sent the PRIVMSG. */
   origin: UserMask;
+  /** Target who received the PRIVMSG. */
   target: string;
+  /** Text of the PRIVMSG. */
   text: string;
 }
 
 export interface ChannelMsg {
+  /** User who sent the PRIVMSG. */
   origin: UserMask;
+  /** Channel where the PRIVMSG is sent. */
   channel: string;
+  /** Text of the PRIVMSG. */
   text: string;
 }
 
 export interface PrivateMsg {
+  /** User who sent the PRIVMSG. */
   origin: UserMask;
+  /** Text of the PRIVMSG. */
   text: string;
 }
 

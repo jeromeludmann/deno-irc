@@ -5,11 +5,13 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface Options {
   replies?: {
+    /** Replies to CTCP TIME. */
     time?: boolean;
   };
 }
 
 export interface Commands {
+  /** Queries the date time of a `target`. */
   time(target?: string): void;
 }
 
@@ -19,13 +21,18 @@ export interface Events {
 }
 
 export interface CtcpTime {
+  /** User who sent the CTCP TIME query. */
   origin: UserMask;
+  /** Target who received the CTCP TIME query. */
   target: string;
 }
 
 export interface CtcpTimeReply {
+  /** User who sent the CTCP TIME reply. */
   origin: UserMask;
+  /** Target who received the CTCP TIME reply. */
   target: string;
+  /** Date time of the user. */
   time: string;
 }
 

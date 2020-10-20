@@ -2,6 +2,7 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Commands {
+  /** Leaves the `channel` with an optional `comment`. */
   part(channel: string, comment?: string): void;
 }
 
@@ -10,9 +11,12 @@ export interface Events {
 }
 
 export interface Part {
+  /** User who sent the PART. */
   origin: UserMask;
+  /** Channel left by the user. */
   channel: string;
-  comment: string;
+  /** Optional comment of the PART. */
+  comment?: string;
 }
 
 export interface PartPluginParams {

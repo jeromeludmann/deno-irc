@@ -6,6 +6,7 @@ interface ServerEvents extends Record<AnyCommand, string> {
   "server_closed": null;
 }
 
+/** Test IRC server which allows to send arbitrary messages to clients. */
 export class TestServer extends EventEmitter<ServerEvents> {
   port = generateRandomPort();
   host = "127.0.0.1";
@@ -14,6 +15,7 @@ export class TestServer extends EventEmitter<ServerEvents> {
   private listener?: Deno.Listener;
   private connections: Deno.Conn[] = [];
 
+  /** Starts the test server. */
   listen() {
     for (;;) {
       try {
@@ -64,6 +66,7 @@ export class TestServer extends EventEmitter<ServerEvents> {
     this.emit("server_closed", null);
   }
 
+  /** Sends messages to the client. */
   send(...messages: string[]) {
     if (this.connections.length === 0) {
       throw new Error("No connections");
@@ -76,6 +79,7 @@ export class TestServer extends EventEmitter<ServerEvents> {
     }
   }
 
+  /** Closes the connected client and stops the server. */
   close(): Promise<void> {
     return new Promise((resolve) => {
       this.connections.forEach((conn) => conn.close());
@@ -92,6 +96,7 @@ export class TestServer extends EventEmitter<ServerEvents> {
     });
   }
 
+  /** Ensures that the client is correctly connected to the server. */
   async waitClient(): Promise<void> {
     await this.once("client_accepted");
   }

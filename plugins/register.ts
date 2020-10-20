@@ -3,8 +3,11 @@ import { createPlugin } from "../core/mod.ts";
 import type { NickPluginParams } from "./nick.ts";
 
 export interface Options {
+  /** The username used to register the client to the server. */
   username?: string;
+  /** The realname used to register the client to the server. */
   realname?: string;
+  /** The password used to connect the client to the server. */
   password?: string;
 }
 
@@ -14,15 +17,22 @@ export interface Events {
 }
 
 export interface Register {
+  /** Nick who is registered. */
   nick: string;
+  /** Text of the RPL_WELCOME. */
   text: string;
 }
 
 export interface Myinfo {
+  /** Nick used on the server. */
   nick: string;
+  /** Hostname of the server. */
   serverHost: string;
+  /** Version of the server. */
   serverVersion: string;
+  /** Available user modes on the server. */
   availableUserModes: string[];
+  /** Available channel modes on the server. */
   availableChannelModes: string[];
 }
 

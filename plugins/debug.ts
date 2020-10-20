@@ -2,6 +2,7 @@ import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
 export interface Options {
+  /** Prints debug informations to output. */
   debug?: boolean;
 }
 

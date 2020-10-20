@@ -4,10 +4,12 @@ import type { JoinPluginParams } from "./join.ts";
 import type { NickPluginParams } from "./nick.ts";
 
 export interface Options {
+  /** Enables auto join on invite. */
   joinOnInvite?: boolean;
 }
 
 export interface Commands {
+  /** Invites a `nick` to a `channel`. */
   invite(nick: string, channel: string): void;
 }
 
@@ -16,8 +18,11 @@ export interface Events {
 }
 
 export interface Invite {
+  /** User who sent the INVITE. */
   origin: UserMask;
+  /** Nick who was invited. */
   nick: string;
+  /** Channel where the nick was invited. */
   channel: string;
 }
 

@@ -2,6 +2,7 @@ import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
 export interface Commands {
+  /** Gets the message of the day (MOTD) of the server. */
   motd(): void;
 }
 
@@ -10,6 +11,7 @@ export interface Events {
 }
 
 export interface Motd {
+  /** Message of the day (MOTD). */
   motd?: string[];
 }
 

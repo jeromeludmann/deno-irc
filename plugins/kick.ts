@@ -2,6 +2,7 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Commands {
+  /** Kicks a `nick` from a `channel` with an optional `comment`. */
   kick(channel: string, nick: string, comment?: string): void;
 }
 
@@ -10,10 +11,14 @@ export interface Events {
 }
 
 export interface Kick {
+  /** User who sent the KICK. */
   origin: UserMask;
+  /** Channel where the nick is kicked. */
   channel: string;
+  /** Nick who is kicked. */
   nick: string;
-  comment: string;
+  /** Optional comment of the KICK. */
+  comment?: string;
 }
 
 export interface KickPluginParams {

@@ -8,6 +8,7 @@ import {
 import { isCtcp } from "./ctcp.ts";
 
 export interface Commands {
+  /** Notifies a `target` with a `text`. */
   notice(target: string, text: string): void;
 }
 
@@ -19,24 +20,34 @@ export interface Events {
 }
 
 export interface Notice {
+  /** Raw prefix of the NOTICE. */
   prefix: string;
+  /** Target of the NOTICE. */
   target: string;
+  /** Text of the NOTICE. */
   text: string;
 }
 
 export interface ServerNotice {
+  /** Origin of the NOTICE. */
   origin: string;
+  /** Text of the NOTICE. */
   text: string;
 }
 
 export interface ChannelNotice {
+  /** User who sent the NOTICE. */
   origin: UserMask;
+  /** Channel where the NOTICE is sent. */
   channel: string;
+  /** Text of the NOTICE. */
   text: string;
 }
 
 export interface PrivateNotice {
+  /** User who sent the NOTICE. */
   origin: UserMask;
+  /** Text of the NOTICE. */
   text: string;
 }
 

@@ -1,8 +1,17 @@
 import { AnyCommand, AnyNumeric, IRC_NUMERICS } from "./protocol.ts";
 
+/** Main parser used by the core client. */
 export class Parser {
   private chunk = "";
 
+  /**
+   * Parses `chunks` of raw messages and provides a `Generator<Raw>`.
+   *
+   * `chunks` is a string of raw messages each ending with `\r\n`. If the last
+   * raw message of the `batch` does not end with `\r\n`, it means the message
+   * is not complete and will be temporarily stored in the `Parser` instance to
+   * be processed on the next call.
+   */
   *parseMessages(chunks: string): Generator<Raw> {
     this.chunk += chunks;
     const batch = this.chunk.split("\r\n");
@@ -14,10 +23,15 @@ export class Parser {
   }
 }
 
+/** Raw shape of an IRC message. */
 export interface Raw {
+  /** Prefix of the message. */
   prefix: string;
+  /** Command of the message. */
   command: AnyCommand | AnyNumeric;
+  /** Parameters of the message. */
   params: string[];
+  /** Original raw string. */
   raw: string;
 }
 
@@ -72,12 +86,14 @@ function parseMessage(raw: string): Raw {
   return msg;
 }
 
+/** User mask containing the nickname, the username and the userhost. */
 export interface UserMask {
   nick: string;
   username: string;
   userhost: string;
 }
 
+/** Gets a user mask object from a prefix string. */
 export function parseUserMask(prefix: string): UserMask {
   const usermask = prefix.match(/^(.+)!(.+)@(.+)$/);
   if (usermask === null) {

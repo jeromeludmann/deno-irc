@@ -30,8 +30,9 @@ export type Plugin<T extends PluginParams = {}> = (
   client: ExtendedClient<T>,
 ) => void;
 
+/** Composes a plugin from its functions. */
 export function createPlugin<T extends PluginParams = {}>(
-  ...fns: Array<(client: ExtendedClient<T>) => void>
+  ...fns: Plugin<T>[]
 ): Plugin<T> {
   return (client: ExtendedClient<T>) => fns.forEach((fn) => fn(client));
 }
@@ -40,6 +41,7 @@ const BUFFER_SIZE = 4096;
 
 const PORT = 6667;
 
+/** Core features of the IRC client. */
 export class Client<TEvents extends Events> extends EventEmitter<TEvents> {
   private conn: Deno.Conn | null = null;
   private decoder = new TextDecoder();
@@ -65,6 +67,7 @@ export class Client<TEvents extends Events> extends EventEmitter<TEvents> {
     const errorListenerCount = this.listenerCount("error");
   }
 
+  /** Connects to a server using a hostname and an optional port. */
   async connect(hostname: string, port = PORT): Promise<void> {
     if (this.conn) {
       this.conn?.close();
@@ -111,6 +114,7 @@ export class Client<TEvents extends Events> extends EventEmitter<TEvents> {
     }
   }
 
+  /** Sends a raw message to the server. */
   async send(command: AnyCommand, ...params: string[]): Promise<void> {
     if (this.conn === null) {
       this.emit("error", new Errors.SendError("Not connected"));
@@ -135,6 +139,7 @@ export class Client<TEvents extends Events> extends EventEmitter<TEvents> {
     }
   }
 
+  /** Disconnects from the server. */
   async disconnect(): Promise<void> {
     if (this.conn === null) {
       return;

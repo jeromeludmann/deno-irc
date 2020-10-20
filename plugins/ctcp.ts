@@ -1,7 +1,13 @@
 import type { ExtendedClient, Raw, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
+export interface Options {
+  /** Automatic CTCP replies. */
+  replies?: {};
+}
+
 export interface Commands {
+  /** Sends a CTCP message to a `target` with a `command` and a `param`. */
   ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
 }
 
@@ -17,10 +23,15 @@ export type AnyCtcpCommand =
   | "VERSION";
 
 export interface RawCtcp {
+  /** User who sent the CTCP. */
   origin: UserMask;
+  /** Target who received the CTCP. */
   target: string;
+  /** Name of the CTCP command. */
   command: AnyCtcpCommand;
+  /** Type of the CTCP (`"query"` or `"reply"`). */
   type: "query" | "reply";
+  /** Optional param of the CTCP. */
   param?: string;
 }
 

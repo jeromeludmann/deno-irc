@@ -2,11 +2,10 @@ import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
 export interface Commands {
-  whois(
-    ...params:
-      | [mask: string]
-      | [target: string, mask: string]
-  ): void;
+  /** Gets the WHOIS informations of a `nick`. */
+  whois(nick: string): void;
+  /** Gets the WHOIS informations of a `nick` for a given `server`. */
+  whois(server: string, nick: string): void;
 }
 
 export interface Events {
@@ -14,15 +13,25 @@ export interface Events {
 }
 
 export interface WhoisReply {
+  /** Nick. */
   nick: string;
+  /** Hostname. */
   host: string;
+  /** User name. */
   username: string;
+  /** Real name. */
   realname: string;
+  /** Channels joined. */
   channels: string[];
+  /** Idle time. */
   idle: number;
+  /** Server where the user is connected. */
   server: string;
+  /** Informations of the connected server. */
   serverInfo: string;
+  /** Optional user operator message. */
   operator?: string;
+  /** Optional away message. */
   away?: string;
 }
 

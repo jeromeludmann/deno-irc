@@ -2,10 +2,12 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Options {
+  /** The nick used to register the client to the server. */
   nick: string;
 }
 
 export interface Commands {
+  /** Sets the `nick` of the client (once connected). */
   nick(nick: string): void;
 }
 
@@ -14,7 +16,9 @@ export interface Events {
 }
 
 export interface Nick {
+  /** User who sent the NICK. */
   origin: UserMask;
+  /** New nick used by the user. */
   nick: string;
 }
 

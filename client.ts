@@ -25,6 +25,7 @@ import * as Whois from "./plugins/whois.ts";
 export type Options =
   & Core.Options
   & Clientinfo.Options
+  & Ctcp.Options
   & Debug.Options
   & Invite.Options
   & Nick.Options
@@ -110,6 +111,7 @@ export interface Client extends Commands {
   readonly state: Readonly<State>;
 }
 
+/** Full featured IRC client. */
 export class Client extends Core.Client<Events> {
   constructor(options: Options) {
     super(options, plugins);

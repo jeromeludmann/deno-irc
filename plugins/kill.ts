@@ -2,6 +2,7 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Commands {
+  /** Kills a `nick` from the server with a `comment`. */
   kill(nick: string, comment: string): void;
 }
 
@@ -10,8 +11,11 @@ export interface Events {
 }
 
 export interface Kill {
+  /** User who sent the KILL. */
   origin: UserMask;
+  /** Nick who is killed. */
   nick: string;
+  /** Comment of the KILL. */
   comment: string;
 }
 

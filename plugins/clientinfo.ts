@@ -5,11 +5,13 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface Options {
   replies?: {
+    /** Replies to CTCP CLIENTINFO. */
     clientinfo?: boolean;
   };
 }
 
 export interface Commands {
+  /** Queries the supported CTCP commands of a `target`. */
   clientinfo(target: string): void;
 }
 
@@ -19,13 +21,18 @@ export interface Events {
 }
 
 export interface CtcpClientinfo {
+  /** Origin of the CTCP CLIENTINFO query. */
   origin: UserMask;
+  /** Target of the CTCP CLIENTINFO query. */
   target: string;
 }
 
 export interface CtcpClientinfoReply {
+  /** User who sent the CTCP CLIENTINFO reply. */
   origin: UserMask;
+  /** Target who received the CTCP CLIENTINFO reply. */
   target: string;
+  /** Array of supported commands by the user. */
   supported: AnyCtcpCommand[];
 }
 

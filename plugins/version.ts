@@ -5,11 +5,13 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface Options {
   replies?: {
+    /** Replies to CTCP VERSION. */
     version?: boolean;
   };
 }
 
 export interface Commands {
+  /** Queries the client version of a `target`. */
   version(target?: string): void;
 }
 
@@ -19,13 +21,18 @@ export interface Events {
 }
 
 export interface CtcpVersion {
+  /** User who sent the CTCP VERSION query. */
   origin: UserMask;
+  /** Target who received the CTCP VERSION query. */
   target: string;
 }
 
 export interface CtcpVersionReply {
+  /** User who sent the CTCP VERSION reply. */
   origin: UserMask;
+  /** Target who received the CTCP VERSION reply. */
   target: string;
+  /** Client version of the user. */
   version: string;
 }
 
