@@ -24,6 +24,7 @@ import * as Whois from "./plugins/whois.ts";
 
 export type Options =
   & Core.Options
+  & Clientinfo.Options
   & Debug.Options
   & Invite.Options
   & Nick.Options
