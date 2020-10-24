@@ -2,7 +2,7 @@ import type { ExtendedClient, Raw, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
 export interface Commands {
-  ctcp(target: string, command: string, param?: string): void;
+  ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
 }
 
 export interface Events {

@@ -10,13 +10,13 @@ Deno.test("ctcp commands", async () => {
   client.connect(server.host, server.port);
   await client.once("connected");
 
-  client.ctcp("#channel", "COMMAND");
+  client.ctcp("#channel", "TIME");
   const raw1 = await server.once("PRIVMSG");
-  assertEquals(raw1, "PRIVMSG #channel \u0001COMMAND\u0001");
+  assertEquals(raw1, "PRIVMSG #channel \u0001TIME\u0001");
 
-  client.ctcp("#channel", "COMMAND", "param");
+  client.ctcp("#channel", "ACTION", "param");
   const raw2 = await server.once("PRIVMSG");
-  assertEquals(raw2, "PRIVMSG #channel :\u0001COMMAND param\u0001");
+  assertEquals(raw2, "PRIVMSG #channel :\u0001ACTION param\u0001");
 
   await sanitize();
 });
