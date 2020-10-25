@@ -12,6 +12,7 @@ import * as Motd from "./plugins/motd.ts";
 import * as Msg from "./plugins/msg.ts";
 import * as Nick from "./plugins/nick.ts";
 import * as Notice from "./plugins/notice.ts";
+import * as OnConnect from "./plugins/on_connect.ts";
 import * as Oper from "./plugins/oper.ts";
 import * as Part from "./plugins/part.ts";
 import * as Ping from "./plugins/ping.ts";
@@ -29,6 +30,7 @@ export type Options =
   & Debug.Options
   & Invite.Options
   & Nick.Options
+  & OnConnect.Options
   & Ping.Options
   & Register.Options
   & Time.Options
