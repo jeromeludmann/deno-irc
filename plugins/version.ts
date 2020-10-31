@@ -5,7 +5,7 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface VersionParams {
   options: {
-    replies?: {
+    ctcpReplies?: {
       /** Replies to CTCP VERSION. */
       version?: boolean;
     };
@@ -37,8 +37,8 @@ export interface CtcpVersionReply {
 }
 
 function options(client: ExtendedClient<VersionParams>) {
-  client.options.replies ??= {};
-  client.options.replies.version ??= true;
+  client.options.ctcpReplies ??= {};
+  client.options.ctcpReplies.version ??= true;
 }
 
 function commands(
@@ -81,7 +81,7 @@ function events(
 }
 
 function replies(client: ExtendedClient<VersionParams>) {
-  if (!client.options.replies?.version) {
+  if (!client.options.ctcpReplies?.version) {
     return;
   }
 

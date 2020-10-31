@@ -4,7 +4,7 @@ import { createPlugin, parseUserMask } from "../core/mod.ts";
 export interface CtcpParams {
   options: {
     /** Automatic CTCP replies. */
-    replies?: {};
+    ctcpReplies?: {};
   };
   commands: {
     /** Sends a CTCP message to a `target` with a `command` and a `param`. */

@@ -5,7 +5,7 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface TimeParams {
   options: {
-    replies?: {
+    ctcpReplies?: {
       /** Replies to CTCP TIME. */
       time?: boolean;
     };
@@ -37,8 +37,8 @@ export interface CtcpTimeReply {
 }
 
 function options(client: ExtendedClient<TimeParams>) {
-  client.options.replies ??= {};
-  client.options.replies.time ??= true;
+  client.options.ctcpReplies ??= {};
+  client.options.ctcpReplies.time ??= true;
 }
 
 function commands(client: ExtendedClient<TimeParams & CtcpParams>) {
@@ -77,7 +77,7 @@ function events(client: ExtendedClient<TimeParams & CtcpParams>) {
 }
 
 function replies(client: ExtendedClient<TimeParams>) {
-  if (!client.options.replies?.time) {
+  if (!client.options.ctcpReplies?.time) {
     return;
   }
 

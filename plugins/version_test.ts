@@ -49,7 +49,10 @@ Deno.test("version events", async () => {
 });
 
 Deno.test("version replies", async () => {
-  const { server, client, sanitize } = arrange([ctcp, version], {});
+  const { server, client, sanitize } = arrange(
+    [ctcp, version],
+    { ctcpReplies: { version: true } },
+  );
 
   server.listen();
   client.connect(server.host, server.port);

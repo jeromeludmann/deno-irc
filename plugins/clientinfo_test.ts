@@ -45,7 +45,10 @@ Deno.test("clientinfo events", async () => {
 });
 
 Deno.test("clientinfo replies", async () => {
-  const { server, client, sanitize } = arrange([ctcp, clientinfo], {});
+  const { server, client, sanitize } = arrange(
+    [ctcp, clientinfo],
+    { ctcpReplies: { clientinfo: true } },
+  );
 
   server.listen();
   client.connect(server.host, server.port);

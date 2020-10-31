@@ -19,7 +19,7 @@ Deno.test("client options", async () => {
       pass: "secret",
     },
     joinOnInvite: true,
-    replies: {
+    ctcpReplies: {
       clientinfo: true,
       ping: true,
       time: true,

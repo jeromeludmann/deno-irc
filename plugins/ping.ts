@@ -5,7 +5,7 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface PingParams {
   options: {
-    replies?: {
+    ctcpReplies?: {
       /** Replies to CTCP PING. */
       ping?: boolean;
     };
@@ -46,8 +46,8 @@ export interface CtcpPing {
 }
 
 function options(client: ExtendedClient<PingParams>) {
-  client.options.replies ??= {};
-  client.options.replies.ping ??= true;
+  client.options.ctcpReplies ??= {};
+  client.options.ctcpReplies.ping ??= true;
 }
 
 function commands(client: ExtendedClient<PingParams & CtcpParams>) {
@@ -111,7 +111,7 @@ function replies(client: ExtendedClient<PingParams>) {
     pong(...msg.keys);
   });
 
-  if (client.options.replies?.ping) {
+  if (client.options.ctcpReplies?.ping) {
     client.on("ctcp_ping", (msg) => {
       client.send("NOTICE", msg.origin.nick, createCtcp("PING", msg.key));
     });

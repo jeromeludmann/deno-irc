@@ -5,7 +5,7 @@ import { createCtcp } from "./ctcp.ts";
 
 export interface ClientinfoParams {
   options: {
-    replies?: {
+    ctcpReplies?: {
       /** Replies to CTCP CLIENTINFO. */
       clientinfo?: boolean;
     };
@@ -37,8 +37,8 @@ export interface CtcpClientinfoReply {
 }
 
 function options(client: ExtendedClient<ClientinfoParams>) {
-  client.options.replies ??= {};
-  client.options.replies.clientinfo ??= true;
+  client.options.ctcpReplies ??= {};
+  client.options.ctcpReplies.clientinfo ??= true;
 }
 
 function commands(
@@ -80,7 +80,7 @@ function events(
 }
 
 function replies(client: ExtendedClient<ClientinfoParams>) {
-  if (client.options.replies?.clientinfo === false) {
+  if (client.options.ctcpReplies?.clientinfo === false) {
     return;
   }
 

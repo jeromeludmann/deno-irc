@@ -49,7 +49,10 @@ Deno.test("time events", async () => {
 });
 
 Deno.test("time replies", async () => {
-  const { server, client, sanitize } = arrange([ctcp, time], {});
+  const { server, client, sanitize } = arrange(
+    [ctcp, time],
+    { ctcpReplies: { time: true } },
+  );
 
   server.listen();
   client.connect(server.host, server.port);
