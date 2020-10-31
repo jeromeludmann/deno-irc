@@ -2,19 +2,21 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, isChannel, parseUserMask } from "../core/mod.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface MsgParams {
+export interface PrivmsgParams {
   commands: {
+    /** Sends a message `text` to a `target`. */
+    privmsg(target: string, text: string): void;
     /** Sends a message `text` to a `target`. */
     msg(target: string, text: string): void;
   };
   events: {
-    "msg": Msg;
-    "msg:channel": ChannelMsg;
-    "msg:private": PrivateMsg;
+    "privmsg": Privmsg;
+    "privmsg:channel": ChannelPrivmsg;
+    "privmsg:private": PrivatePrivmsg;
   };
 }
 
-export interface Msg {
+export interface Privmsg {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
   /** Target who received the PRIVMSG. */
@@ -23,7 +25,7 @@ export interface Msg {
   text: string;
 }
 
-export interface ChannelMsg {
+export interface ChannelPrivmsg {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
   /** Channel where the PRIVMSG is sent. */
@@ -32,18 +34,18 @@ export interface ChannelMsg {
   text: string;
 }
 
-export interface PrivateMsg {
+export interface PrivatePrivmsg {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
   /** Text of the PRIVMSG. */
   text: string;
 }
 
-function commands(client: ExtendedClient<MsgParams>) {
-  client.msg = client.send.bind(client, "PRIVMSG");
+function commands(client: ExtendedClient<PrivmsgParams>) {
+  client.privmsg = client.msg = client.send.bind(client, "PRIVMSG");
 }
 
-function events(client: ExtendedClient<MsgParams>) {
+function events(client: ExtendedClient<PrivmsgParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "PRIVMSG") {
       return;
@@ -56,20 +58,20 @@ function events(client: ExtendedClient<MsgParams>) {
     const origin = parseUserMask(msg.prefix);
     const [target, text] = msg.params;
 
-    client.emit("msg", {
+    client.emit("privmsg", {
       origin,
       target,
       text,
     });
 
     if (isChannel(target)) {
-      client.emit("msg:channel", {
+      client.emit("privmsg:channel", {
         origin,
         channel: target,
         text,
       });
     } else {
-      client.emit("msg:private", {
+      client.emit("privmsg:private", {
         origin,
         text,
       });
@@ -77,4 +79,4 @@ function events(client: ExtendedClient<MsgParams>) {
   });
 }
 
-export const msg = createPlugin(commands, events);
+export const privmsg = createPlugin(commands, events);

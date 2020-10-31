@@ -37,6 +37,7 @@ Deno.test("client commands", async () => {
   const client = new Client({ nick: "nick" });
 
   assertEquals(typeof client.action, "function");
+  assertEquals(typeof client.me, "function");
   assertEquals(typeof client.clientinfo, "function");
   assertEquals(typeof client.ctcp, "function");
   assertEquals(typeof client.invite, "function");
@@ -44,6 +45,7 @@ Deno.test("client commands", async () => {
   assertEquals(typeof client.kick, "function");
   assertEquals(typeof client.kill, "function");
   assertEquals(typeof client.motd, "function");
+  assertEquals(typeof client.privmsg, "function");
   assertEquals(typeof client.msg, "function");
   assertEquals(typeof client.nick, "function");
   assertEquals(typeof client.notice, "function");
@@ -73,9 +75,9 @@ Deno.test("client events", async () => {
   assertEquals(listeners.kick?.length, undefined);
   assertEquals(listeners.kill?.length, undefined);
   assertEquals(listeners.motd?.length, undefined);
-  assertEquals(listeners.msg?.length, undefined);
-  assertEquals(listeners["msg:channel"]?.length, undefined);
-  assertEquals(listeners["msg:private"]?.length, undefined);
+  assertEquals(listeners.privmsg?.length, undefined);
+  assertEquals(listeners["privmsg:channel"]?.length, undefined);
+  assertEquals(listeners["privmsg:private"]?.length, undefined);
   assertEquals(listeners.nick?.length, 1);
   assertEquals(listeners.notice?.length, undefined);
   assertEquals(listeners.part?.length, undefined);

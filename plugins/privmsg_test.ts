@@ -1,9 +1,9 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { msg } from "./msg.ts";
+import { privmsg } from "./privmsg.ts";
 
-Deno.test("msg commands", async () => {
-  const { server, client, sanitize } = arrange([msg], {});
+Deno.test("privmsg commands", async () => {
+  const { server, client, sanitize } = arrange([privmsg], {});
 
   server.listen();
   client.connect(server.host, server.port);
@@ -16,8 +16,8 @@ Deno.test("msg commands", async () => {
   await sanitize();
 });
 
-Deno.test("msg events", async () => {
-  const { server, client, sanitize } = arrange([msg], {});
+Deno.test("privmsg events", async () => {
+  const { server, client, sanitize } = arrange([privmsg], {});
 
   server.listen();
   client.connect(server.host, server.port);
@@ -25,8 +25,8 @@ Deno.test("msg events", async () => {
 
   server.send(":nick!user@host PRIVMSG #channel :Hello world");
   const events1 = await Promise.all([
-    client.once("msg"),
-    client.once("msg:channel"),
+    client.once("privmsg"),
+    client.once("privmsg:channel"),
   ]);
   assertEquals(events1, [{
     origin: { nick: "nick", username: "user", userhost: "host" },
@@ -40,8 +40,8 @@ Deno.test("msg events", async () => {
 
   server.send(":nick!user@host PRIVMSG nick2 :Hello world");
   const events2 = await Promise.all([
-    client.once("msg"),
-    client.once("msg:private"),
+    client.once("privmsg"),
+    client.once("privmsg:private"),
   ]);
   assertEquals(events2, [{
     origin: { nick: "nick", username: "user", userhost: "host" },

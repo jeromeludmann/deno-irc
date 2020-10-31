@@ -22,8 +22,6 @@ import type { KillParams } from "./plugins/kill.ts";
 import { kill } from "./plugins/kill.ts";
 import type { MotdParams } from "./plugins/motd.ts";
 import { motd } from "./plugins/motd.ts";
-import type { MsgParams } from "./plugins/msg.ts";
-import { msg } from "./plugins/msg.ts";
 import type { MyinfoParams } from "./plugins/myinfo.ts";
 import { myinfo } from "./plugins/myinfo.ts";
 import type { MyinfoStateParams } from "./plugins/myinfo_state.ts";
@@ -42,6 +40,8 @@ import type { PartParams } from "./plugins/part.ts";
 import { part } from "./plugins/part.ts";
 import type { PingParams } from "./plugins/ping.ts";
 import { ping } from "./plugins/ping.ts";
+import type { PrivmsgParams } from "./plugins/privmsg.ts";
+import { privmsg } from "./plugins/privmsg.ts";
 import type { QuitParams } from "./plugins/quit.ts";
 import { quit } from "./plugins/quit.ts";
 import type { RegisterParams } from "./plugins/register.ts";
@@ -72,7 +72,6 @@ type Params =
   & KickParams
   & KillParams
   & MotdParams
-  & MsgParams
   & MyinfoParams
   & MyinfoStateParams
   & NickParams
@@ -82,6 +81,7 @@ type Params =
   & OperOnRegisterParams
   & PartParams
   & PingParams
+  & PrivmsgParams
   & QuitParams
   & RegisterParams
   & RegisterOnConnectParams
@@ -103,7 +103,6 @@ const plugins = [
   kick,
   kill,
   motd,
-  msg,
   myinfo,
   myinfoState,
   nick,
@@ -113,6 +112,7 @@ const plugins = [
   operOnRegister,
   part,
   ping,
+  privmsg,
   quit,
   register,
   registerOnConnect,
