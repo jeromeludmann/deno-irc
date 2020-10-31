@@ -1,12 +1,5 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
-import type { JoinPluginParams } from "./join.ts";
-import type { NickPluginParams } from "./nick.ts";
-
-export interface Options {
-  /** Enables auto join on invite. */
-  joinOnInvite?: boolean;
-}
 
 export interface Commands {
   /** Invites a `nick` to a `channel`. */
@@ -29,11 +22,6 @@ export interface Invite {
 export interface InvitePluginParams {
   commands: Commands;
   events: Events;
-  options: Options;
-}
-
-function options(client: ExtendedClient<InvitePluginParams>) {
-  client.options.joinOnInvite ??= false;
 }
 
 function commands(client: ExtendedClient<InvitePluginParams>) {
@@ -56,27 +44,4 @@ function events(client: ExtendedClient<InvitePluginParams>) {
   });
 }
 
-function joinOnInvite(
-  client: ExtendedClient<
-    & InvitePluginParams
-    & JoinPluginParams
-    & NickPluginParams
-  >,
-) {
-  if (!client.options.joinOnInvite) {
-    return;
-  }
-
-  client.on("invite", (msg) => {
-    if (msg.nick === client.state.nick) {
-      client.join(msg.channel);
-    }
-  });
-}
-
-export const plugin = createPlugin(
-  options,
-  commands,
-  events,
-  joinOnInvite,
-);
+export const plugin = createPlugin(commands, events);

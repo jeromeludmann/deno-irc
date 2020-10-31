@@ -1,19 +1,8 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { NickPluginParams } from "./nick.ts";
-
-export interface Options {
-  /** The username used to register the client to the server. */
-  username?: string;
-  /** The realname used to register the client to the server. */
-  realname?: string;
-  /** The password used to connect the client to the server. */
-  password?: string;
-}
 
 export interface Events {
   "register": Register;
-  "myinfo": Myinfo;
 }
 
 export interface Register {
@@ -23,30 +12,8 @@ export interface Register {
   text: string;
 }
 
-export interface Myinfo {
-  /** Nick used on the server. */
-  nick: string;
-  /** Hostname of the server. */
-  serverHost: string;
-  /** Version of the server. */
-  serverVersion: string;
-  /** Available user modes on the server. */
-  availableUserModes: string[];
-  /** Available channel modes on the server. */
-  availableChannelModes: string[];
-}
-
-export interface State {
-  serverHost: string;
-  serverVersion: string;
-  availableUserModes: string[];
-  availableChannelModes: string[];
-}
-
 export interface RegisterPluginParams {
-  options: Options;
   events: Events;
-  state: State;
 }
 
 function events(client: ExtendedClient<RegisterPluginParams>) {
@@ -59,103 +26,8 @@ function events(client: ExtendedClient<RegisterPluginParams>) {
           text,
         });
       }
-
-      case "RPL_MYINFO": {
-        const [nick, host, version, userModes, channelModes] = msg.params;
-        return client.emit("myinfo", {
-          nick,
-          serverHost: host,
-          serverVersion: version,
-          availableUserModes: userModes.split(""),
-          availableChannelModes: channelModes.split(""),
-        });
-      }
     }
   });
 }
 
-function state(
-  client: ExtendedClient<RegisterPluginParams & NickPluginParams>,
-) {
-  client.on("register", (msg) => {
-    client.state.nick = msg.nick;
-  });
-
-  client.on("myinfo", (msg) => {
-    client.state.serverHost = msg.serverHost;
-    client.state.serverVersion = msg.serverVersion;
-    client.state.availableUserModes = msg.availableUserModes;
-    client.state.availableChannelModes = msg.availableChannelModes;
-  });
-}
-
-// TODO Move collision feature to dedicated plugin
-//
-// The following function is confusing and should be rewritten. This could be
-// split in a separate feature, allowing the end user to enable or disable the
-// behavior.
-
-function registration(
-  client: ExtendedClient<RegisterPluginParams & NickPluginParams>,
-) {
-  const {
-    nick,
-    username = nick,
-    realname = nick,
-    password,
-  } = client.options;
-
-  const user = (username: string, realname: string) => {
-    client.send("USER", username, "0", "*", realname);
-  };
-
-  const pass = client.send.bind(client, "PASS");
-
-  const generateRandomName = () => `_${Math.random().toString(36).slice(2, 9)}`;
-
-  const runRegistrationSequence = () => {
-    // Manages nick/username issues on registration
-    const removeNickIssuesListener = client.on("raw", (msg) => {
-      switch (msg.command) {
-        case "ERR_NICKNAMEINUSE": {
-          // Adds trailing "_" to nick if it is already in use
-          const [, nick] = msg.params;
-          client.nick(`${nick}_`);
-          break;
-        }
-
-        case "ERR_ERRONEUSNICKNAME": {
-          // Tries to use a random nick if it contains bad characters
-          client.nick(generateRandomName());
-          break;
-        }
-
-        case "ERR_INVALIDUSERNAME": {
-          // Tries to use a random username if it contains bad characters
-          user(generateRandomName(), realname);
-          break;
-        }
-      }
-    });
-    client.once("register", removeNickIssuesListener);
-
-    // Runs sequence
-    if (password !== undefined) {
-      pass(password);
-    }
-    client.nick(nick);
-    user(username, realname);
-  };
-
-  client.on("connected", () => {
-    runRegistrationSequence();
-  });
-
-  client.on("raw", (msg) => {
-    if (msg.command === "ERR_NOTREGISTERED") {
-      runRegistrationSequence();
-    }
-  });
-}
-
-export const plugin = createPlugin(events, state, registration);
+export const plugin = createPlugin(events);

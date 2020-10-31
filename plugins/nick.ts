@@ -1,11 +1,6 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Options {
-  /** The nick used to register the client to the server. */
-  nick: string;
-}
-
 export interface Commands {
   /** Sets the `nick` of the client (once connected). */
   nick(nick: string): void;
@@ -22,15 +17,9 @@ export interface Nick {
   nick: string;
 }
 
-export interface State {
-  nick: string;
-}
-
 export interface NickPluginParams {
   commands: Commands;
   events: Events;
-  options: Options;
-  state: State;
 }
 
 function commands(client: ExtendedClient<NickPluginParams>) {
@@ -50,14 +39,4 @@ function events(client: ExtendedClient<NickPluginParams>) {
   });
 }
 
-function state(client: ExtendedClient<NickPluginParams>) {
-  client.state.nick = client.options.nick;
-
-  client.on("nick", (msg) => {
-    if (msg.origin.nick === client.state.nick) {
-      client.state.nick = msg.nick;
-    }
-  });
-}
-
-export const plugin = createPlugin(commands, events, state);
+export const plugin = createPlugin(commands, events);
