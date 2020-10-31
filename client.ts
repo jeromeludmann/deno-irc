@@ -73,6 +73,7 @@ export type Events =
   & Kick.Events
   & Kill.Events
   & Motd.Events
+  & Myinfo.Events
   & Msg.Events
   & Nick.Events
   & Notice.Events

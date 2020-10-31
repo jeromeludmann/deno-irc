@@ -16,6 +16,13 @@ export interface MyinfoStatePluginParams {
 function state(
   client: ExtendedClient<MyinfoStatePluginParams & MyinfoPluginParams>,
 ) {
+  client.state = {
+    serverHost: "",
+    serverVersion: "",
+    availableUserModes: [],
+    availableChannelModes: [],
+  };
+
   client.on("myinfo", (msg) => {
     client.state = { ...client.state, ...msg };
   });

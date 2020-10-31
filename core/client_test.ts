@@ -1,7 +1,7 @@
 import { assertEquals } from "./test_deps.ts";
 import { arrange } from "./test_helpers.ts";
 
-Deno.test("client connect", async () => {
+Deno.test("core client connect", async () => {
   const { server, client, sanitize } = arrange([], {});
 
   server.listen();
@@ -20,7 +20,7 @@ Deno.test("client connect", async () => {
   await sanitize();
 });
 
-Deno.test("client disconnect", async () => {
+Deno.test("core client disconnect", async () => {
   const { server, client, sanitize } = arrange([], {});
 
   // closed by server
@@ -48,7 +48,7 @@ Deno.test("client disconnect", async () => {
   await sanitize();
 });
 
-Deno.test("client send", async () => {
+Deno.test("core client send", async () => {
   const { server, client, sanitize } = arrange([], {});
 
   const [err] = await Promise.all([
