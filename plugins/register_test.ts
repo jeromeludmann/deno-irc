@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as register } from "./register.ts";
+import { register } from "./register.ts";
 
 Deno.test("register events", async () => {
   const { server, client, sanitize } = arrange([register], {});

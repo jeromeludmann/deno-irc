@@ -1,8 +1,10 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
-export interface Events {
-  "myinfo": Myinfo;
+export interface MyinfoParams {
+  events: {
+    "myinfo": Myinfo;
+  };
 }
 
 export interface Myinfo {
@@ -18,11 +20,7 @@ export interface Myinfo {
   availableChannelModes: string[];
 }
 
-export interface MyinfoPluginParams {
-  events: Events;
-}
-
-function events(client: ExtendedClient<MyinfoPluginParams>) {
+function events(client: ExtendedClient<MyinfoParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "RPL_MYINFO") {
       return;
@@ -39,4 +37,4 @@ function events(client: ExtendedClient<MyinfoPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(events);
+export const myinfo = createPlugin(events);

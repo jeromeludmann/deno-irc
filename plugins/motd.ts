@@ -1,13 +1,14 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
-export interface Commands {
-  /** Gets the message of the day (MOTD) of the server. */
-  motd(): void;
-}
-
-export interface Events {
-  "motd": Motd;
+export interface MotdParams {
+  commands: {
+    /** Gets the message of the day (MOTD) of the server. */
+    motd(): void;
+  };
+  events: {
+    "motd": Motd;
+  };
 }
 
 export interface Motd {
@@ -15,16 +16,11 @@ export interface Motd {
   motd?: string[];
 }
 
-export interface MotdPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<MotdPluginParams>) {
+function commands(client: ExtendedClient<MotdParams>) {
   client.motd = client.send.bind(client, "MOTD");
 }
 
-function events(client: ExtendedClient<MotdPluginParams>) {
+function events(client: ExtendedClient<MotdParams>) {
   let motd: string[];
 
   client.on("raw", (msg) => {
@@ -49,4 +45,4 @@ function events(client: ExtendedClient<MotdPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const motd = createPlugin(commands, events);

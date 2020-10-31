@@ -1,23 +1,21 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { NickPluginParams } from "./nick.ts";
-import type { RegisterPluginParams } from "./register.ts";
-import type { RegisterOnConnectPluginParams } from "./register_on_connect.ts";
+import type { NickParams } from "./nick.ts";
+import type { RegisterParams } from "./register.ts";
+import type { RegisterOnConnectParams } from "./register_on_connect.ts";
 
-export interface State {
-  nick: string;
-}
-
-export interface NickStatePluginParams {
-  state: State;
+export interface NickStateParams {
+  state: {
+    nick: string;
+  };
 }
 
 function state(
   client: ExtendedClient<
-    & NickStatePluginParams
-    & NickPluginParams
-    & RegisterPluginParams
-    & RegisterOnConnectPluginParams
+    & NickStateParams
+    & NickParams
+    & RegisterParams
+    & RegisterOnConnectParams
   >,
 ) {
   // on new instance
@@ -36,4 +34,4 @@ function state(
   });
 }
 
-export const plugin = createPlugin(state);
+export const nickState = createPlugin(state);

@@ -1,25 +1,25 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { CtcpPluginParams } from "./ctcp.ts";
+import type { CtcpParams } from "./ctcp.ts";
 import { createCtcp } from "./ctcp.ts";
 
-export interface Options {
-  replies?: {
-    /** Replies to CTCP PING. */
-    ping?: boolean;
+export interface PingParams {
+  options: {
+    replies?: {
+      /** Replies to CTCP PING. */
+      ping?: boolean;
+    };
   };
-}
-
-export interface Commands {
-  /** Pings a `target`. */
-  ping(target?: string): void;
-}
-
-export interface Events {
-  "ping": Ping;
-  "pong": Pong;
-  "ctcp_ping": CtcpPing;
-  "ctcp_ping_reply": CtcpPing;
+  commands: {
+    /** Pings a `target`. */
+    ping(target?: string): void;
+  };
+  events: {
+    "ping": Ping;
+    "pong": Pong;
+    "ctcp_ping": CtcpPing;
+    "ctcp_ping_reply": CtcpPing;
+  };
 }
 
 export interface Ping {
@@ -45,18 +45,12 @@ export interface CtcpPing {
   key: string;
 }
 
-export interface PingPluginParams {
-  options: Options;
-  commands: Commands;
-  events: Events;
-}
-
-function options(client: ExtendedClient<PingPluginParams>) {
+function options(client: ExtendedClient<PingParams>) {
   client.options.replies ??= {};
   client.options.replies.ping ??= true;
 }
 
-function commands(client: ExtendedClient<PingPluginParams & CtcpPluginParams>) {
+function commands(client: ExtendedClient<PingParams & CtcpParams>) {
   client.ping = (target) => {
     const key = Date.now().toString();
 
@@ -68,7 +62,7 @@ function commands(client: ExtendedClient<PingPluginParams & CtcpPluginParams>) {
   };
 }
 
-function events(client: ExtendedClient<PingPluginParams & CtcpPluginParams>) {
+function events(client: ExtendedClient<PingParams & CtcpParams>) {
   client.on("raw", (msg) => {
     switch (msg.command) {
       case "PING":
@@ -108,7 +102,7 @@ function events(client: ExtendedClient<PingPluginParams & CtcpPluginParams>) {
   });
 }
 
-function replies(client: ExtendedClient<PingPluginParams>) {
+function replies(client: ExtendedClient<PingParams>) {
   const pong = (...keys: string[]) => {
     client.send("PONG", ...keys);
   };
@@ -124,7 +118,7 @@ function replies(client: ExtendedClient<PingPluginParams>) {
   }
 }
 
-export const plugin = createPlugin(
+export const ping = createPlugin(
   options,
   commands,
   events,

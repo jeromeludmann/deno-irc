@@ -1,16 +1,17 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { CtcpPluginParams } from "./ctcp.ts";
+import type { CtcpParams } from "./ctcp.ts";
 
-export interface Commands {
-  /** Sends an action message `text` to a `target`. */
-  action(target: string, text: string): void;
-  /** Sends an action message `text` to a `target`. */
-  me(target: string, text: string): void;
-}
-
-export interface Events {
-  "ctcp_action": CtcpAction;
+export interface ActionParams {
+  commands: {
+    /** Sends an action message `text` to a `target`. */
+    action(target: string, text: string): void;
+    /** Sends an action message `text` to a `target`. */
+    me(target: string, text: string): void;
+  };
+  events: {
+    "ctcp_action": CtcpAction;
+  };
 }
 
 export interface CtcpAction {
@@ -22,20 +23,15 @@ export interface CtcpAction {
   text: string;
 }
 
-export interface ActionPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
 function commands(
-  client: ExtendedClient<ActionPluginParams & CtcpPluginParams>,
+  client: ExtendedClient<ActionParams & CtcpParams>,
 ) {
   client.action = client.me = (target, text) => {
     client.ctcp(target, "ACTION", text);
   };
 }
 
-function events(client: ExtendedClient<ActionPluginParams & CtcpPluginParams>) {
+function events(client: ExtendedClient<ActionParams & CtcpParams>) {
   client.on("raw:ctcp", (msg) => {
     if (msg.command !== "ACTION") {
       return;
@@ -51,4 +47,4 @@ function events(client: ExtendedClient<ActionPluginParams & CtcpPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const action = createPlugin(commands, events);

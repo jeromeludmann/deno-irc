@@ -1,20 +1,18 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { MyinfoPluginParams } from "./myinfo.ts";
+import type { MyinfoParams } from "./myinfo.ts";
 
-export interface State {
-  serverHost: string;
-  serverVersion: string;
-  availableUserModes: string[];
-  availableChannelModes: string[];
-}
-
-export interface MyinfoStatePluginParams {
-  state: State;
+export interface MyinfoStateParams {
+  state: {
+    serverHost: string;
+    serverVersion: string;
+    availableUserModes: string[];
+    availableChannelModes: string[];
+  };
 }
 
 function state(
-  client: ExtendedClient<MyinfoStatePluginParams & MyinfoPluginParams>,
+  client: ExtendedClient<MyinfoStateParams & MyinfoParams>,
 ) {
   client.state = {
     serverHost: "",
@@ -28,4 +26,4 @@ function state(
   });
 }
 
-export const plugin = createPlugin(state);
+export const myinfoState = createPlugin(state);

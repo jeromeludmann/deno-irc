@@ -1,10 +1,10 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as error } from "./error.ts";
-import { plugin as quit } from "./quit.ts";
+import { quit } from "./quit.ts";
+import { serverError } from "./server_error.ts";
 
 Deno.test("quit commands", async () => {
-  const { server, client, sanitize } = arrange([error, quit], {});
+  const { server, client, sanitize } = arrange([quit, serverError], {});
 
   server.listen();
   client.connect(server.host, server.port);

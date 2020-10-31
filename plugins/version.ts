@@ -1,23 +1,23 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { CtcpPluginParams } from "./ctcp.ts";
+import type { CtcpParams } from "./ctcp.ts";
 import { createCtcp } from "./ctcp.ts";
 
-export interface Options {
-  replies?: {
-    /** Replies to CTCP VERSION. */
-    version?: boolean;
+export interface VersionParams {
+  options: {
+    replies?: {
+      /** Replies to CTCP VERSION. */
+      version?: boolean;
+    };
   };
-}
-
-export interface Commands {
-  /** Queries the client version of a `target`. */
-  version(target?: string): void;
-}
-
-export interface Events {
-  "ctcp_version": CtcpVersion;
-  "ctcp_version_reply": CtcpVersionReply;
+  commands: {
+    /** Queries the client version of a `target`. */
+    version(target?: string): void;
+  };
+  events: {
+    "ctcp_version": CtcpVersion;
+    "ctcp_version_reply": CtcpVersionReply;
+  };
 }
 
 export interface CtcpVersion {
@@ -36,19 +36,13 @@ export interface CtcpVersionReply {
   version: string;
 }
 
-export interface VersionPluginParams {
-  options: Options;
-  commands: Commands;
-  events: Events;
-}
-
-function options(client: ExtendedClient<VersionPluginParams>) {
+function options(client: ExtendedClient<VersionParams>) {
   client.options.replies ??= {};
   client.options.replies.version ??= true;
 }
 
 function commands(
-  client: ExtendedClient<VersionPluginParams & CtcpPluginParams>,
+  client: ExtendedClient<VersionParams & CtcpParams>,
 ) {
   client.version = (target) => {
     if (target !== undefined) {
@@ -60,7 +54,7 @@ function commands(
 }
 
 function events(
-  client: ExtendedClient<VersionPluginParams & CtcpPluginParams>,
+  client: ExtendedClient<VersionParams & CtcpParams>,
 ) {
   client.on("raw:ctcp", (msg) => {
     if (msg.command !== "VERSION") {
@@ -86,7 +80,7 @@ function events(
   });
 }
 
-function replies(client: ExtendedClient<VersionPluginParams>) {
+function replies(client: ExtendedClient<VersionParams>) {
   if (!client.options.replies?.version) {
     return;
   }
@@ -96,7 +90,7 @@ function replies(client: ExtendedClient<VersionPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(
+export const version = createPlugin(
   options,
   commands,
   events,

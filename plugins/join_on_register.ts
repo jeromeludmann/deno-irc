@@ -1,20 +1,18 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { JoinPluginParams } from "./join.ts";
-import type { RegisterPluginParams } from "./register.ts";
+import type { JoinParams } from "./join.ts";
+import type { RegisterParams } from "./register.ts";
 
-export interface Options {
-  /** Channels to join on connect. */
-  channels?: string[];
+export interface JoinOnRegisterParams {
+  options: {
+    /** Channels to join on connect. */
+    channels?: string[];
+  };
 }
 
-export interface JoinOnRegisterPluginParams {
-  options: Options;
-}
-
-function joinOnRegister(
+function autoJoin(
   client: ExtendedClient<
-    JoinOnRegisterPluginParams & JoinPluginParams & RegisterPluginParams
+    JoinOnRegisterParams & JoinParams & RegisterParams
   >,
 ) {
   const { channels } = client.options;
@@ -28,4 +26,4 @@ function joinOnRegister(
   });
 }
 
-export const plugin = createPlugin(joinOnRegister);
+export const joinOnRegister = createPlugin(autoJoin);

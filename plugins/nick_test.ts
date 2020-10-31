@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as nick } from "./nick.ts";
+import { nick } from "./nick.ts";
 
 Deno.test("nick commands", async () => {
   const { server, client, sanitize } = arrange([nick], {});

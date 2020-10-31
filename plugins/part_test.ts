@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as part } from "./part.ts";
+import { part } from "./part.ts";
 
 Deno.test("part commands", async () => {
   const { server, client, sanitize } = arrange([part], {});

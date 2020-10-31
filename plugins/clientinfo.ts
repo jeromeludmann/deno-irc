@@ -1,23 +1,23 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { AnyCtcpCommand, CtcpPluginParams } from "./ctcp.ts";
+import type { AnyCtcpCommand, CtcpParams } from "./ctcp.ts";
 import { createCtcp } from "./ctcp.ts";
 
-export interface Options {
-  replies?: {
-    /** Replies to CTCP CLIENTINFO. */
-    clientinfo?: boolean;
+export interface ClientinfoParams {
+  options: {
+    replies?: {
+      /** Replies to CTCP CLIENTINFO. */
+      clientinfo?: boolean;
+    };
   };
-}
-
-export interface Commands {
-  /** Queries the supported CTCP commands of a `target`. */
-  clientinfo(target: string): void;
-}
-
-export interface Events {
-  "ctcp_clientinfo": CtcpClientinfo;
-  "ctcp_clientinfo_reply": CtcpClientinfoReply;
+  commands: {
+    /** Queries the supported CTCP commands of a `target`. */
+    clientinfo(target: string): void;
+  };
+  events: {
+    "ctcp_clientinfo": CtcpClientinfo;
+    "ctcp_clientinfo_reply": CtcpClientinfoReply;
+  };
 }
 
 export interface CtcpClientinfo {
@@ -36,19 +36,13 @@ export interface CtcpClientinfoReply {
   supported: AnyCtcpCommand[];
 }
 
-export interface ClientinfoPluginParams {
-  commands: Commands;
-  events: Events;
-  options: Options;
-}
-
-function options(client: ExtendedClient<ClientinfoPluginParams>) {
+function options(client: ExtendedClient<ClientinfoParams>) {
   client.options.replies ??= {};
   client.options.replies.clientinfo ??= true;
 }
 
 function commands(
-  client: ExtendedClient<ClientinfoPluginParams & CtcpPluginParams>,
+  client: ExtendedClient<ClientinfoParams & CtcpParams>,
 ) {
   client.clientinfo = (target) => {
     client.ctcp(target, "CLIENTINFO");
@@ -56,7 +50,7 @@ function commands(
 }
 
 function events(
-  client: ExtendedClient<ClientinfoPluginParams & CtcpPluginParams>,
+  client: ExtendedClient<ClientinfoParams & CtcpParams>,
 ) {
   client.on("raw:ctcp", (msg) => {
     if (msg.command !== "CLIENTINFO") {
@@ -85,7 +79,7 @@ function events(
   });
 }
 
-function replies(client: ExtendedClient<ClientinfoPluginParams>) {
+function replies(client: ExtendedClient<ClientinfoParams>) {
   if (client.options.replies?.clientinfo === false) {
     return;
   }
@@ -99,4 +93,4 @@ function replies(client: ExtendedClient<ClientinfoPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(options, commands, events, replies);
+export const clientinfo = createPlugin(options, commands, events, replies);

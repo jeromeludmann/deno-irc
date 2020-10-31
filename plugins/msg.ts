@@ -2,15 +2,16 @@ import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, isChannel, parseUserMask } from "../core/mod.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface Commands {
-  /** Sends a message `text` to a `target`. */
-  msg(target: string, text: string): void;
-}
-
-export interface Events {
-  "msg": Msg;
-  "msg:channel": ChannelMsg;
-  "msg:private": PrivateMsg;
+export interface MsgParams {
+  commands: {
+    /** Sends a message `text` to a `target`. */
+    msg(target: string, text: string): void;
+  };
+  events: {
+    "msg": Msg;
+    "msg:channel": ChannelMsg;
+    "msg:private": PrivateMsg;
+  };
 }
 
 export interface Msg {
@@ -38,16 +39,11 @@ export interface PrivateMsg {
   text: string;
 }
 
-export interface MsgPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<MsgPluginParams>) {
+function commands(client: ExtendedClient<MsgParams>) {
   client.msg = client.send.bind(client, "PRIVMSG");
 }
 
-function events(client: ExtendedClient<MsgPluginParams>) {
+function events(client: ExtendedClient<MsgParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "PRIVMSG") {
       return;
@@ -81,4 +77,4 @@ function events(client: ExtendedClient<MsgPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const msg = createPlugin(commands, events);

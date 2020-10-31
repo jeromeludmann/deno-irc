@@ -1,18 +1,18 @@
 import type { ExtendedClient, Raw, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Options {
-  /** Automatic CTCP replies. */
-  replies?: {};
-}
-
-export interface Commands {
-  /** Sends a CTCP message to a `target` with a `command` and a `param`. */
-  ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
-}
-
-export interface Events {
-  "raw:ctcp": RawCtcp;
+export interface CtcpParams {
+  options: {
+    /** Automatic CTCP replies. */
+    replies?: {};
+  };
+  commands: {
+    /** Sends a CTCP message to a `target` with a `command` and a `param`. */
+    ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
+  };
+  events: {
+    "raw:ctcp": RawCtcp;
+  };
 }
 
 export type AnyCtcpCommand =
@@ -35,11 +35,6 @@ export interface RawCtcp {
   param?: string;
 }
 
-export interface CtcpPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
 export function isCtcp(msg: Raw): boolean {
   return (
     msg.params.length === 2 &&
@@ -56,13 +51,13 @@ export function createCtcp(command: string, param?: string) {
   return ctcp;
 }
 
-export function commands(client: ExtendedClient<CtcpPluginParams>) {
+export function commands(client: ExtendedClient<CtcpParams>) {
   client.ctcp = (target, command, param) => {
     client.send("PRIVMSG", target, createCtcp(command, param));
   };
 }
 
-export function events(client: ExtendedClient<CtcpPluginParams>) {
+export function events(client: ExtendedClient<CtcpParams>) {
   client.on("raw", (msg) => {
     if (!isCtcp(msg)) {
       return;
@@ -90,4 +85,4 @@ export function events(client: ExtendedClient<CtcpPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const ctcp = createPlugin(commands, events);

@@ -4,16 +4,17 @@ import type { Raw } from "./parsers.ts";
 import { Parser } from "./parsers.ts";
 import type { AnyCommand } from "./protocol.ts";
 
-export interface Options {
-  bufferSize?: number;
-}
-
-export interface Events {
-  "connecting": RemoteAddr;
-  "connected": RemoteAddr;
-  "disconnected": RemoteAddr;
-  "raw": Raw;
-  "error": Errors.ModuleError;
+export interface Params {
+  options: {
+    bufferSize?: number;
+  };
+  events: {
+    "connecting": RemoteAddr;
+    "connected": RemoteAddr;
+    "disconnected": RemoteAddr;
+    "raw": Raw;
+    "error": Errors.ModuleError;
+  };
 }
 
 type PluginParams = {
@@ -23,7 +24,7 @@ type PluginParams = {
 export type ExtendedClient<T extends PluginParams = {}> =
   & { options: T["options"] }
   & T["commands"]
-  & Client<Events & T["events"]>
+  & Client<Params["events"] & T["events"]>
   & { state: T["state"] };
 
 export type Plugin<T extends PluginParams = {}> = (
@@ -42,14 +43,18 @@ const BUFFER_SIZE = 4096;
 const PORT = 6667;
 
 /** Core features of the IRC client. */
-export class Client<TEvents extends Events> extends EventEmitter<TEvents> {
+export class Client<TEvents extends Params["events"]>
+  extends EventEmitter<TEvents> {
   private conn: Deno.Conn | null = null;
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
   state: Readonly<{}> = {};
 
-  constructor(public options: Readonly<Options>, plugins: Plugin<any>[]) {
+  constructor(
+    public options: Readonly<Params["options"]>,
+    plugins: Plugin<any>[],
+  ) {
     super();
 
     this.on("error", (error) => {

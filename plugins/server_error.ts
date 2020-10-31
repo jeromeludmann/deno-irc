@@ -4,6 +4,8 @@ import { createPlugin } from "../core/mod.ts";
 
 // Note: "error" event is already defined in the core part
 
+export interface ServerErrorParams {}
+
 export class ServerError extends ModuleError {
   name = ServerError.name;
 }
@@ -19,4 +21,4 @@ function emitServerError(client: ExtendedClient) {
   });
 }
 
-export const plugin = createPlugin(emitServerError);
+export const serverError = createPlugin(emitServerError);

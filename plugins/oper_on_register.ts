@@ -1,25 +1,23 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { OperPluginParams } from "./oper.ts";
-import type { RegisterPluginParams } from "./register.ts";
+import type { OperParams } from "./oper.ts";
+import type { RegisterParams } from "./register.ts";
 
-export interface Options {
-  /** Sets as operator on connect. */
-  oper?: {
-    /** Username operator. */
-    user: string;
-    /** Password operator. */
-    pass: string;
+export interface OperOnRegisterParams {
+  options: {
+    /** Sets as operator on connect. */
+    oper?: {
+      /** Username operator. */
+      user: string;
+      /** Password operator. */
+      pass: string;
+    };
   };
 }
 
-export interface OperOnRegisterPluginParams {
-  options: Options;
-}
-
-function operOnRegister(
+function autoOper(
   client: ExtendedClient<
-    OperOnRegisterPluginParams & OperPluginParams & RegisterPluginParams
+    OperOnRegisterParams & OperParams & RegisterParams
   >,
 ) {
   if (client.options.oper === undefined) {
@@ -33,4 +31,4 @@ function operOnRegister(
   });
 }
 
-export const plugin = createPlugin(operOnRegister);
+export const operOnRegister = createPlugin(autoOper);

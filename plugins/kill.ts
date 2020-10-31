@@ -1,13 +1,14 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Kills a `nick` from the server with a `comment`. */
-  kill(nick: string, comment: string): void;
-}
-
-export interface Events {
-  "kill": Kill;
+export interface KillParams {
+  commands: {
+    /** Kills a `nick` from the server with a `comment`. */
+    kill(nick: string, comment: string): void;
+  };
+  events: {
+    "kill": Kill;
+  };
 }
 
 export interface Kill {
@@ -19,16 +20,11 @@ export interface Kill {
   comment: string;
 }
 
-export interface KillPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<KillPluginParams>) {
+function commands(client: ExtendedClient<KillParams>) {
   client.kill = client.send.bind(client, "KILL");
 }
 
-function events(client: ExtendedClient<KillPluginParams>) {
+function events(client: ExtendedClient<KillParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "KILL") {
       return;
@@ -40,4 +36,4 @@ function events(client: ExtendedClient<KillPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const kill = createPlugin(commands, events);

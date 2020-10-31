@@ -1,8 +1,10 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
-export interface Events {
-  "register": Register;
+export interface RegisterParams {
+  events: {
+    "register": Register;
+  };
 }
 
 export interface Register {
@@ -12,11 +14,7 @@ export interface Register {
   text: string;
 }
 
-export interface RegisterPluginParams {
-  events: Events;
-}
-
-function events(client: ExtendedClient<RegisterPluginParams>) {
+function events(client: ExtendedClient<RegisterParams>) {
   client.on("raw", (msg) => {
     switch (msg.command) {
       case "RPL_WELCOME": {
@@ -30,4 +28,4 @@ function events(client: ExtendedClient<RegisterPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(events);
+export const register = createPlugin(events);

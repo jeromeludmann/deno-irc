@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as kill } from "./kill.ts";
+import { kill } from "./kill.ts";
 
 Deno.test("kill commands", async () => {
   const { server, client, sanitize } = arrange([kill], {});

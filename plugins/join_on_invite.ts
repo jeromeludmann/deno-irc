@@ -1,28 +1,26 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { InvitePluginParams } from "./invite.ts";
-import type { JoinPluginParams } from "./join.ts";
-import type { NickStatePluginParams } from "./nick_state.ts";
+import type { InviteParams } from "./invite.ts";
+import type { JoinParams } from "./join.ts";
+import type { NickStateParams } from "./nick_state.ts";
 
-export interface Options {
-  /** Enables auto join on invite. */
-  joinOnInvite?: boolean;
+export interface JoinOnInviteParams {
+  options: {
+    /** Enables auto join on invite. */
+    joinOnInvite?: boolean;
+  };
 }
 
-export interface JoinOnInvitePluginParams {
-  options: Options;
-}
-
-function options(client: ExtendedClient<JoinOnInvitePluginParams>) {
+function options(client: ExtendedClient<JoinOnInviteParams>) {
   client.options.joinOnInvite ??= false;
 }
 
-function joinOnInvite(
+function autoJoin(
   client: ExtendedClient<
-    & JoinOnInvitePluginParams
-    & InvitePluginParams
-    & JoinPluginParams
-    & NickStatePluginParams
+    & JoinOnInviteParams
+    & InviteParams
+    & JoinParams
+    & NickStateParams
   >,
 ) {
   if (!client.options.joinOnInvite) {
@@ -36,4 +34,4 @@ function joinOnInvite(
   });
 }
 
-export const plugin = createPlugin(options, joinOnInvite);
+export const joinOnInvite = createPlugin(options, autoJoin);

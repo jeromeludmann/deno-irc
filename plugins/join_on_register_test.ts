@@ -1,8 +1,8 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as join } from "./join.ts";
-import { plugin as joinOnRegister } from "./join_on_register.ts";
-import { plugin as register } from "./register.ts";
+import { join } from "./join.ts";
+import { joinOnRegister } from "./join_on_register.ts";
+import { register } from "./register.ts";
 
 Deno.test("join_on_register", async () => {
   const { server, client, sanitize } = arrange(

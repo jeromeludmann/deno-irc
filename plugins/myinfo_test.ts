@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as myinfo } from "./myinfo.ts";
+import { myinfo } from "./myinfo.ts";
 
 Deno.test("myinfo events", async () => {
   const { server, client, sanitize } = arrange([myinfo], {});

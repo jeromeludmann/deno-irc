@@ -1,7 +1,7 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as action } from "./action.ts";
-import { plugin as ctcp } from "./ctcp.ts";
+import { action } from "./action.ts";
+import { ctcp } from "./ctcp.ts";
 
 Deno.test("action commands", async () => {
   const { server, client, sanitize } = arrange([ctcp, action], {});

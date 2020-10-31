@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as notice } from "./notice.ts";
+import { notice } from "./notice.ts";
 
 Deno.test("notice commands", async () => {
   const { server, client, sanitize } = arrange([notice], {});

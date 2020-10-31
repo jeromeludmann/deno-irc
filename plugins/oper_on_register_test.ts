@@ -1,8 +1,8 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as oper } from "./oper.ts";
-import { plugin as operOnRegister } from "./oper_on_register.ts";
-import { plugin as register } from "./register.ts";
+import { oper } from "./oper.ts";
+import { operOnRegister } from "./oper_on_register.ts";
+import { register } from "./register.ts";
 
 Deno.test("oper_on_register", async () => {
   const { server, client, sanitize } = arrange(

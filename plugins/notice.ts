@@ -7,16 +7,17 @@ import {
 } from "../core/mod.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface Commands {
-  /** Notifies a `target` with a `text`. */
-  notice(target: string, text: string): void;
-}
-
-export interface Events {
-  "notice": Notice;
-  "notice:server": ServerNotice;
-  "notice:channel": ChannelNotice;
-  "notice:private": PrivateNotice;
+export interface NoticeParams {
+  commands: {
+    /** Notifies a `target` with a `text`. */
+    notice(target: string, text: string): void;
+  };
+  events: {
+    "notice": Notice;
+    "notice:server": ServerNotice;
+    "notice:channel": ChannelNotice;
+    "notice:private": PrivateNotice;
+  };
 }
 
 export interface Notice {
@@ -51,16 +52,11 @@ export interface PrivateNotice {
   text: string;
 }
 
-export interface NoticePluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<NoticePluginParams>) {
+function commands(client: ExtendedClient<NoticeParams>) {
   client.notice = client.send.bind(client, "NOTICE");
 }
 
-function events(client: ExtendedClient<NoticePluginParams>) {
+function events(client: ExtendedClient<NoticeParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "NOTICE") {
       return;
@@ -102,4 +98,4 @@ function events(client: ExtendedClient<NoticePluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const notice = createPlugin(commands, events);

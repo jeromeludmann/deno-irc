@@ -1,15 +1,16 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Joins a `channel`. */
-  join(channel: string): void;
-  /** Joins `channels`. */
-  join(...channels: string[]): void;
-}
-
-export interface Events {
-  "join": Join;
+export interface JoinParams {
+  commands: {
+    /** Joins a `channel`. */
+    join(channel: string): void;
+    /** Joins `channels`. */
+    join(...channels: string[]): void;
+  };
+  events: {
+    "join": Join;
+  };
 }
 
 export interface Join {
@@ -19,18 +20,13 @@ export interface Join {
   channel: string;
 }
 
-export interface JoinPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<JoinPluginParams>) {
+function commands(client: ExtendedClient<JoinParams>) {
   client.join = (...channels: string[]) => {
     client.send("JOIN", channels.join(","));
   };
 }
 
-function events(client: ExtendedClient<JoinPluginParams>) {
+function events(client: ExtendedClient<JoinParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "JOIN") {
       return;
@@ -42,4 +38,4 @@ function events(client: ExtendedClient<JoinPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const join = createPlugin(commands, events);

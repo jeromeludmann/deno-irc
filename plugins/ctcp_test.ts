@@ -1,7 +1,7 @@
 import type { Raw } from "../core/mod.ts";
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { isCtcp, plugin as ctcp } from "./ctcp.ts";
+import { ctcp, isCtcp } from "./ctcp.ts";
 
 Deno.test("ctcp commands", async () => {
   const { server, client, sanitize } = arrange([ctcp], {});

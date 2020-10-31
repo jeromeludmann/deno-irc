@@ -1,13 +1,14 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Leaves the `channel` with an optional `comment`. */
-  part(channel: string, comment?: string): void;
-}
-
-export interface Events {
-  "part": Part;
+export interface PartParams {
+  commands: {
+    /** Leaves the `channel` with an optional `comment`. */
+    part(channel: string, comment?: string): void;
+  };
+  events: {
+    "part": Part;
+  };
 }
 
 export interface Part {
@@ -19,16 +20,11 @@ export interface Part {
   comment?: string;
 }
 
-export interface PartPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<PartPluginParams>) {
+function commands(client: ExtendedClient<PartParams>) {
   client.part = client.send.bind(client, "PART");
 }
 
-function events(client: ExtendedClient<PartPluginParams>) {
+function events(client: ExtendedClient<PartParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "PART") {
       return;
@@ -41,4 +37,4 @@ function events(client: ExtendedClient<PartPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const part = createPlugin(commands, events);

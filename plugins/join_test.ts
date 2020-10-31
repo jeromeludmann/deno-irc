@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as join } from "./join.ts";
+import { join } from "./join.ts";
 
 Deno.test("join commands", async () => {
   const { server, client, sanitize } = arrange([join], {});

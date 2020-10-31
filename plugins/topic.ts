@@ -1,17 +1,18 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Gets the `topic` of a `channel`. */
-  topic(channel: string): void;
-  /** Changes the `topic` of a `channel`. */
-  topic(channel: string, topic: string): void;
-}
-
-export interface Events {
-  "topic_change": TopicChange;
-  "topic_set": TopicSet;
-  "topic_set_by": TopicSetBy;
+export interface TopicParams {
+  commands: {
+    /** Gets the `topic` of a `channel`. */
+    topic(channel: string): void;
+    /** Changes the `topic` of a `channel`. */
+    topic(channel: string, topic: string): void;
+  };
+  events: {
+    "topic_change": TopicChange;
+    "topic_set": TopicSet;
+    "topic_set_by": TopicSetBy;
+  };
 }
 
 export interface TopicChange {
@@ -39,16 +40,11 @@ export interface TopicSetBy {
   time: Date;
 }
 
-export interface TopicPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<TopicPluginParams>) {
+function commands(client: ExtendedClient<TopicParams>) {
   client.topic = client.send.bind(client, "TOPIC");
 }
 
-function events(client: ExtendedClient<TopicPluginParams>) {
+function events(client: ExtendedClient<TopicParams>) {
   client.on("raw", (msg) => {
     switch (msg.command) {
       case "TOPIC": {
@@ -76,4 +72,4 @@ function events(client: ExtendedClient<TopicPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const topic = createPlugin(commands, events);

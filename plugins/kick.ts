@@ -1,13 +1,14 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Kicks a `nick` from a `channel` with an optional `comment`. */
-  kick(channel: string, nick: string, comment?: string): void;
-}
-
-export interface Events {
-  "kick": Kick;
+export interface KickParams {
+  commands: {
+    /** Kicks a `nick` from a `channel` with an optional `comment`. */
+    kick(channel: string, nick: string, comment?: string): void;
+  };
+  events: {
+    "kick": Kick;
+  };
 }
 
 export interface Kick {
@@ -21,16 +22,11 @@ export interface Kick {
   comment?: string;
 }
 
-export interface KickPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<KickPluginParams>) {
+function commands(client: ExtendedClient<KickParams>) {
   client.kick = client.send.bind(client, "KICK");
 }
 
-function events(client: ExtendedClient<KickPluginParams>) {
+function events(client: ExtendedClient<KickParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "KICK") {
       return;
@@ -42,4 +38,4 @@ function events(client: ExtendedClient<KickPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const kick = createPlugin(commands, events);

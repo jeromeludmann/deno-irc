@@ -1,7 +1,7 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as ctcp } from "./ctcp.ts";
-import { plugin as ping } from "./ping.ts";
+import { ctcp } from "./ctcp.ts";
+import { ping } from "./ping.ts";
 
 Deno.test("ping commands", async () => {
   const { server, client, sanitize } = arrange([ctcp, ping], {});

@@ -1,21 +1,19 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { NickPluginParams } from "./nick.ts";
-import type { RegisterPluginParams } from "./register.ts";
+import type { NickParams } from "./nick.ts";
+import type { RegisterParams } from "./register.ts";
 
-export interface Options {
-  /** The nick used to register the client to the server. */
-  nick: string;
-  /** The username used to register the client to the server. */
-  username?: string;
-  /** The realname used to register the client to the server. */
-  realname?: string;
-  /** The password used to connect the client to the server. */
-  password?: string;
-}
-
-export interface RegisterOnConnectPluginParams {
-  options: Options;
+export interface RegisterOnConnectParams {
+  options: {
+    /** The nick used to register the client to the server. */
+    nick: string;
+    /** The username used to register the client to the server. */
+    username?: string;
+    /** The realname used to register the client to the server. */
+    realname?: string;
+    /** The password used to connect the client to the server. */
+    password?: string;
+  };
 }
 
 // TODO Move collision feature to dedicated plugin
@@ -24,9 +22,9 @@ export interface RegisterOnConnectPluginParams {
 // split in a separate feature, allowing the end user to enable or disable the
 // behavior.
 
-function registration(
+function autoRegister(
   client: ExtendedClient<
-    RegisterOnConnectPluginParams & RegisterPluginParams & NickPluginParams
+    RegisterOnConnectParams & RegisterParams & NickParams
   >,
 ) {
   const {
@@ -89,4 +87,4 @@ function registration(
   });
 }
 
-export const plugin = createPlugin(registration);
+export const registerOnConnect = createPlugin(autoRegister);

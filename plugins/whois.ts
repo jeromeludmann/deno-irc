@@ -1,15 +1,16 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
-export interface Commands {
-  /** Gets the WHOIS informations of a `nick`. */
-  whois(nick: string): void;
-  /** Gets the WHOIS informations of a `nick` for a given `server`. */
-  whois(server: string, nick: string): void;
-}
-
-export interface Events {
-  "whois_reply": WhoisReply;
+export interface WhoisParams {
+  commands: {
+    /** Gets the WHOIS informations of a `nick`. */
+    whois(nick: string): void;
+    /** Gets the WHOIS informations of a `nick` for a given `server`. */
+    whois(server: string, nick: string): void;
+  };
+  events: {
+    "whois_reply": WhoisReply;
+  };
 }
 
 export interface WhoisReply {
@@ -35,16 +36,11 @@ export interface WhoisReply {
   away?: string;
 }
 
-export interface WhoisPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<WhoisPluginParams>) {
+function commands(client: ExtendedClient<WhoisParams>) {
   client.whois = client.send.bind(client, "WHOIS");
 }
 
-function events(client: ExtendedClient<WhoisPluginParams>) {
+function events(client: ExtendedClient<WhoisParams>) {
   const buffers: Record<string, Partial<WhoisReply>> = {};
 
   client.on("raw", (msg) => {
@@ -110,4 +106,4 @@ function events(client: ExtendedClient<WhoisPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const whois = createPlugin(commands, events);

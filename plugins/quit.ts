@@ -1,13 +1,14 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin, parseUserMask } from "../core/mod.ts";
 
-export interface Commands {
-  /** Leaves the server with an optional `comment`. */
-  quit(comment?: string): void;
-}
-
-export interface Events {
-  "quit": Quit;
+export interface QuitParams {
+  commands: {
+    /** Leaves the server with an optional `comment`. */
+    quit(comment?: string): void;
+  };
+  events: {
+    "quit": Quit;
+  };
 }
 
 export interface Quit {
@@ -17,12 +18,7 @@ export interface Quit {
   comment?: string;
 }
 
-export interface QuitPluginParams {
-  commands: Commands;
-  events: Events;
-}
-
-function commands(client: ExtendedClient<QuitPluginParams>) {
+function commands(client: ExtendedClient<QuitParams>) {
   client.quit = (comment) => {
     // When the client sends a "QUIT", the server replies with an "ERROR".
     // Since "ERROR" are converted to thrown errors when there is no "error"
@@ -33,7 +29,7 @@ function commands(client: ExtendedClient<QuitPluginParams>) {
   };
 }
 
-function events(client: ExtendedClient<QuitPluginParams>) {
+function events(client: ExtendedClient<QuitParams>) {
   client.on("raw", (msg) => {
     if (msg.command !== "QUIT") {
       return;
@@ -46,4 +42,4 @@ function events(client: ExtendedClient<QuitPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(commands, events);
+export const quit = createPlugin(commands, events);

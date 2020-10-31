@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as whois } from "./whois.ts";
+import { whois } from "./whois.ts";
 
 Deno.test("whois commands", async () => {
   const { server, client, sanitize } = arrange([whois], {});

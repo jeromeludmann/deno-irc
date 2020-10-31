@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as kick } from "./kick.ts";
+import { kick } from "./kick.ts";
 
 Deno.test("kick commands", async () => {
   const { server, client, sanitize } = arrange([kick], {});

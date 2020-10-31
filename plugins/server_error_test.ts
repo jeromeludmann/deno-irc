@@ -1,9 +1,9 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as error } from "./error.ts";
+import { serverError } from "./server_error.ts";
 
-Deno.test("error events", async () => {
-  const { server, client, sanitize } = arrange([error], {});
+Deno.test("server_error events", async () => {
+  const { server, client, sanitize } = arrange([serverError], {});
 
   server.listen();
   client.connect(server.host, server.port);

@@ -1,23 +1,23 @@
 import type { ExtendedClient, UserMask } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
-import type { CtcpPluginParams } from "./ctcp.ts";
+import type { CtcpParams } from "./ctcp.ts";
 import { createCtcp } from "./ctcp.ts";
 
-export interface Options {
-  replies?: {
-    /** Replies to CTCP TIME. */
-    time?: boolean;
+export interface TimeParams {
+  options: {
+    replies?: {
+      /** Replies to CTCP TIME. */
+      time?: boolean;
+    };
   };
-}
-
-export interface Commands {
-  /** Queries the date time of a `target`. */
-  time(target?: string): void;
-}
-
-export interface Events {
-  "ctcp_time": CtcpTime;
-  "ctcp_time_reply": CtcpTimeReply;
+  commands: {
+    /** Queries the date time of a `target`. */
+    time(target?: string): void;
+  };
+  events: {
+    "ctcp_time": CtcpTime;
+    "ctcp_time_reply": CtcpTimeReply;
+  };
 }
 
 export interface CtcpTime {
@@ -36,18 +36,12 @@ export interface CtcpTimeReply {
   time: string;
 }
 
-export interface TimePluginParams {
-  options: Options;
-  commands: Commands;
-  events: Events;
-}
-
-function options(client: ExtendedClient<TimePluginParams>) {
+function options(client: ExtendedClient<TimeParams>) {
   client.options.replies ??= {};
   client.options.replies.time ??= true;
 }
 
-function commands(client: ExtendedClient<TimePluginParams & CtcpPluginParams>) {
+function commands(client: ExtendedClient<TimeParams & CtcpParams>) {
   client.time = (target) => {
     if (target !== undefined) {
       client.ctcp(target, "TIME");
@@ -57,7 +51,7 @@ function commands(client: ExtendedClient<TimePluginParams & CtcpPluginParams>) {
   };
 }
 
-function events(client: ExtendedClient<TimePluginParams & CtcpPluginParams>) {
+function events(client: ExtendedClient<TimeParams & CtcpParams>) {
   client.on("raw:ctcp", (msg) => {
     if (msg.command !== "TIME") {
       return;
@@ -82,7 +76,7 @@ function events(client: ExtendedClient<TimePluginParams & CtcpPluginParams>) {
   });
 }
 
-function replies(client: ExtendedClient<TimePluginParams>) {
+function replies(client: ExtendedClient<TimeParams>) {
   if (!client.options.replies?.time) {
     return;
   }
@@ -93,7 +87,7 @@ function replies(client: ExtendedClient<TimePluginParams>) {
   });
 }
 
-export const plugin = createPlugin(
+export const time = createPlugin(
   options,
   commands,
   events,

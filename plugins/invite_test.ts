@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as invite } from "./invite.ts";
+import { invite } from "./invite.ts";
 
 Deno.test("invite commands", async () => {
   const { server, client, sanitize } = arrange([invite], {});

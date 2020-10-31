@@ -1,9 +1,9 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as invite } from "./invite.ts";
-import { plugin as join } from "./join.ts";
-import { plugin as joinOnInvite } from "./join_on_invite.ts";
-import { plugin as nickState } from "./nick_state.ts";
+import { invite } from "./invite.ts";
+import { join } from "./join.ts";
+import { joinOnInvite } from "./join_on_invite.ts";
+import { nickState } from "./nick_state.ts";
 
 Deno.test("join_on_invite", async () => {
   const { server, client, sanitize } = arrange(

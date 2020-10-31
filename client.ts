@@ -1,126 +1,132 @@
-import * as Core from "./core/mod.ts";
-import * as Action from "./plugins/action.ts";
-import * as Clientinfo from "./plugins/clientinfo.ts";
-import * as Ctcp from "./plugins/ctcp.ts";
-import * as Debug from "./plugins/debug.ts";
-import * as Error from "./plugins/error.ts";
-import * as Invite from "./plugins/invite.ts";
-import * as Join from "./plugins/join.ts";
-import * as JoinOnInvite from "./plugins/join_on_invite.ts";
-import * as JoinOnRegister from "./plugins/join_on_register.ts";
-import * as Kick from "./plugins/kick.ts";
-import * as Kill from "./plugins/kill.ts";
-import * as Motd from "./plugins/motd.ts";
-import * as Msg from "./plugins/msg.ts";
-import * as Myinfo from "./plugins/myinfo.ts";
-import * as MyinfoState from "./plugins/myinfo_state.ts";
-import * as Nick from "./plugins/nick.ts";
-import * as NickState from "./plugins/nick_state.ts";
-import * as Notice from "./plugins/notice.ts";
-import * as Oper from "./plugins/oper.ts";
-import * as OperOnRegister from "./plugins/oper_on_register.ts";
-import * as Part from "./plugins/part.ts";
-import * as Ping from "./plugins/ping.ts";
-import * as Quit from "./plugins/quit.ts";
-import * as Register from "./plugins/register.ts";
-import * as RegisterOnConnect from "./plugins/register_on_connect.ts";
-import * as Time from "./plugins/time.ts";
-import * as Topic from "./plugins/topic.ts";
-import * as Version from "./plugins/version.ts";
-import * as Whois from "./plugins/whois.ts";
+import type { Params as CoreParams } from "./core/client.ts";
+import { Client as CoreClient } from "./core/client.ts";
+import type { ActionParams } from "./plugins/action.ts";
+import { action } from "./plugins/action.ts";
+import type { ClientinfoParams } from "./plugins/clientinfo.ts";
+import { clientinfo } from "./plugins/clientinfo.ts";
+import type { CtcpParams } from "./plugins/ctcp.ts";
+import { ctcp } from "./plugins/ctcp.ts";
+import type { DebugParams } from "./plugins/debug.ts";
+import { debug } from "./plugins/debug.ts";
+import type { InviteParams } from "./plugins/invite.ts";
+import { invite } from "./plugins/invite.ts";
+import type { JoinParams } from "./plugins/join.ts";
+import { join } from "./plugins/join.ts";
+import type { JoinOnInviteParams } from "./plugins/join_on_invite.ts";
+import { joinOnInvite } from "./plugins/join_on_invite.ts";
+import type { JoinOnRegisterParams } from "./plugins/join_on_register.ts";
+import { joinOnRegister } from "./plugins/join_on_register.ts";
+import type { KickParams } from "./plugins/kick.ts";
+import { kick } from "./plugins/kick.ts";
+import type { KillParams } from "./plugins/kill.ts";
+import { kill } from "./plugins/kill.ts";
+import type { MotdParams } from "./plugins/motd.ts";
+import { motd } from "./plugins/motd.ts";
+import type { MsgParams } from "./plugins/msg.ts";
+import { msg } from "./plugins/msg.ts";
+import type { MyinfoParams } from "./plugins/myinfo.ts";
+import { myinfo } from "./plugins/myinfo.ts";
+import type { MyinfoStateParams } from "./plugins/myinfo_state.ts";
+import { myinfoState } from "./plugins/myinfo_state.ts";
+import type { NickParams } from "./plugins/nick.ts";
+import { nick } from "./plugins/nick.ts";
+import type { NickStateParams } from "./plugins/nick_state.ts";
+import { nickState } from "./plugins/nick_state.ts";
+import type { NoticeParams } from "./plugins/notice.ts";
+import { notice } from "./plugins/notice.ts";
+import type { OperParams } from "./plugins/oper.ts";
+import { oper } from "./plugins/oper.ts";
+import type { OperOnRegisterParams } from "./plugins/oper_on_register.ts";
+import { operOnRegister } from "./plugins/oper_on_register.ts";
+import type { PartParams } from "./plugins/part.ts";
+import { part } from "./plugins/part.ts";
+import type { PingParams } from "./plugins/ping.ts";
+import { ping } from "./plugins/ping.ts";
+import type { QuitParams } from "./plugins/quit.ts";
+import { quit } from "./plugins/quit.ts";
+import type { RegisterParams } from "./plugins/register.ts";
+import { register } from "./plugins/register.ts";
+import type { RegisterOnConnectParams } from "./plugins/register_on_connect.ts";
+import { registerOnConnect } from "./plugins/register_on_connect.ts";
+import type { ServerErrorParams } from "./plugins/server_error.ts";
+import { serverError } from "./plugins/server_error.ts";
+import type { TimeParams } from "./plugins/time.ts";
+import { time } from "./plugins/time.ts";
+import type { TopicParams } from "./plugins/topic.ts";
+import { topic } from "./plugins/topic.ts";
+import type { VersionParams } from "./plugins/version.ts";
+import { version } from "./plugins/version.ts";
+import type { WhoisParams } from "./plugins/whois.ts";
+import { whois } from "./plugins/whois.ts";
 
-export type Options =
-  & Core.Options
-  & Clientinfo.Options
-  & Ctcp.Options
-  & Debug.Options
-  & JoinOnInvite.Options
-  & JoinOnRegister.Options
-  & OperOnRegister.Options
-  & Ping.Options
-  & RegisterOnConnect.Options
-  & Time.Options
-  & Version.Options;
-
-export type Commands =
-  & Action.Commands
-  & Clientinfo.Commands
-  & Ctcp.Commands
-  & Invite.Commands
-  & Join.Commands
-  & Kick.Commands
-  & Kill.Commands
-  & Motd.Commands
-  & Msg.Commands
-  & Nick.Commands
-  & Notice.Commands
-  & Oper.Commands
-  & Part.Commands
-  & Ping.Commands
-  & Quit.Commands
-  & Time.Commands
-  & Topic.Commands
-  & Version.Commands
-  & Whois.Commands;
-
-export type Events =
-  & Core.Events
-  & Action.Events
-  & Clientinfo.Events
-  & Ctcp.Events
-  & Invite.Events
-  & Join.Events
-  & Kick.Events
-  & Kill.Events
-  & Motd.Events
-  & Myinfo.Events
-  & Msg.Events
-  & Nick.Events
-  & Notice.Events
-  & Part.Events
-  & Ping.Events
-  & Quit.Events
-  & Register.Events
-  & Time.Events
-  & Topic.Events
-  & Version.Events
-  & Whois.Events;
-
-export type State =
-  & NickState.State
-  & MyinfoState.State;
+type Params =
+  & CoreParams
+  & ActionParams
+  & ClientinfoParams
+  & CtcpParams
+  & DebugParams
+  & InviteParams
+  & JoinParams
+  & JoinOnInviteParams
+  & JoinOnRegisterParams
+  & KickParams
+  & KillParams
+  & MotdParams
+  & MsgParams
+  & MyinfoParams
+  & MyinfoStateParams
+  & NickParams
+  & NickStateParams
+  & NoticeParams
+  & OperParams
+  & OperOnRegisterParams
+  & PartParams
+  & PingParams
+  & QuitParams
+  & RegisterParams
+  & RegisterOnConnectParams
+  & ServerErrorParams
+  & TimeParams
+  & TopicParams
+  & VersionParams
+  & WhoisParams;
 
 const plugins = [
-  Action.plugin,
-  Clientinfo.plugin,
-  Ctcp.plugin,
-  Debug.plugin,
-  Error.plugin,
-  Invite.plugin,
-  Join.plugin,
-  JoinOnInvite.plugin,
-  JoinOnRegister.plugin,
-  Kick.plugin,
-  Kill.plugin,
-  Motd.plugin,
-  Msg.plugin,
-  Myinfo.plugin,
-  MyinfoState.plugin,
-  Nick.plugin,
-  NickState.plugin,
-  Notice.plugin,
-  Oper.plugin,
-  OperOnRegister.plugin,
-  Part.plugin,
-  Ping.plugin,
-  Quit.plugin,
-  Register.plugin,
-  RegisterOnConnect.plugin,
-  Time.plugin,
-  Topic.plugin,
-  Version.plugin,
-  Whois.plugin,
+  action,
+  clientinfo,
+  ctcp,
+  debug,
+  invite,
+  join,
+  joinOnInvite,
+  joinOnRegister,
+  kick,
+  kill,
+  motd,
+  msg,
+  myinfo,
+  myinfoState,
+  nick,
+  nickState,
+  notice,
+  oper,
+  operOnRegister,
+  part,
+  ping,
+  quit,
+  register,
+  registerOnConnect,
+  serverError,
+  time,
+  topic,
+  version,
+  whois,
 ];
+
+export type Options = Params["options"];
+export type Commands = Params["commands"];
+export type Events = Params["events"];
+export type State = Params["state"];
 
 export interface Client extends Commands {
   readonly options: Readonly<Options>;
@@ -128,7 +134,7 @@ export interface Client extends Commands {
 }
 
 /** Full featured IRC client. */
-export class Client extends Core.Client<Events> {
+export class Client extends CoreClient<Events> {
   constructor(options: Options) {
     super(options, plugins);
   }

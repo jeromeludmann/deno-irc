@@ -3,7 +3,8 @@ import { EventEmitter } from "./core/events.ts";
 import { assertEquals } from "./core/test_deps.ts";
 import { Client, Options } from "./mod.ts";
 
-// Note: Typing errors are a consequence of missing unions in `client.ts`
+// Typing errors mean there are missing param intersections.
+// They should be added to `Params`, defined in `client.ts`.
 
 Deno.test("client options", async () => {
   const options: Required<Options> = {

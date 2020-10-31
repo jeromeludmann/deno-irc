@@ -1,20 +1,18 @@
 import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 
-export interface Options {
-  /** Prints debug informations to output. */
-  debug?: boolean;
+export interface DebugParams {
+  options: {
+    /** Prints debug informations to output. */
+    debug?: boolean;
+  };
 }
 
-export interface DebugPluginParams {
-  options: Options;
-}
-
-function options(client: ExtendedClient<DebugPluginParams>) {
+function options(client: ExtendedClient<DebugParams>) {
   client.options.debug ??= false;
 }
 
-function rawMessages(client: ExtendedClient<DebugPluginParams>) {
+function rawMessages(client: ExtendedClient<DebugParams>) {
   if (client.options.debug === false) {
     return;
   }
@@ -30,7 +28,7 @@ function rawMessages(client: ExtendedClient<DebugPluginParams>) {
   };
 }
 
-function emittedEvents(client: ExtendedClient<DebugPluginParams>) {
+function emittedEvents(client: ExtendedClient<DebugParams>) {
   if (client.options.debug === false) {
     return;
   }
@@ -45,7 +43,7 @@ function emittedEvents(client: ExtendedClient<DebugPluginParams>) {
   };
 }
 
-function stateChanges(client: ExtendedClient<DebugPluginParams>) {
+function stateChanges(client: ExtendedClient<DebugParams>) {
   if (client.options.debug === false) {
     return;
   }
@@ -78,7 +76,7 @@ function stateChanges(client: ExtendedClient<DebugPluginParams>) {
   });
 }
 
-export const plugin = createPlugin(
+export const debug = createPlugin(
   options,
   rawMessages,
   emittedEvents,

@@ -1,6 +1,6 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
-import { plugin as motd } from "./motd.ts";
+import { motd } from "./motd.ts";
 
 Deno.test("motd commands", async () => {
   const { server, client, sanitize } = arrange([motd], {});
