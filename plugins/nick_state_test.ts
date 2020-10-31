@@ -21,6 +21,10 @@ Deno.test("nick state", async () => {
   await client.once("register");
   assertEquals(client.state.nick, "nick2");
 
+  server.send(":nick4!user@host NICK nick3");
+  await client.once("nick");
+  assertEquals(client.state.nick, "nick2");
+
   server.send(":nick2!user@host NICK nick3");
   await client.once("nick");
   assertEquals(client.state.nick, "nick3");
