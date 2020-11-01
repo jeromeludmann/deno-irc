@@ -4,22 +4,26 @@ import type { NickParams } from "./nick.ts";
 import type { RegisterParams } from "./register.ts";
 import type { RegisterOnConnectParams } from "./register_on_connect.ts";
 
-export interface NickStateParams {
+export interface UserStateParams {
   state: {
     nick: string;
+    username: string;
+    realname: string;
   };
 }
 
 function state(
   client: ExtendedClient<
-    & NickStateParams
+    & UserStateParams
     & NickParams
     & RegisterParams
     & RegisterOnConnectParams
   >,
 ) {
+  const { nick, username = nick, realname = nick } = client.options;
+
   // on new instance
-  client.state.nick = client.options.nick;
+  client.state = { ...client.state, nick, username, realname };
 
   // on register
   client.on("register", (msg) => {
@@ -34,4 +38,4 @@ function state(
   });
 }
 
-export const nickState = createPlugin(state);
+export const userState = createPlugin(state);

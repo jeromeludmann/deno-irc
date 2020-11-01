@@ -1,17 +1,21 @@
 import { assertEquals } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
 import { nick } from "./nick.ts";
-import { nickState } from "./nick_state.ts";
 import { register } from "./register.ts";
 import { registerOnConnect } from "./register_on_connect.ts";
+import { userState } from "./user_state.ts";
 
-Deno.test("nick state", async () => {
+Deno.test("user state", async () => {
   const { server, client, sanitize } = arrange(
-    [nickState, nick, register, registerOnConnect],
-    { nick: "nick" },
+    [userState, nick, register, registerOnConnect],
+    { nick: "nick", username: "user", realname: "real name" },
   );
 
-  assertEquals(client.state.nick, "nick");
+  assertEquals(client.state, {
+    nick: "nick",
+    username: "user",
+    realname: "real name",
+  });
 
   server.listen();
   client.connect(server.host, server.port);
