@@ -43,20 +43,5 @@ Deno.test("register_on_connect", async () => {
     "USER user 0 * :real name",
   ]);
 
-  server.send(":serverhost 433 nick nick2 :Nickname is already in use");
-  assertEquals((await client.once("raw")).command, "ERR_NICKNAMEINUSE");
-  const raw3 = await server.once("NICK");
-  assertEquals(raw3, "NICK nick2_");
-
-  server.send(":serverhost 432 nick `^$ :Erroneous nickname");
-  assertEquals((await client.once("raw")).command, "ERR_ERRONEUSNICKNAME");
-  const raw4 = await server.once("NICK");
-  assertEquals(raw4.startsWith("NICK "), true);
-
-  server.send(":serverhost 468 * USER :Your username is not valid");
-  assertEquals((await client.once("raw")).command, "ERR_INVALIDUSERNAME");
-  const raw5 = await server.once("USER");
-  assertEquals(raw5.startsWith("USER "), true);
-
   await sanitize();
 });

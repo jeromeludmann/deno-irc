@@ -2,7 +2,7 @@ import type { ExtendedClient } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
 import type { InviteParams } from "./invite.ts";
 import type { JoinParams } from "./join.ts";
-import type { NickStateParams } from "./nick_state.ts";
+import type { UserStateParams } from "./user_state.ts";
 
 export interface JoinOnInviteParams {
   options: {
@@ -20,7 +20,7 @@ function autoJoin(
     & JoinOnInviteParams
     & InviteParams
     & JoinParams
-    & NickStateParams
+    & UserStateParams
   >,
 ) {
   if (!client.options.joinOnInvite) {

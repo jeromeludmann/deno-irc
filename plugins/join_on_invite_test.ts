@@ -3,11 +3,11 @@ import { arrange } from "../core/test_helpers.ts";
 import { invite } from "./invite.ts";
 import { join } from "./join.ts";
 import { joinOnInvite } from "./join_on_invite.ts";
-import { nickState } from "./nick_state.ts";
+import { userState } from "./user_state.ts";
 
 Deno.test("join_on_invite", async () => {
   const { server, client, sanitize } = arrange(
-    [joinOnInvite, invite, join, nickState],
+    [joinOnInvite, invite, join, userState],
     { nick: "nick", joinOnInvite: true },
   );
 

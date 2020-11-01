@@ -8,6 +8,8 @@ import type { CtcpParams } from "./plugins/ctcp.ts";
 import { ctcp } from "./plugins/ctcp.ts";
 import type { DebugParams } from "./plugins/debug.ts";
 import { debug } from "./plugins/debug.ts";
+import type { InvalidNamesParams } from "./plugins/invalid_names.ts";
+import { invalidNames } from "./plugins/invalid_names.ts";
 import type { InviteParams } from "./plugins/invite.ts";
 import { invite } from "./plugins/invite.ts";
 import type { JoinParams } from "./plugins/join.ts";
@@ -28,8 +30,6 @@ import type { MyinfoStateParams } from "./plugins/myinfo_state.ts";
 import { myinfoState } from "./plugins/myinfo_state.ts";
 import type { NickParams } from "./plugins/nick.ts";
 import { nick } from "./plugins/nick.ts";
-import type { NickStateParams } from "./plugins/nick_state.ts";
-import { nickState } from "./plugins/nick_state.ts";
 import type { NoticeParams } from "./plugins/notice.ts";
 import { notice } from "./plugins/notice.ts";
 import type { OperParams } from "./plugins/oper.ts";
@@ -54,6 +54,8 @@ import type { TimeParams } from "./plugins/time.ts";
 import { time } from "./plugins/time.ts";
 import type { TopicParams } from "./plugins/topic.ts";
 import { topic } from "./plugins/topic.ts";
+import type { UserStateParams } from "./plugins/user_state.ts";
+import { userState } from "./plugins/user_state.ts";
 import type { VersionParams } from "./plugins/version.ts";
 import { version } from "./plugins/version.ts";
 import type { WhoisParams } from "./plugins/whois.ts";
@@ -65,6 +67,7 @@ type Params =
   & ClientinfoParams
   & CtcpParams
   & DebugParams
+  & InvalidNamesParams
   & InviteParams
   & JoinParams
   & JoinOnInviteParams
@@ -75,7 +78,6 @@ type Params =
   & MyinfoParams
   & MyinfoStateParams
   & NickParams
-  & NickStateParams
   & NoticeParams
   & OperParams
   & OperOnRegisterParams
@@ -88,6 +90,7 @@ type Params =
   & ServerErrorParams
   & TimeParams
   & TopicParams
+  & UserStateParams
   & VersionParams
   & WhoisParams;
 
@@ -96,6 +99,7 @@ const plugins = [
   clientinfo,
   ctcp,
   debug,
+  invalidNames,
   invite,
   join,
   joinOnInvite,
@@ -106,7 +110,6 @@ const plugins = [
   myinfo,
   myinfoState,
   nick,
-  nickState,
   notice,
   oper,
   operOnRegister,
@@ -119,6 +122,7 @@ const plugins = [
   serverError,
   time,
   topic,
+  userState,
   version,
   whois,
 ];

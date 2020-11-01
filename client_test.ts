@@ -1,7 +1,6 @@
-import { Events } from "./client.ts";
+import { Client, Events, Options } from "./client.ts";
 import { EventEmitter } from "./core/events.ts";
 import { assertEquals } from "./core/test_deps.ts";
-import { Client, Options } from "./mod.ts";
 
 // Typing errors mean there are missing param intersections.
 // They should be added to `Params`, defined in `client.ts`.
@@ -26,6 +25,7 @@ Deno.test("client options", async () => {
       version: true,
     },
     debug: false,
+    resolveInvalidNames: false,
   };
 
   const client = new Client(options);
