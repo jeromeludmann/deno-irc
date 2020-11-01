@@ -66,7 +66,7 @@ client.on("msg:private", (msg) => {
 });
 ```
 
-Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the pecificities of the protocol.
+Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the specificities of the protocol.
 
 ### Commands
 
@@ -121,6 +121,14 @@ It involves keeping the core as minimal as possible and delegates implementation
 The core contains some internal parts related to main parsers, sockets and event emitter. The plugins contain all the extra features built on top of the core client.
 
 In most of the cases, it is quite handy to add new features using plugins without touching the core.
+
+### Run unit tests
+
+All added parts (core and plugins) should be tested to ensure they work as expected:
+
+```sh
+make test
+```
 
 ## License
 
