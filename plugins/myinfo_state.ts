@@ -15,6 +15,7 @@ function state(
   client: ExtendedClient<MyinfoStateParams & MyinfoParams>,
 ) {
   client.state = {
+    ...client.state,
     serverHost: "",
     serverVersion: "",
     availableUserModes: [],
