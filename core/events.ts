@@ -78,7 +78,18 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   }
 
   /** Counts the number of listeners bound to the `eventName`. */
-  listenerCount<T extends keyof TEvents>(eventName: T): number {
+  getListenerCount<T extends keyof TEvents>(eventName: T): number {
     return eventName in this.listeners ? this.listeners[eventName].length : 0;
+  }
+
+  /** Counts all the numbers of existing listeners. */
+  getAllListenersCounts(): Record<keyof TEvents, number> {
+    return Object.keys(this.listeners).reduce(
+      (counts, eventName: keyof TEvents) => {
+        counts[eventName] = this.getListenerCount(eventName);
+        return counts;
+      },
+      {} as Record<keyof TEvents, number>,
+    );
   }
 }

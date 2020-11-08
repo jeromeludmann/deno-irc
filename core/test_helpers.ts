@@ -4,7 +4,7 @@ import { TestServer } from "./test_server.ts";
 export function arrange<
   TPlugins extends Core.Plugin<any>[],
   TOptions extends
-    & Core.Params["options"]
+    & Core.ClientParams["options"]
     & UnionToIntersection<Parameters<TPlugins[number]>[0]["options"]>,
 >(plugins: TPlugins, options: TOptions) {
   const server = new TestServer();

@@ -1,4 +1,4 @@
-import { assertEquals } from "./test_deps.ts";
+import { assertEquals, assertExists, assertMatch } from "./test_deps.ts";
 import { arrange } from "./test_helpers.ts";
 
 Deno.test("core client connect", async () => {
@@ -7,8 +7,11 @@ Deno.test("core client connect", async () => {
   server.listen();
 
   client.connect("unreachable");
-  const err = await client.once("error");
-  assertEquals(err.name, "ConnectError");
+  const err = await client.once("error:client");
+  assertEquals(err.name, "ClientError");
+  assertMatch(err.message, /^connect: .+$/);
+  assertEquals(err.op, "connect");
+  assertExists(err.cause);
 
   client.connect(server.host, server.port);
   const connected = await client.once("connected");
@@ -52,11 +55,13 @@ Deno.test("core client send", async () => {
   const { server, client, sanitize } = arrange([], {});
 
   const [err] = await Promise.all([
-    client.once("error"),
+    client.once("error:client"),
     client.send("PING", "key"),
   ]);
-  assertEquals(err.name, "SendError");
-  assertEquals(err.message, "Not connected");
+  assertEquals(err.name, "ClientError");
+  assertEquals(err.message, "write: Not connected");
+  assertEquals(err.op, "write");
+  assertEquals(err.cause, undefined);
 
   server.listen();
   client.connect(server.host, server.port);

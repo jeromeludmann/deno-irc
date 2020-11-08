@@ -24,33 +24,35 @@ Deno.test("privmsg events", async () => {
   await server.waitClient();
 
   server.send(":nick!user@host PRIVMSG #channel :Hello world");
-  const events1 = await Promise.all([
+  const [msg1, msg2] = await Promise.all([
     client.once("privmsg"),
     client.once("privmsg:channel"),
   ]);
-  assertEquals(events1, [{
+  assertEquals(msg1, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     target: "#channel",
     text: "Hello world",
-  }, {
+  });
+  assertEquals(msg2, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     channel: "#channel",
     text: "Hello world",
-  }]);
+  });
 
   server.send(":nick!user@host PRIVMSG nick2 :Hello world");
-  const events2 = await Promise.all([
+  const [msg3, msg4] = await Promise.all([
     client.once("privmsg"),
     client.once("privmsg:private"),
   ]);
-  assertEquals(events2, [{
+  assertEquals(msg3, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     target: "nick2",
     text: "Hello world",
-  }, {
+  });
+  assertEquals(msg4, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     text: "Hello world",
-  }]);
+  });
 
   await sanitize();
 });

@@ -24,47 +24,50 @@ Deno.test("notice events", async () => {
   await server.waitClient();
 
   server.send(":serverhost NOTICE * :*** Looking up your hostname...");
-  const events1 = await Promise.all([
+  const [msg1, msg2] = await Promise.all([
     client.once("notice"),
     client.once("notice:server"),
   ]);
-  assertEquals(events1, [{
+  assertEquals(msg1, {
     prefix: "serverhost",
     target: "*",
     text: "*** Looking up your hostname...",
-  }, {
+  });
+  assertEquals(msg2, {
     origin: "serverhost",
     text: "*** Looking up your hostname...",
-  }]);
+  });
 
   server.send(":nick!user@host NOTICE #channel :Hello world");
-  const events2 = await Promise.all([
+  const [msg3, msg4] = await Promise.all([
     client.once("notice"),
     client.once("notice:channel"),
   ]);
-  assertEquals(events2, [{
+  assertEquals(msg3, {
     prefix: "nick!user@host",
     target: "#channel",
     text: "Hello world",
-  }, {
+  });
+  assertEquals(msg4, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     channel: "#channel",
     text: "Hello world",
-  }]);
+  });
 
   server.send(":nick!user@host NOTICE nick2 :Hello world");
-  const messages3 = await Promise.all([
+  const [msg5, msg6] = await Promise.all([
     client.once("notice"),
     client.once("notice:private"),
   ]);
-  assertEquals(messages3, [{
+  assertEquals(msg5, {
     prefix: "nick!user@host",
     target: "nick2",
     text: "Hello world",
-  }, {
+  });
+  assertEquals(msg6, {
     origin: { nick: "nick", username: "user", userhost: "host" },
     text: "Hello world",
-  }]);
+  });
 
   await sanitize();
 });

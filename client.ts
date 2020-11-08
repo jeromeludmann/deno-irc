@@ -1,4 +1,4 @@
-import type { Params as CoreParams } from "./core/client.ts";
+import type { ClientParams as CoreClientParams } from "./core/client.ts";
 import { Client as CoreClient } from "./core/client.ts";
 import type { ActionParams } from "./plugins/action.ts";
 import { action } from "./plugins/action.ts";
@@ -62,7 +62,7 @@ import type { WhoisParams } from "./plugins/whois.ts";
 import { whois } from "./plugins/whois.ts";
 
 type Params =
-  & CoreParams
+  & CoreClientParams
   & ActionParams
   & ClientinfoParams
   & CtcpParams

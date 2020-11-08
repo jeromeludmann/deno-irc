@@ -34,12 +34,6 @@ client.on("register", () => client.join("#my_chan"));
 
 Note that this code above requires the `--allow-net` option.
 
-It is also better to have at least one `"error"` event listener to avoid the client from crashing:
-
-```ts
-client.on("error", (error) => console.error(error));
-```
-
 There are only two main concepts to know to use this module: [events](#events) and [commands](#commands).
 
 ### Events
@@ -52,21 +46,31 @@ They can be received by listening to their event names:
 client.on("join" (msg) => {
   console.log(`${msg.origin.nick} joins ${msg.channel}`);
 });
+```
 
+Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the specificities of the protocol.
+
+```ts
 client.on("nick" (msg) => {
   console.log(`${msg.origin.nick} is now known as ${msg.nick}`);
 });
 
-client.on("msg:channel", (msg) => {
-  console.log(`${msg.origin.nick} talks to ${msg.channel}: ${msg.text}`);
-});
-
-client.on("msg:private", (msg) => {
-  console.log(`${msg.origin.nick} talks to you: ${msg.text}`);
+client.on("privmsg", (msg) => {
+  console.log(`${msg.origin.nick} talks to ${msg.target}: ${msg.text}`);
 });
 ```
 
-Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the specificities of the protocol.
+Some events can be filtered like this:
+
+```ts
+client.on("privmsg:channel", (msg) => {
+  console.log(`${msg.origin.nick} talks to ${msg.channel}: ${msg.text}`);
+});
+
+client.on("privmsg:private", (msg) => {
+  console.log(`${msg.origin.nick} talks to you: ${msg.text}`);
+});
+```
 
 ### Commands
 
@@ -77,7 +81,7 @@ They can be sent by calling them:
 ```ts
 client.join("#channel");
 
-client.msg("#channel", "Hello world!");
+client.privmsg("#channel", "Hello world!");
 
 client.nick("new_nick");
 
@@ -90,25 +94,34 @@ client.quit("Goodbye!");
 
 When an error is thrown, it causes a crash.
 
-By listening to `"error"` events, errors will no longer be thrown and you will be
-able to handle them properly:
+It is required to have event listeners for `"error:client"` and `"error:server"` to avoid the client from crashing.
+
+By listening to these events, errors will no longer be thrown and you will be able to handle them properly:
 
 ```ts
-client.on("error", (error) => {
-  // deal with the error message
+client.on("error:client", (error) => {
+  switch (error.op) {
+    case "connect": // error while connecting
+    case "plugin": // error from internal plugin
+    default:
+      console.error(error);
+  }
+});
 
-  switch (error.name) {
-    case "ConnectError":
-    case "SendError":
-      console.log(`${error.name}: ${error.message}`);
-      break;
+client.on("error:server", (error) => {
+  switch (error.command) {
+    case "ERR_NICKNAMEINUSE": // nick is already in use
+    case "ERR_NOSUCHCHANNEL": // channel does not exist
+    case "ERROR": // error that causes a disconnection
     default:
       console.error(error);
   }
 });
 ```
 
-This behavior is heavily inspired by the Node.js event emitter pattern.
+This behavior is heavily inspired by the [Node.js error handling](https://www.joyent.com/node-js/production/design/errors).
+
+An early crash prevents loosing useful informations when the client tries something without success.
 
 ## Contributing
 

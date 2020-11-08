@@ -1,24 +1,40 @@
-import { ModuleError } from "../core/errors.ts";
-import type { ExtendedClient } from "../core/mod.ts";
+import type { ExtendedClient, Raw } from "../core/mod.ts";
 import { createPlugin } from "../core/mod.ts";
+import type { AnyError } from "../core/protocol.ts";
 
-// Note: "error" event is already defined in the core part
-
-export interface ServerErrorParams {}
-
-export class ServerError extends ModuleError {
-  name = ServerError.name;
+export interface ServerErrorParams {
+  events: {
+    "error:server": ServerError;
+  };
 }
 
-function emitServerError(client: ExtendedClient) {
+type ServerCommand = "ERROR" | AnyError;
+
+export class ServerError extends Error {
+  command: ServerCommand;
+  params: string[];
+
+  constructor(msg: Raw) {
+    super(`${msg.command}: ${msg.params.join(" ")}`);
+    this.name = ServerError.name;
+    this.command = msg.command as ServerCommand;
+    this.params = msg.params;
+  }
+}
+
+function events(client: ExtendedClient<ServerErrorParams>) {
   client.on("raw", (msg) => {
-    if (msg.command !== "ERROR") {
+    const isServerError = (
+      msg.command.startsWith("ERR_") ||
+      msg.command === "ERROR"
+    );
+
+    if (!isServerError) {
       return;
     }
 
-    const [message] = msg.params;
-    client.emit("error", new ServerError(message));
+    client.emitError("error:server", new ServerError(msg));
   });
 }
 
-export const serverError = createPlugin(emitServerError);
+export const serverError = createPlugin(events);

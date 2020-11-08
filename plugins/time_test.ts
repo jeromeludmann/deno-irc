@@ -1,4 +1,4 @@
-import { assertEquals } from "../core/test_deps.ts";
+import { assertEquals, assertMatch } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
 import { ctcp } from "./ctcp.ts";
 import { time } from "./time.ts";
@@ -60,7 +60,7 @@ Deno.test("time replies", async () => {
 
   server.send(":nick2!user@host PRIVMSG nick :\u0001TIME\u0001");
   const raw = await server.once("NOTICE");
-  assertEquals(raw.startsWith("NOTICE nick2 :\u0001TIME "), true);
+  assertMatch(raw, /^NOTICE nick2 :\u0001TIME .+\u0001$/);
 
   await sanitize();
 });

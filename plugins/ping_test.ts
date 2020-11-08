@@ -1,4 +1,4 @@
-import { assertEquals } from "../core/test_deps.ts";
+import { assertEquals, assertMatch } from "../core/test_deps.ts";
 import { arrange } from "../core/test_helpers.ts";
 import { ctcp } from "./ctcp.ts";
 import { ping } from "./ping.ts";
@@ -12,11 +12,11 @@ Deno.test("ping commands", async () => {
 
   client.ping();
   const raw1 = await server.once("PING");
-  assertEquals(raw1.startsWith("PING "), true);
+  assertMatch(raw1, /^PING .+$/);
 
   client.ping("#channel");
   const raw2 = await server.once("PRIVMSG");
-  assertEquals(raw2.startsWith("PRIVMSG #channel :\u0001PING "), true);
+  assertMatch(raw2, /^PRIVMSG #channel :\u0001PING .+\u0001$/);
 
   await sanitize();
 });

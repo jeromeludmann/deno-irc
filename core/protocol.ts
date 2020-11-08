@@ -31,7 +31,7 @@ export type AnyCommand =
   | "WHOIS"
   | "WHOWAS";
 
-export const IRC_NUMERICS = {
+export const IRC_REPLIES = {
   "001": "RPL_WELCOME",
   "002": "RPL_YOURHOST",
   "003": "RPL_CREATED",
@@ -162,6 +162,9 @@ export const IRC_NUMERICS = {
   "394": "RPL_ENDOFUSERS",
   "395": "RPL_NOUSERS",
   "396": "RPL_HOSTHIDDEN",
+} as const;
+
+export const IRC_ERRORS = {
   "400": "ERR_UNKNOWNERROR",
   "401": "ERR_NOSUCHNICK",
   "402": "ERR_NOSUCHSERVER",
@@ -257,4 +260,10 @@ export const IRC_NUMERICS = {
   "552": "ERR_USINGSLINE",
 } as const;
 
-export type AnyNumeric = typeof IRC_NUMERICS[keyof typeof IRC_NUMERICS];
+export const IRC_NUMERICS = { ...IRC_REPLIES, ...IRC_ERRORS };
+
+export type AnyReply = typeof IRC_REPLIES[keyof typeof IRC_REPLIES];
+
+export type AnyError = typeof IRC_ERRORS[keyof typeof IRC_ERRORS];
+
+export type AnyNumeric = AnyReply | AnyError;
