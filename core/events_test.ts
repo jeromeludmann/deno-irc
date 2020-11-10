@@ -10,7 +10,7 @@ Deno.test("add one listener and emit an event", async () => {
     triggered++;
     value = val;
   });
-  await emitter.emit("event", { key: "value" });
+  emitter.emit("event", { key: "value" });
 
   assertEquals(triggered, 1);
   assertEquals(value, { key: "value" });
@@ -26,7 +26,7 @@ Deno.test("add two listeners and emit an event", async () => {
   emitter.on("event", () => {
     triggered++;
   });
-  await emitter.emit("event", {});
+  emitter.emit("event", {});
 
   assertEquals(triggered, 2);
 });
@@ -38,7 +38,7 @@ Deno.test("add one listener and emit a different event", async () => {
   emitter.on("event", () => {
     triggered++;
   });
-  await emitter.emit("msg2", {});
+  emitter.emit("event2", {});
 
   assertEquals(triggered, 0);
 });
@@ -54,7 +54,7 @@ Deno.test("add two listeners and remove one of them", async () => {
     triggered++;
   });
   off1();
-  await emitter.emit("event", {});
+  emitter.emit("event", {});
 
   assertEquals(triggered, 1);
 });
@@ -72,7 +72,7 @@ Deno.test("add two listeners and remove all of them", async () => {
   });
   off1();
   off2();
-  await emitter.emit("event", {});
+  emitter.emit("event", {});
 
   assertEquals(triggered1, 0);
   assertEquals(triggered2, 0);
@@ -87,7 +87,7 @@ Deno.test("add a listener twice and emit an event", async () => {
 
   emitter.on("event", listener);
   emitter.on("event", listener);
-  await emitter.emit("event", {});
+  emitter.emit("event", {});
 
   assertEquals(triggered, 2);
 });
@@ -103,7 +103,7 @@ Deno.test("add a listener twice and remove it", async () => {
   off = emitter.on("event", listener);
   emitter.on("event", listener);
   off();
-  await emitter.emit("event", {});
+  emitter.emit("event", {});
 
   assertEquals(triggered, 0);
 });
@@ -117,4 +117,22 @@ Deno.test("wait an event", async () => {
   ]);
 
   assertEquals(payload, { key: "value" });
+});
+
+Deno.test("wait an event for n ms.", async () => {
+  const emitter = new EventEmitter();
+
+  const [payload] = await Promise.all([
+    emitter.wait("event", 10),
+    emitter.emit("event", { key: "value" }),
+  ]);
+
+  assertEquals(payload, { key: "value" });
+
+  const [never] = await Promise.all([
+    emitter.wait("event", 10),
+    emitter.emit("event2", { key: "value" }),
+  ]);
+
+  assertEquals(never, null);
 });

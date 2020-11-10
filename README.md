@@ -72,6 +72,24 @@ client.on("privmsg:private", (msg) => {
 });
 ```
 
+There are also other methods which can be useful.
+
+Following only resolve when the message has been received:
+
+```ts
+const msg = await client.once("join");
+```
+
+Resolves when the message has been received, otherwise resolves after the given delay to `null`:
+
+```ts
+const msg = client.wait("join", 2000);
+
+if (msg === null) {
+  console.log("message never received");
+}
+```
+
 ### Commands
 
 Commands are the way to send messages to the server.

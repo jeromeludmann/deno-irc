@@ -64,6 +64,25 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
+  /** Waits for an `eventName` for `timeout` ms (default to `1000` ms). */
+  wait<T extends keyof TEvents>(
+    eventName: T,
+    delay: number = 1000,
+  ): Promise<InferredPayload<TEvents, T> | null> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        removeListener();
+        resolve(null);
+      }, delay);
+
+      const removeListener = this.on(eventName, (payload) => {
+        removeListener();
+        clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+  }
+
   /** Removes the `listener` of the `eventName`. */
   off<T extends keyof TEvents>(
     eventName: T,
