@@ -22,7 +22,7 @@ Deno.test("client options", async () => {
       clientinfo: true,
       ping: true,
       time: true,
-      version: true,
+      version: "deno-irc",
     },
     debug: false,
     resolveInvalidNames: false,

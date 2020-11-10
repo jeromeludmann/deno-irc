@@ -6,8 +6,12 @@ import { createCtcp } from "./ctcp.ts";
 export interface VersionParams {
   options: {
     ctcpReplies?: {
-      /** Replies to CTCP VERSION. */
-      version?: boolean;
+      /**
+       * Replies to CTCP VERSION with the given string.
+       *
+       * Default to `"deno-irc"`. `false` to disable.
+       */
+      version?: string | false;
     };
   };
   commands: {
@@ -38,7 +42,7 @@ export interface CtcpVersionReply {
 
 function options(client: ExtendedClient<VersionParams>) {
   client.options.ctcpReplies ??= {};
-  client.options.ctcpReplies.version ??= true;
+  client.options.ctcpReplies.version ??= "deno-irc";
 }
 
 function commands(
@@ -81,12 +85,14 @@ function events(
 }
 
 function replies(client: ExtendedClient<VersionParams>) {
-  if (!client.options.ctcpReplies?.version) {
+  const version = client.options.ctcpReplies?.version;
+
+  if (!version) {
     return;
   }
 
   client.on("ctcp_version", (msg) => {
-    client.send("NOTICE", msg.origin.nick, createCtcp("VERSION", "deno-irc"));
+    client.send("NOTICE", msg.origin.nick, createCtcp("VERSION", version));
   });
 }
 

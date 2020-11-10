@@ -51,7 +51,7 @@ Deno.test("version events", async () => {
 Deno.test("version replies", async () => {
   const { server, client, sanitize } = arrange(
     [ctcp, version],
-    { ctcpReplies: { version: true } },
+    { ctcpReplies: { version: "custom version" } },
   );
 
   server.listen();
@@ -60,7 +60,24 @@ Deno.test("version replies", async () => {
 
   server.send(":nick2!user@host PRIVMSG nick :\u0001VERSION\u0001");
   const raw = await server.once("NOTICE");
-  assertEquals(raw, "NOTICE nick2 :\u0001VERSION deno-irc\u0001");
+  assertEquals(raw, "NOTICE nick2 :\u0001VERSION custom version\u0001");
+
+  await sanitize();
+});
+
+Deno.test("version replies (disabled)", async () => {
+  const { server, client, sanitize } = arrange(
+    [ctcp, version],
+    { ctcpReplies: { version: false } },
+  );
+
+  server.listen();
+  client.connect(server.host, server.port);
+  await server.waitClient();
+
+  server.send(":nick2!user@host PRIVMSG nick :\u0001VERSION\u0001");
+  const raw = await server.wait("NOTICE", 10);
+  assertEquals(raw, null);
 
   await sanitize();
 });
