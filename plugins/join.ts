@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface JoinParams {
   commands: {
@@ -21,9 +21,8 @@ export interface Join {
 }
 
 function commands(client: ExtendedClient<JoinParams>) {
-  client.join = (...channels: string[]) => {
+  client.join = (...channels: string[]) =>
     client.send("JOIN", channels.join(","));
-  };
 }
 
 function events(client: ExtendedClient<JoinParams>) {

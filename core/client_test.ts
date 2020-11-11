@@ -1,75 +1,164 @@
-import { assertEquals, assertExists, assertMatch } from "./test_deps.ts";
-import { arrange } from "./test_helpers.ts";
+import { assertEquals, assertThrowsAsync } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
+import { ExtendedClient, FatalError } from "./client.ts";
 
-Deno.test("core client connect", async () => {
-  const { server, client, sanitize } = arrange([], {});
+describe("core/client", (test) => {
+  test("connect to server", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
 
-  server.listen();
+    client.connect("host", 6668);
+    const addr = await client.once("connected");
 
-  client.connect("unreachable");
-  const err = await client.once("error:client");
-  assertEquals(err.name, "ClientError");
-  assertMatch(err.message, /^connect: .+$/);
-  assertEquals(err.op, "connect");
-  assertExists(err.cause);
-
-  client.connect(server.host, server.port);
-  const connected = await client.once("connected");
-  assertEquals(connected, {
-    hostname: server.host,
-    port: server.port,
+    assertEquals(addr, {
+      hostname: "host",
+      port: 6668,
+    });
   });
 
-  await sanitize();
-});
+  test("fail to connect", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
 
-Deno.test("core client disconnect", async () => {
-  const { server, client, sanitize } = arrange([], {});
+    client.connect("bad_remote_host");
+    const error = await client.once("error");
 
-  // closed by server
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-  server.close();
-  const msg1 = await client.once("disconnected");
-  assertEquals(msg1, {
-    hostname: server.host,
-    port: server.port,
+    assertEquals(error.name, "FatalError");
+    assertEquals(error.type, "connect");
   });
 
-  // closed by client
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-  client.disconnect();
-  const msg2 = await client.once("disconnected");
-  assertEquals(msg2, {
-    hostname: server.host,
-    port: server.port,
+  test("throw on connect", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
+
+    assertThrowsAsync(
+      () => client.connect("bad_remote_host"),
+      FatalError,
+      "connect",
+    );
   });
 
-  await sanitize();
-});
+  test("send raw message to server", async () => {
+    const { client, server } = await mock([], {});
 
-Deno.test("core client send", async () => {
-  const { server, client, sanitize } = arrange([], {});
+    client.send("PING", "key");
+    const raw = server.receive();
 
-  const [err] = await Promise.all([
-    client.once("error:client"),
-    client.send("PING", "key"),
-  ]);
-  assertEquals(err.name, "ClientError");
-  assertEquals(err.message, "write: Not connected");
-  assertEquals(err.op, "write");
-  assertEquals(err.cause, undefined);
+    assertEquals(raw, ["PING key"]);
+  });
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("fail to send raw message if not connected", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
 
-  client.send("PING", "key");
-  const raw = await server.once("PING");
-  assertEquals(raw, "PING key");
+    const [error] = await Promise.all([
+      client.once("error"),
+      client.send("PING", "key"),
+    ]);
 
-  await sanitize();
+    assertEquals(error.name, "FatalError");
+    assertEquals(error.type, "write");
+  });
+
+  test("throw on send", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
+
+    assertThrowsAsync(
+      () => client.send("PING", "key"),
+      FatalError,
+      "write",
+    );
+  });
+
+  test("receive raw messages from server", async () => {
+    const { client, server } = await mock([], {});
+    const messages = [];
+
+    server.send("PING key");
+    messages.push(await client.once("raw"));
+
+    server.send(":serverhost 001 me :Welcome to the server");
+    messages.push(await client.once("raw"));
+
+    assertEquals(messages, [
+      {
+        command: "PING",
+        params: ["key"],
+        prefix: "",
+        raw: "PING key",
+      },
+      {
+        command: "RPL_WELCOME",
+        params: ["me", "Welcome to the server"],
+        prefix: "serverhost",
+        raw: ":serverhost 001 me :Welcome to the server",
+      },
+    ]);
+  });
+
+  test("disconnect from server", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
+
+    await client.connect("host");
+    const [addr] = await Promise.all([
+      client.once("disconnected"),
+      client.disconnect(),
+    ]);
+
+    assertEquals(addr, {
+      hostname: "host",
+      port: 6667,
+    });
+  });
+
+  test("be disconnected by server", async () => {
+    const { client, server } = await mock([], {}, { withConnection: false });
+
+    await client.connect("host");
+    server.close();
+    const msg = await client.once("disconnected");
+
+    assertEquals(msg, {
+      hostname: "host",
+      port: 6667,
+    });
+  });
+
+  test("not disconnect if not connected", async () => {
+    const { client } = await mock([], {}, { withConnection: false });
+
+    client.disconnect();
+    const addr = await client.wait("disconnected", 1);
+
+    assertEquals(addr, null);
+  });
+
+  const throwOnConnect = (client: ExtendedClient) => {
+    client.on("connected", () => {
+      throw new Error("Boom!");
+    });
+  };
+
+  const catchErrors = (client: ExtendedClient) => {
+    client.on("error", () => {});
+  };
+
+  const plugins = [throwOnConnect, catchErrors];
+
+  test("throw if no listeners bound to 'error'", async () => {
+    const { client } = await mock(plugins, {}, { withConnection: false });
+
+    assertThrowsAsync(
+      () => client.connect(""),
+      FatalError,
+      "Boom!",
+    );
+  });
+
+  test("not throw if listeners bound to 'error'", async () => {
+    const { client } = await mock(plugins, {}, { withConnection: false });
+
+    client.connect("");
+    const error = await client.once("error");
+
+    assertEquals(error.name, "FatalError");
+    assertEquals(error.type, "connect");
+  });
 });

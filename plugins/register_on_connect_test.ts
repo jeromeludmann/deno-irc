@@ -1,47 +1,48 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { nick } from "./nick.ts";
 import { register } from "./register.ts";
 import { registerOnConnect } from "./register_on_connect.ts";
 
-Deno.test("register_on_connect", async () => {
-  const { server, client, sanitize } = arrange(
-    [registerOnConnect, nick, register],
-    {
-      nick: "nick",
-      username: "user",
-      realname: "real name",
-      password: "pass",
-    },
-  );
+describe("plugins/register_on_connect", (test) => {
+  const plugins = [registerOnConnect, nick, register];
+  const options = {
+    nick: "me",
+    username: "user",
+    realname: "real name",
+    password: "pass",
+  };
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("register on connect", async () => {
+    const { client, server } = await mock(
+      plugins,
+      options,
+      { withConnection: false },
+    );
 
-  const raw1 = await Promise.all([
-    server.once("PASS"),
-    server.once("NICK"),
-    server.once("USER"),
-  ]);
-  assertEquals(raw1, [
-    "PASS pass",
-    "NICK nick",
-    "USER user 0 * :real name",
-  ]);
+    await client.connect("");
+    const raw = server.receive();
 
-  server.send(":serverhost 451 nick :You have not registered");
-  assertEquals((await client.once("raw")).command, "ERR_NOTREGISTERED");
-  const raw2 = await Promise.all([
-    server.once("PASS"),
-    server.once("NICK"),
-    server.once("USER"),
-  ]);
-  assertEquals(raw2, [
-    "PASS pass",
-    "NICK nick",
-    "USER user 0 * :real name",
-  ]);
+    assertEquals(raw, [
+      "PASS pass",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+  });
 
-  await sanitize();
+  test("register on ERR_NOTREGISTERED", async () => {
+    const { client, server } = await mock(plugins, options);
+    server.receive();
+
+    server.send(":serverhost 451 me :You have not registered");
+    await client.once("raw");
+    const raw = server.receive();
+
+    assertEquals(raw, [
+      "PASS pass",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+  });
 });

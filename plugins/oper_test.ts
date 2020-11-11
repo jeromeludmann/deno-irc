@@ -1,17 +1,17 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { oper } from "./oper.ts";
 
-Deno.test("oper commands", async () => {
-  const { server, client, sanitize } = arrange([oper], {});
+describe("plugins/oper", (test) => {
+  const plugins = [oper];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send OPER", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.oper("user", "pass");
-  const raw = await server.once("OPER");
-  assertEquals(raw, "OPER user pass");
+    client.oper("user", "pass");
+    const raw = server.receive();
 
-  await sanitize();
+    assertEquals(raw, ["OPER user pass"]);
+  });
 });

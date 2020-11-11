@@ -1,6 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
-import type { ServerErrorParams } from "./server_error.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface QuitParams {
   commands: {
@@ -19,15 +18,8 @@ export interface Quit {
   comment?: string;
 }
 
-function commands(client: ExtendedClient<QuitParams & ServerErrorParams>) {
-  client.quit = (comment) => {
-    // When the client sends a "QUIT", the server replies with an "ERROR".
-    // Since "ERROR" are converted to thrown errors when there is no "error"
-    // event listener, this following prevents the client from throwing.
-    client.once("error:server");
-
-    client.send("QUIT", comment ?? "");
-  };
+function commands(client: ExtendedClient<QuitParams>) {
+  client.quit = (...params: string[]) => client.send("QUIT", ...params);
 }
 
 function events(client: ExtendedClient<QuitParams>) {

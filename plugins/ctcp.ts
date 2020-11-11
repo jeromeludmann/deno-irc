@@ -1,5 +1,5 @@
-import type { ExtendedClient, Raw, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
 export interface CtcpParams {
   options: {
@@ -11,7 +11,7 @@ export interface CtcpParams {
     ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
   };
   events: {
-    "raw:ctcp": RawCtcp;
+    "ctcp": Ctcp;
   };
 }
 
@@ -22,7 +22,7 @@ export type AnyCtcpCommand =
   | "TIME"
   | "VERSION";
 
-export interface RawCtcp {
+export interface Ctcp {
   /** User who sent the CTCP. */
   origin: UserMask;
   /** Target who received the CTCP. */
@@ -38,23 +38,20 @@ export interface RawCtcp {
 export function isCtcp(msg: Raw): boolean {
   return (
     msg.params.length === 2 &&
-    msg.params[1][0] === "\u0001" &&
-    msg.params[1][msg.params[1].length - 1] === "\u0001" &&
+    msg.params[1][0] === "\x01" &&
+    msg.params[1][msg.params[1].length - 1] === "\x01" &&
     (msg.command === "PRIVMSG" || msg.command === "NOTICE")
   );
 }
 
 export function createCtcp(command: string, param?: string) {
-  let ctcp = `\u0001${command}`;
-  if (param) ctcp += ` ${param}`;
-  ctcp += "\u0001";
-  return ctcp;
+  const ctcpParam = param === undefined ? "" : " " + param;
+  return `\x01${command}${ctcpParam}\x01`;
 }
 
 export function commands(client: ExtendedClient<CtcpParams>) {
-  client.ctcp = (target, command, param) => {
+  client.ctcp = (target, command, param) =>
     client.send("PRIVMSG", target, createCtcp(command, param));
-  };
 }
 
 export function events(client: ExtendedClient<CtcpParams>) {
@@ -70,7 +67,7 @@ export function events(client: ExtendedClient<CtcpParams>) {
     const ctcpCommand = rawCtcp.slice(1, i) as AnyCtcpCommand;
     const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
 
-    const ctcp: RawCtcp = {
+    const ctcp: Ctcp = {
       origin: parseUserMask(msg.prefix),
       target,
       command: ctcpCommand,
@@ -81,7 +78,7 @@ export function events(client: ExtendedClient<CtcpParams>) {
       ctcp.param = ctcpParam;
     }
 
-    client.emit("raw:ctcp", ctcp);
+    client.emit("ctcp", ctcp);
   });
 }
 

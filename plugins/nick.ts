@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface NickParams {
   commands: {
@@ -19,7 +19,7 @@ export interface Nick {
 }
 
 function commands(client: ExtendedClient<NickParams>) {
-  client.nick = client.send.bind(client, "NICK");
+  client.nick = (...params) => client.send("NICK", ...params);
 }
 
 function events(client: ExtendedClient<NickParams>) {

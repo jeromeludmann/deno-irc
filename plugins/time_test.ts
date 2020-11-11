@@ -1,66 +1,75 @@
-import { assertEquals, assertMatch } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals, assertMatch } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { ctcp } from "./ctcp.ts";
 import { time } from "./time.ts";
 
-Deno.test("time commands", async () => {
-  const { server, client, sanitize } = arrange([ctcp, time], {});
+describe("plugins/time", (test) => {
+  const plugins = [ctcp, time];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send TIME", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.time();
-  const raw1 = await server.once("TIME");
-  assertEquals(raw1, "TIME");
+    client.time();
+    client.time("#channel");
+    const raw = server.receive();
 
-  client.time("#channel");
-  const raw2 = await server.once("PRIVMSG");
-  assertEquals(raw2, "PRIVMSG #channel \u0001TIME\u0001");
-
-  await sanitize();
-});
-
-Deno.test("time events", async () => {
-  const { server, client, sanitize } = arrange([ctcp, time], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":nick!user@host PRIVMSG #channel :\u0001TIME\u0001");
-  const msg1 = await client.once("ctcp_time");
-  assertEquals(msg1, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    target: "#channel",
+    assertEquals(raw, [
+      "TIME",
+      "PRIVMSG #channel \x01TIME\x01",
+    ]);
   });
 
-  server.send(
-    ":nick2!user@host NOTICE nick :\u0001TIME Tue Sep 01 2020 20:17:48 GMT+0200 (CEST)\u0001",
-  );
-  const msg2 = await client.once("ctcp_time_reply");
-  assertEquals(msg2, {
-    origin: { nick: "nick2", username: "user", userhost: "host" },
-    target: "nick",
-    time: "Tue Sep 01 2020 20:17:48 GMT+0200 (CEST)",
+  test("emit 'ctcp_time' on CTCP TIME query", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host PRIVMSG #channel :\x01TIME\x01");
+    const msg = await client.once("ctcp_time");
+
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "#channel",
+    });
   });
 
-  await sanitize();
-});
+  test("emit 'ctcp_time_reply' on CTCP TIME reply", async () => {
+    const { client, server } = await mock(plugins, {});
 
-Deno.test("time replies", async () => {
-  const { server, client, sanitize } = arrange(
-    [ctcp, time],
-    { ctcpReplies: { time: true } },
-  );
+    server.send(
+      ":someone!user@host NOTICE me :\x01TIME Tue Sep 01 2020 20:17:48 GMT+0200 (CEST)\x01",
+    );
+    const msg = await client.once("ctcp_time_reply");
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "me",
+      time: "Tue Sep 01 2020 20:17:48 GMT+0200 (CEST)",
+    });
+  });
 
-  server.send(":nick2!user@host PRIVMSG nick :\u0001TIME\u0001");
-  const raw = await server.once("NOTICE");
-  assertMatch(raw, /^NOTICE nick2 :\u0001TIME .+\u0001$/);
+  test("reply to CTCP TIME query", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { time: true } },
+    );
 
-  await sanitize();
+    server.send(":someone!user@host PRIVMSG me :\x01TIME\x01");
+    await client.once("ctcp_time");
+    const raw = server.receive();
+
+    assertMatch(raw[0], /^NOTICE someone :\x01TIME .+\x01$/);
+  });
+
+  test("not reply to CTCP TIME query if disabled", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { time: false } },
+    );
+
+    server.send(":someone!user@host PRIVMSG me :\x01TIME\x01");
+    await client.once("ctcp_time");
+    const raw = server.receive();
+
+    assertEquals(raw, []);
+  });
 });

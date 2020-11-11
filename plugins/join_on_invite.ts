@@ -1,8 +1,7 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { InviteParams } from "./invite.ts";
-import type { JoinParams } from "./join.ts";
-import type { UserStateParams } from "./user_state.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { InviteParams } from "./invite.ts";
+import { JoinParams } from "./join.ts";
+import { UserStateParams } from "./user_state.ts";
 
 export interface JoinOnInviteParams {
   options: {

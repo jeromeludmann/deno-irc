@@ -1,5 +1,4 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
 
 export interface OperParams {
   commands: {
@@ -9,7 +8,7 @@ export interface OperParams {
 }
 
 function commands(client: ExtendedClient<OperParams>) {
-  client.oper = client.send.bind(client, "OPER");
+  client.oper = (...params) => client.send("OPER", ...params);
 }
 
 export const oper = createPlugin(commands);

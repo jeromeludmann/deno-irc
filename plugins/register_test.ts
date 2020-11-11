@@ -1,38 +1,38 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { register } from "./register.ts";
 
-Deno.test("register commands", async () => {
-  const { server, client, sanitize } = arrange([register], {});
+describe("plugins/register", (test) => {
+  const plugins = [register];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send USER", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.user("username", "real name");
-  const raw1 = await server.once("USER");
-  assertEquals(raw1, "USER username 0 * :real name");
+    client.user("username", "real name");
+    const raw = server.receive();
 
-  client.pass("password");
-  const raw2 = await server.once("PASS");
-  assertEquals(raw2, "PASS password");
-
-  await sanitize();
-});
-
-Deno.test("register events", async () => {
-  const { server, client, sanitize } = arrange([register], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":serverhost 001 nick :Welcome to the server");
-  const msg1 = await client.once("register");
-  assertEquals(msg1, {
-    nick: "nick",
-    text: "Welcome to the server",
+    assertEquals(raw, ["USER username 0 * :real name"]);
   });
 
-  await sanitize();
+  test("send PASS", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    client.pass("password");
+    const raw = server.receive();
+
+    assertEquals(raw, ["PASS password"]);
+  });
+
+  test("emit 'register' on RPL_WELCOME", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":serverhost 001 me :Welcome to the server");
+    const msg = await client.once("register");
+
+    assertEquals(msg, {
+      nick: "me",
+      text: "Welcome to the server",
+    });
+  });
 });

@@ -1,7 +1,6 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { OperParams } from "./oper.ts";
-import type { RegisterParams } from "./register.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { OperParams } from "./oper.ts";
+import { RegisterParams } from "./register.ts";
 
 export interface OperOnRegisterParams {
   options: {

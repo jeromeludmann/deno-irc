@@ -1,70 +1,88 @@
-import { assertEquals, assertMatch } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals, assertMatch } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { ctcp } from "./ctcp.ts";
 import { ping } from "./ping.ts";
 
-Deno.test("ping commands", async () => {
-  const { server, client, sanitize } = arrange([ctcp, ping], {});
+describe("plugins/ping", (test) => {
+  const plugins = [ctcp, ping];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send PING", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.ping();
-  const raw1 = await server.once("PING");
-  assertMatch(raw1, /^PING .+$/);
+    client.ping();
+    client.ping("#channel");
+    const raw = server.receive();
 
-  client.ping("#channel");
-  const raw2 = await server.once("PRIVMSG");
-  assertMatch(raw2, /^PRIVMSG #channel :\u0001PING .+\u0001$/);
-
-  await sanitize();
-});
-
-Deno.test("ping events", async () => {
-  const { server, client, sanitize } = arrange([ping, ctcp], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send("PING :key");
-  const msg1 = await client.once("ping");
-  assertEquals(msg1, { keys: ["key"] });
-
-  server.send(":nick!user@host PRIVMSG #channel :\u0001PING key\u0001");
-  const msg2 = await client.once("ctcp_ping");
-  assertEquals(msg2, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    target: "#channel",
-    key: "key",
+    assertMatch(raw[0], /^PING .+$/);
+    assertMatch(raw[1], /^PRIVMSG #channel :\x01PING .+\x01$/);
   });
 
-  server.send(":nick2!user@host NOTICE nick :\u0001PING key\u0001");
-  const msg3 = await client.once("ctcp_ping_reply");
-  assertEquals(msg3, {
-    origin: { nick: "nick2", username: "user", userhost: "host" },
-    target: "nick",
-    key: "key",
+  test("emit 'ping' on PING", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send("PING :key");
+    const msg = await client.once("ping");
+
+    assertEquals(msg, { keys: ["key"] });
   });
 
-  await sanitize();
-});
+  test("emit 'pong' on PONG", async () => {
+    const { client, server } = await mock(plugins, {});
 
-Deno.test("ping replies", async () => {
-  const { server, client, sanitize } = arrange([ctcp, ping], {});
+    server.send("PONG daemon :key");
+    const msg = await client.once("pong");
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+    assertEquals(msg, {
+      origin: "",
+      daemon: "daemon",
+      key: "key",
+    });
+  });
 
-  server.send("PING :key");
-  const raw1 = await server.once("PONG");
-  assertEquals(raw1, "PONG key");
+  test("emit 'ctcp_ping' on CTCP PING query", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  server.send(":nick2!user@host PRIVMSG nick :\u0001PING key\u0001");
-  const raw2 = await server.once("NOTICE");
-  assertEquals(raw2, "NOTICE nick2 :\u0001PING key\u0001");
+    server.send(":someone!user@host PRIVMSG #channel :\x01PING key\x01");
+    const msg = await client.once("ctcp_ping");
 
-  await sanitize();
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "#channel",
+      key: "key",
+    });
+  });
+
+  test("emit 'ctcp_ping_reply' on CTCP PING reply", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host NOTICE me :\x01PING key\x01");
+    const msg = await client.once("ctcp_ping_reply");
+
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "me",
+      key: "key",
+    });
+  });
+
+  test("reply to PING", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send("PING :key");
+    await client.once("ping");
+    const raw = server.receive();
+
+    assertEquals(raw, ["PONG key"]);
+  });
+
+  test("reply to CTCP PING query", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host PRIVMSG me :\x01PING key\x01");
+    await client.once("ctcp_ping");
+    const raw = server.receive();
+
+    assertEquals(raw, ["NOTICE someone :\x01PING key\x01"]);
+  });
 });

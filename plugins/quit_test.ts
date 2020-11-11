@@ -1,58 +1,44 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { quit } from "./quit.ts";
 import { serverError } from "./server_error.ts";
 
-Deno.test("quit commands", async () => {
-  const { server, client, sanitize } = arrange([quit, serverError], {});
+describe("plugins/quit", (test) => {
+  const plugins = [quit, serverError];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send QUIT", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.quit();
-  const raw1 = await server.once("QUIT");
-  assertEquals(raw1, "QUIT");
+    client.quit();
+    client.quit("Goodbye!");
+    const raw = server.receive();
 
-  client.quit("Goodbye!");
-  const raw2 = await server.once("QUIT");
-  assertEquals(raw2, "QUIT Goodbye!");
-
-  // "quit" command should never throw a server error
-  client.quit();
-  await server.once("QUIT");
-  server.send("ERROR :Closing link: (user@host) [Client exited]");
-  const msg = await client.once("raw");
-  assertEquals(msg, {
-    command: "ERROR",
-    params: ["Closing link: (user@host) [Client exited]"],
-    prefix: "",
-    raw: "ERROR :Closing link: (user@host) [Client exited]",
+    assertEquals(raw, [
+      "QUIT",
+      "QUIT Goodbye!",
+    ]);
   });
 
-  await sanitize();
-});
+  test("emit 'quit' on QUIT", async () => {
+    const { client, server } = await mock(plugins, {});
+    const messages = [];
 
-Deno.test("quit events", async () => {
-  const { server, client, sanitize } = arrange([quit], {});
+    server.send(":someone!user@host QUIT");
+    messages.push(await client.once("quit"));
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+    server.send(":someone!user@host QUIT :Goodbye!");
+    messages.push(await client.once("quit"));
 
-  server.send(":nick!user@host QUIT");
-  const msg1 = await client.once("quit");
-  assertEquals(msg1, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    comment: undefined,
+    assertEquals(messages, [
+      {
+        origin: { nick: "someone", username: "user", userhost: "host" },
+        comment: undefined,
+      },
+      {
+        origin: { nick: "someone", username: "user", userhost: "host" },
+        comment: "Goodbye!",
+      },
+    ]);
   });
-
-  server.send(":nick!user@host QUIT :Goodbye!");
-  const msg2 = await client.once("quit");
-  assertEquals(msg2, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    comment: "Goodbye!",
-  });
-
-  await sanitize();
 });

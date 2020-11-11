@@ -1,7 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { CtcpParams } from "./ctcp.ts";
-import { createCtcp } from "./ctcp.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { UserMask } from "../core/parsers.ts";
+import { createCtcp, CtcpParams } from "./ctcp.ts";
 
 export interface TimeParams {
   options: {
@@ -43,16 +42,16 @@ function options(client: ExtendedClient<TimeParams>) {
 
 function commands(client: ExtendedClient<TimeParams & CtcpParams>) {
   client.time = (target) => {
-    if (target !== undefined) {
-      client.ctcp(target, "TIME");
-    } else {
+    if (target === undefined) {
       client.send("TIME");
+    } else {
+      client.ctcp(target, "TIME");
     }
   };
 }
 
 function events(client: ExtendedClient<TimeParams & CtcpParams>) {
-  client.on("raw:ctcp", (msg) => {
+  client.on("ctcp", (msg) => {
     if (msg.command !== "TIME") {
       return;
     }

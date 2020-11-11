@@ -1,7 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { AnyCtcpCommand, CtcpParams } from "./ctcp.ts";
-import { createCtcp } from "./ctcp.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { UserMask } from "../core/parsers.ts";
+import { AnyCtcpCommand, createCtcp, CtcpParams } from "./ctcp.ts";
 
 export interface ClientinfoParams {
   options: {
@@ -41,18 +40,12 @@ function options(client: ExtendedClient<ClientinfoParams>) {
   client.options.ctcpReplies.clientinfo ??= true;
 }
 
-function commands(
-  client: ExtendedClient<ClientinfoParams & CtcpParams>,
-) {
-  client.clientinfo = (target) => {
-    client.ctcp(target, "CLIENTINFO");
-  };
+function commands(client: ExtendedClient<ClientinfoParams & CtcpParams>) {
+  client.clientinfo = (target) => client.ctcp(target, "CLIENTINFO");
 }
 
-function events(
-  client: ExtendedClient<ClientinfoParams & CtcpParams>,
-) {
-  client.on("raw:ctcp", (msg) => {
+function events(client: ExtendedClient<ClientinfoParams & CtcpParams>) {
+  client.on("ctcp", (msg) => {
     if (msg.command !== "CLIENTINFO") {
       return;
     }
@@ -61,20 +54,18 @@ function events(
 
     switch (msg.type) {
       case "query":
-        client.emit("ctcp_clientinfo", {
+        return client.emit("ctcp_clientinfo", {
           origin,
           target,
         });
-        break;
 
       case "reply":
         const supported = (param?.split(" ") ?? []) as AnyCtcpCommand[];
-        client.emit("ctcp_clientinfo_reply", {
+        return client.emit("ctcp_clientinfo_reply", {
           origin,
           target,
           supported,
         });
-        break;
     }
   });
 }

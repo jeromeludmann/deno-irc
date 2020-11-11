@@ -1,62 +1,74 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { clientinfo } from "./clientinfo.ts";
 import { ctcp } from "./ctcp.ts";
 
-Deno.test("clientinfo commands", async () => {
-  const { server, client, sanitize } = arrange([ctcp, clientinfo], {});
+describe("plugins/clientinfo", (test) => {
+  const plugins = [ctcp, clientinfo];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send CTCP CLIENTINFO", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.clientinfo("#channel");
-  const raw = await server.once("PRIVMSG");
-  assertEquals(raw, "PRIVMSG #channel \u0001CLIENTINFO\u0001");
+    client.clientinfo("#channel");
+    const raw = server.receive();
 
-  await sanitize();
-});
-
-Deno.test("clientinfo events", async () => {
-  const { server, client, sanitize } = arrange([ctcp, clientinfo], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":nick!user@host PRIVMSG #channel :\u0001CLIENTINFO\u0001");
-  const msg1 = await client.once("ctcp_clientinfo");
-  assertEquals(msg1, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    target: "#channel",
+    assertEquals(raw, ["PRIVMSG #channel \x01CLIENTINFO\x01"]);
   });
 
-  server.send(
-    ":nick2!user@host NOTICE nick :\u0001CLIENTINFO PING TIME VERSION\u0001",
-  );
-  const msg2 = await client.once("ctcp_clientinfo_reply");
-  assertEquals(msg2, {
-    origin: { nick: "nick2", username: "user", userhost: "host" },
-    target: "nick",
-    supported: ["PING", "TIME", "VERSION"],
+  test("emit 'ctcp_clientinfo' on CTCP CLIENTINFO query", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host PRIVMSG #channel :\x01CLIENTINFO\x01");
+    const msg = await client.once("ctcp_clientinfo");
+
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "#channel",
+    });
   });
 
-  await sanitize();
-});
+  test("emit 'ctcp_clientinfo_reply' on CTCP CLIENTINFO reply", async () => {
+    const { client, server } = await mock(plugins, {});
 
-Deno.test("clientinfo replies", async () => {
-  const { server, client, sanitize } = arrange(
-    [ctcp, clientinfo],
-    { ctcpReplies: { clientinfo: true } },
-  );
+    server.send(
+      ":someone!user@host NOTICE me :\x01CLIENTINFO PING TIME VERSION\x01",
+    );
+    const msg = await client.once("ctcp_clientinfo_reply");
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "me",
+      supported: ["PING", "TIME", "VERSION"],
+    });
+  });
 
-  server.send(":nick2!user@host PRIVMSG nick :\u0001CLIENTINFO\u0001");
-  const raw1 = await server.once("NOTICE");
-  assertEquals(raw1, "NOTICE nick2 :\u0001CLIENTINFO PING TIME VERSION\u0001");
+  test("reply to CTCP CLIENTINFO query", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { clientinfo: true } },
+    );
 
-  await sanitize();
+    server.send(":someone!user@host PRIVMSG me :\x01CLIENTINFO\x01");
+    await client.once("ctcp_clientinfo");
+    const raw = server.receive();
+
+    assertEquals(
+      raw,
+      ["NOTICE someone :\x01CLIENTINFO PING TIME VERSION\x01"],
+    );
+  });
+
+  test("not reply to CTCP CLIENTINFO query if disabled", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { clientinfo: false } },
+    );
+
+    server.send(":someone!user@host PRIVMSG me :\x01CLIENTINFO\x01");
+    await client.once("ctcp_clientinfo");
+    const raw = server.receive();
+
+    assertEquals(raw, []);
+  });
 });

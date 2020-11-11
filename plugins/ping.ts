@@ -1,7 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { CtcpParams } from "./ctcp.ts";
-import { createCtcp } from "./ctcp.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { UserMask } from "../core/parsers.ts";
+import { createCtcp, CtcpParams } from "./ctcp.ts";
 
 export interface PingParams {
   options: {
@@ -54,10 +53,10 @@ function commands(client: ExtendedClient<PingParams & CtcpParams>) {
   client.ping = (target) => {
     const key = Date.now().toString();
 
-    if (target) {
-      client.ctcp(target, "PING", key);
-    } else {
+    if (target === undefined) {
       client.send("PING", key);
+    } else {
+      client.ctcp(target, "PING", key);
     }
   };
 }
@@ -80,7 +79,7 @@ function events(client: ExtendedClient<PingParams & CtcpParams>) {
     }
   });
 
-  client.on("raw:ctcp", (msg) => {
+  client.on("ctcp", (msg) => {
     if (msg.command !== "PING") return;
     const { origin, target } = msg;
 
@@ -103,19 +102,19 @@ function events(client: ExtendedClient<PingParams & CtcpParams>) {
 }
 
 function replies(client: ExtendedClient<PingParams>) {
-  const pong = (...keys: string[]) => {
-    client.send("PONG", ...keys);
-  };
+  const pong = (...params: string[]) => client.send("PONG", ...params);
 
   client.on("ping", (msg) => {
     pong(...msg.keys);
   });
 
-  if (client.options.ctcpReplies?.ping) {
-    client.on("ctcp_ping", (msg) => {
-      client.send("NOTICE", msg.origin.nick, createCtcp("PING", msg.key));
-    });
+  if (!client.options.ctcpReplies?.ping) {
+    return;
   }
+
+  client.on("ctcp_ping", (msg) => {
+    client.send("NOTICE", msg.origin.nick, createCtcp("PING", msg.key));
+  });
 }
 
 export const ping = createPlugin(

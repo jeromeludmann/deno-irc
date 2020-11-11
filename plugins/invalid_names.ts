@@ -1,7 +1,6 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { NickParams } from "./nick.ts";
-import type { RegisterParams } from "./register.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { NickParams } from "./nick.ts";
+import { RegisterParams } from "./register.ts";
 import { UserStateParams } from "./user_state.ts";
 
 export interface InvalidNamesParams {
@@ -13,7 +12,10 @@ export interface InvalidNamesParams {
 
 function resolveInvalidNames(
   client: ExtendedClient<
-    InvalidNamesParams & NickParams & RegisterParams & UserStateParams
+    & InvalidNamesParams
+    & NickParams
+    & RegisterParams
+    & UserStateParams
   >,
 ) {
   if (!!client.options.resolveInvalidNames === false) {

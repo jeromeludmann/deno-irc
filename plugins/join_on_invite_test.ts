@@ -1,23 +1,38 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { invite } from "./invite.ts";
 import { join } from "./join.ts";
 import { joinOnInvite } from "./join_on_invite.ts";
 import { userState } from "./user_state.ts";
 
-Deno.test("join_on_invite", async () => {
-  const { server, client, sanitize } = arrange(
-    [joinOnInvite, invite, join, userState],
-    { nick: "nick", joinOnInvite: true },
-  );
+describe("plugins/join_on_invite", (test) => {
+  const plugins = [joinOnInvite, invite, join, userState];
+  const options = { nick: "me" };
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("join on INVITE", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ...options, joinOnInvite: true },
+    );
 
-  server.send(":nick2!user@host INVITE nick :#channel");
-  const raw = await server.once("JOIN");
-  assertEquals(raw, "JOIN #channel");
+    server.send(":someone!user@host INVITE me :#channel");
+    await client.once("invite");
+    const raw = server.receive();
 
-  await sanitize();
+    assertEquals(raw, ["JOIN #channel"]);
+  });
+
+  test("not join on INVITE if disabled", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ...options, joinOnInvite: false },
+    );
+
+    server.send(":someone!user@host INVITE me :#channel");
+    await client.once("raw");
+    const raw = server.receive();
+
+    assertEquals(raw, []);
+  });
 });

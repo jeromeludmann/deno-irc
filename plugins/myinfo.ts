@@ -1,5 +1,4 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
 
 export interface MyinfoParams {
   events: {
@@ -8,8 +7,6 @@ export interface MyinfoParams {
 }
 
 export interface Myinfo {
-  /** Nick used on the server. */
-  nick: string;
   /** Hostname of the server. */
   serverHost: string;
   /** Version of the server. */
@@ -28,7 +25,6 @@ function events(client: ExtendedClient<MyinfoParams>) {
 
     const [nick, host, version, userModes, channelModes] = msg.params;
     return client.emit("myinfo", {
-      nick,
       serverHost: host,
       serverVersion: version,
       availableUserModes: userModes.split(""),

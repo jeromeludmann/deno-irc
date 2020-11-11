@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface InviteParams {
   commands: {
@@ -21,7 +21,7 @@ export interface Invite {
 }
 
 function commands(client: ExtendedClient<InviteParams>) {
-  client.invite = client.send.bind(client, "INVITE");
+  client.invite = (...params) => client.send("INVITE", ...params);
 }
 
 function events(client: ExtendedClient<InviteParams>) {

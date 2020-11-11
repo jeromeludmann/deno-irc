@@ -1,8 +1,7 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { NickParams } from "./nick.ts";
-import type { RegisterParams } from "./register.ts";
-import type { RegisterOnConnectParams } from "./register_on_connect.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { NickParams } from "./nick.ts";
+import { RegisterParams } from "./register.ts";
+import { RegisterOnConnectParams } from "./register_on_connect.ts";
 
 export interface UserStateParams {
   state: {
@@ -22,15 +21,14 @@ function state(
 ) {
   const { nick, username = nick, realname = nick } = client.options;
 
-  // on new instance
-  client.state = { ...client.state, nick, username, realname };
+  client.state.nick = nick;
+  client.state.username = username;
+  client.state.realname = realname;
 
-  // on register
   client.on("register", (msg) => {
     client.state.nick = msg.nick;
   });
 
-  // on nick change
   client.on("nick", (msg) => {
     if (msg.origin.nick === client.state.nick) {
       client.state.nick = msg.nick;

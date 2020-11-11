@@ -1,21 +1,23 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { myinfo } from "./myinfo.ts";
 import { myinfoState } from "./myinfo_state.ts";
 
-Deno.test("myinfo state", async () => {
-  const { server, client, sanitize } = arrange([myinfoState, myinfo], {});
+describe("plugins/myinfo_state", (test) => {
+  const plugins = [myinfoState, myinfo];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("update myinfo state on RPL_MYINFO", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  server.send(":serverhost 004 nick serverhost IRC-version iorsw ilmop");
-  await client.once("myinfo");
-  assertEquals(client.state.serverHost, "serverhost");
-  assertEquals(client.state.serverVersion, "IRC-version");
-  assertEquals(client.state.availableUserModes, ["i", "o", "r", "s", "w"]);
-  assertEquals(client.state.availableChannelModes, ["i", "l", "m", "o", "p"]);
+    server.send(":serverhost 004 me serverhost IRC-version iorsw ilmop");
+    await client.once("myinfo");
 
-  await sanitize();
+    assertEquals(client.state, {
+      serverHost: "serverhost",
+      serverVersion: "IRC-version",
+      availableUserModes: ["i", "o", "r", "s", "w"],
+      availableChannelModes: ["i", "l", "m", "o", "p"],
+    });
+  });
 });

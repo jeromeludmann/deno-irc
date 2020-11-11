@@ -1,83 +1,73 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { ctcp } from "./ctcp.ts";
 import { version } from "./version.ts";
 
-Deno.test("version commands", async () => {
-  const { server, client, sanitize } = arrange([ctcp, version], {});
+describe("plugins/version", (test) => {
+  const plugins = [ctcp, version];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send VERSION", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.version();
-  const raw1 = await server.once("VERSION");
-  assertEquals(raw1, "VERSION");
+    client.version();
+    client.version("someone");
+    const raw = server.receive();
 
-  client.version("#channel");
-  const raw2 = await server.once("PRIVMSG");
-  assertEquals(raw2, "PRIVMSG #channel \u0001VERSION\u0001");
-
-  await sanitize();
-});
-
-Deno.test("version events", async () => {
-  const { server, client, sanitize } = arrange([ctcp, version], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":nick!user@host PRIVMSG #channel :\u0001VERSION\u0001");
-  const msg1 = await client.once("ctcp_version");
-  assertEquals(msg1, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    target: "#channel",
+    assertEquals(raw, [
+      "VERSION",
+      "PRIVMSG someone \x01VERSION\x01",
+    ]);
   });
 
-  server.send(
-    ":nick2!user@host NOTICE nick :\u0001VERSION deno-irc\u0001",
-  );
-  const msg2 = await client.once("ctcp_version_reply");
-  assertEquals(msg2, {
-    origin: { nick: "nick2", username: "user", userhost: "host" },
-    target: "nick",
-    version: "deno-irc",
+  test("emit 'ctcp_version' on CTCP VERSION query", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host PRIVMSG me :\x01VERSION\x01");
+    const msg = await client.once("ctcp_version");
+
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "me",
+    });
   });
 
-  await sanitize();
-});
+  test("emit 'ctcp_version_reply' on CTCP VERSION reply", async () => {
+    const { client, server } = await mock(plugins, {});
 
-Deno.test("version replies", async () => {
-  const { server, client, sanitize } = arrange(
-    [ctcp, version],
-    { ctcpReplies: { version: "custom version" } },
-  );
+    server.send(":someone!user@host NOTICE me :\x01VERSION deno-irc\x01");
+    const msg = await client.once("ctcp_version_reply");
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      target: "me",
+      version: "deno-irc",
+    });
+  });
 
-  server.send(":nick2!user@host PRIVMSG nick :\u0001VERSION\u0001");
-  const raw = await server.once("NOTICE");
-  assertEquals(raw, "NOTICE nick2 :\u0001VERSION custom version\u0001");
+  test("reply to CTCP VERSION query", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { version: "custom version" } },
+    );
 
-  await sanitize();
-});
+    server.send(":someone!user@host PRIVMSG me :\x01VERSION\x01");
+    await client.once("ctcp_version");
+    const raw = server.receive();
 
-Deno.test("version replies (disabled)", async () => {
-  const { server, client, sanitize } = arrange(
-    [ctcp, version],
-    { ctcpReplies: { version: false } },
-  );
+    assertEquals(raw, ["NOTICE someone :\x01VERSION custom version\x01"]);
+  });
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("not reply to CTCP VERSION query if disabled", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { ctcpReplies: { version: false } },
+    );
 
-  server.send(":nick2!user@host PRIVMSG nick :\u0001VERSION\u0001");
-  const raw = await server.wait("NOTICE", 10);
-  assertEquals(raw, null);
+    server.send(":someone!user@host PRIVMSG me :\x01VERSION\x01");
+    await client.once("ctcp_version");
+    const raw = server.receive();
 
-  await sanitize();
+    assertEquals(raw, []);
+  });
 });

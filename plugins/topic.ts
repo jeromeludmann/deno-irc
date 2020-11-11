@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface TopicParams {
   commands: {
@@ -41,7 +41,7 @@ export interface TopicSetBy {
 }
 
 function commands(client: ExtendedClient<TopicParams>) {
-  client.topic = client.send.bind(client, "TOPIC");
+  client.topic = (...params: string[]) => client.send("TOPIC", ...params);
 }
 
 function events(client: ExtendedClient<TopicParams>) {

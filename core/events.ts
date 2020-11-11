@@ -2,6 +2,8 @@ type Listener<T> = (payload: T) => void;
 
 type Listeners<T> = Record<keyof T, Listener<any>[]>;
 
+type DefaultListenerCounts<T> = Record<keyof T, number>;
+
 type InferredPayload<
   TEvents extends Record<string, any>,
   TEventName extends keyof TEvents,
@@ -9,12 +11,22 @@ type InferredPayload<
 
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
+  private defaultListenerCounts = {} as DefaultListenerCounts<TEvents>;
 
   /** Calls all the listeners of the `eventName` with the `eventPayload`. */
   emit<T extends keyof TEvents>(
     eventName: T,
     eventPayload: InferredPayload<TEvents, T>,
   ): void {
+    const isThrowable = (
+      (eventPayload as unknown) instanceof Error &&
+      this.countListeners(eventName) === this.countDefaultListeners(eventName)
+    );
+
+    if (isThrowable) {
+      throw eventPayload;
+    }
+
     if (!(eventName in this.listeners)) {
       return;
     }
@@ -41,7 +53,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   ): void;
 
   /** Promise-based version of `.once(eventName, listener)`. */
-  once<T extends keyof TEvents>(
+  async once<T extends keyof TEvents>(
     eventName: T,
   ): Promise<InferredPayload<TEvents, T>>;
 
@@ -64,10 +76,10 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
-  /** Waits for an `eventName` for `timeout` ms (default to `1000` ms). */
-  wait<T extends keyof TEvents>(
+  /** Waits for an `eventName` during `delay` in ms. */
+  async wait<T extends keyof TEvents>(
     eventName: T,
-    delay: number = 1000,
+    delay: number,
   ): Promise<InferredPayload<TEvents, T> | null> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -76,8 +88,8 @@ export class EventEmitter<TEvents extends Record<string, any>> {
       }, delay);
 
       const removeListener = this.on(eventName, (payload) => {
-        removeListener();
         clearTimeout(timeout);
+        removeListener();
         resolve(payload);
       });
     });
@@ -96,19 +108,21 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
-  /** Counts the number of listeners bound to the `eventName`. */
-  getListenerCount<T extends keyof TEvents>(eventName: T): number {
+  resetErrorThrowingBehavior(): void {
+    this.defaultListenerCounts = {} as DefaultListenerCounts<TEvents>;
+
+    for (const eventName in this.listeners) {
+      this.defaultListenerCounts[eventName] = this.listeners[eventName].length;
+    }
+  }
+
+  private countListeners<T extends keyof TEvents>(eventName: T): number {
     return eventName in this.listeners ? this.listeners[eventName].length : 0;
   }
 
-  /** Counts all the numbers of existing listeners. */
-  getAllListenersCounts(): Record<keyof TEvents, number> {
-    return Object.keys(this.listeners).reduce(
-      (counts, eventName: keyof TEvents) => {
-        counts[eventName] = this.getListenerCount(eventName);
-        return counts;
-      },
-      {} as Record<keyof TEvents, number>,
-    );
+  private countDefaultListeners<T extends keyof TEvents>(eventName: T): number {
+    return eventName in this.defaultListenerCounts
+      ? this.defaultListenerCounts[eventName]
+      : 0;
   }
 }

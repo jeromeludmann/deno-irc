@@ -1,22 +1,17 @@
-import { Client, Events, Options } from "./client.ts";
-import { EventEmitter } from "./core/events.ts";
-import { assertEquals } from "./core/test_deps.ts";
+import { ClientOptions } from "./client.ts";
+import { assertArrayIncludes, assertEquals, assertExists } from "./deps.ts";
+import { describe } from "./testing/helpers.ts";
+import { mockAll } from "./testing/mock.ts";
 
-// Typing errors mean there are missing param intersections.
-// They should be added to `Params`, defined in `client.ts`.
-
-Deno.test("client options", async () => {
-  const options: Required<Options> = {
+describe("client", (test) => {
+  const options: Required<ClientOptions> = {
     bufferSize: 512,
-    password: "secret",
-    nick: "nick",
+    password: "password",
+    nick: "me",
     username: "user",
     realname: "real name",
-    channels: ["#channel"],
-    oper: {
-      user: "user",
-      pass: "secret",
-    },
+    channels: ["#channel1", "#channel2"],
+    oper: { user: "oper", pass: "pass" },
     joinOnInvite: true,
     ctcpReplies: {
       clientinfo: true,
@@ -24,85 +19,144 @@ Deno.test("client options", async () => {
       time: true,
       version: "deno-irc",
     },
-    debug: false,
-    resolveInvalidNames: false,
+    resolveInvalidNames: true,
+    verbose: true,
   };
 
-  const client = new Client(options);
+  const { client, server } = mockAll(options);
 
-  assertEquals(client.options, options);
-});
+  let raw: string[] = [];
 
-Deno.test("client commands", async () => {
-  const client = new Client({ nick: "nick" });
+  test("have options", () => {
+    assertEquals(client.options, options);
+  });
 
-  assertEquals(typeof client.action, "function");
-  assertEquals(typeof client.me, "function");
-  assertEquals(typeof client.clientinfo, "function");
-  assertEquals(typeof client.ctcp, "function");
-  assertEquals(typeof client.invite, "function");
-  assertEquals(typeof client.join, "function");
-  assertEquals(typeof client.kick, "function");
-  assertEquals(typeof client.kill, "function");
-  assertEquals(typeof client.motd, "function");
-  assertEquals(typeof client.privmsg, "function");
-  assertEquals(typeof client.msg, "function");
-  assertEquals(typeof client.nick, "function");
-  assertEquals(typeof client.notice, "function");
-  assertEquals(typeof client.oper, "function");
-  assertEquals(typeof client.part, "function");
-  assertEquals(typeof client.ping, "function");
-  assertEquals(typeof client.quit, "function");
-  assertEquals(typeof client.time, "function");
-  assertEquals(typeof client.topic, "function");
-  assertEquals(typeof client.version, "function");
-  assertEquals(typeof client.whois, "function");
-});
+  test("have core commands", () => {
+    assertExists(client.connect);
+    assertExists(client.send);
+    assertExists(client.disconnect);
+    assertExists(client.emit);
+    assertExists(client.on);
+    assertExists(client.once);
+    assertExists(client.wait);
+    assertExists(client.off);
+  });
 
-Deno.test("client events", async () => {
-  const client = new Client({ nick: "nick" });
+  test("have plugin commands", () => {
+    assertExists(client.action);
+    assertExists(client.clientinfo);
+    assertExists(client.ctcp);
+    assertExists(client.invite);
+    assertExists(client.join);
+    assertExists(client.kick);
+    assertExists(client.kill);
+    assertExists(client.motd);
+    assertExists(client.privmsg);
+    assertExists(client.nick);
+    assertExists(client.notice);
+    assertExists(client.oper);
+    assertExists(client.part);
+    assertExists(client.ping);
+    assertExists(client.quit);
+    assertExists(client.time);
+    assertExists(client.topic);
+    assertExists(client.version);
+    assertExists(client.whois);
+  });
 
-  const listeners =
-    (client as unknown as { listeners: EventEmitter<Events>["listeners"] })
-      .listeners;
+  test("have plugin command aliases", () => {
+    assertEquals(client.action, client.me);
+    assertEquals(client.privmsg, client.msg);
+  });
 
-  assertEquals(listeners.ctcp_action?.length, undefined);
-  assertEquals(listeners.ctcp_clientinfo?.length, 1);
-  assertEquals(listeners.ctcp_clientinfo_reply?.length, undefined);
-  assertEquals(listeners["raw:ctcp"]?.length, 5);
-  assertEquals(listeners.invite?.length, undefined);
-  assertEquals(listeners.join?.length, undefined);
-  assertEquals(listeners.kick?.length, undefined);
-  assertEquals(listeners.kill?.length, undefined);
-  assertEquals(listeners.motd?.length, undefined);
-  assertEquals(listeners.privmsg?.length, undefined);
-  assertEquals(listeners["privmsg:channel"]?.length, undefined);
-  assertEquals(listeners["privmsg:private"]?.length, undefined);
-  assertEquals(listeners.nick?.length, 1);
-  assertEquals(listeners.notice?.length, undefined);
-  assertEquals(listeners.part?.length, undefined);
-  assertEquals(listeners.ping?.length, 1);
-  assertEquals(listeners.pong?.length, undefined);
-  assertEquals(listeners.ctcp_ping?.length, 1);
-  assertEquals(listeners.ctcp_ping_reply?.length, undefined);
-  assertEquals(listeners.quit?.length, undefined);
-  assertEquals(listeners.register?.length, 1);
-  assertEquals(listeners.myinfo?.length, 1);
-  assertEquals(listeners.ctcp_time?.length, 1);
-  assertEquals(listeners.ctcp_time_reply?.length, undefined);
-  assertEquals(listeners.topic_change?.length, undefined);
-  assertEquals(listeners.topic_set?.length, undefined);
-  assertEquals(listeners.topic_set_by?.length, undefined);
-  assertEquals(listeners.ctcp_version?.length, 1);
-  assertEquals(listeners.whois_reply?.length, undefined);
-});
+  test("have state initialized", () => {
+    assertEquals(client.state, {
+      nick: "me",
+      username: "user",
+      realname: "real name",
+      serverHost: "",
+      serverVersion: "",
+      availableUserModes: [],
+      availableChannelModes: [],
+    });
+  });
 
-Deno.test("client state", async () => {
-  const client = new Client({ nick: "nick" });
+  test("connect to server", async () => {
+    const conn = await client.connect("");
 
-  assertEquals(client.state.nick, "nick");
-  assertEquals(client.state.serverHost, "");
-  assertEquals(client.state.serverVersion, "");
-  assertEquals(client.state.availableUserModes, []);
-  assertEquals(client.state.availableChannelModes, []);
+    assertExists(conn);
+  });
+
+  test("register on connect", () => {
+    raw = server.receive();
+
+    assertEquals(raw, [
+      "PASS password",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+  });
+
+  test("reply to PING", async () => {
+    server.send("PING :key");
+    await client.once("ping");
+    raw = server.receive();
+
+    assertEquals(raw, ["PONG key"]);
+  });
+
+  test("be registered on RPL_WELCOME", async () => {
+    server.send(":serverhost 001 me :Welcome to the server");
+    const msg = await client.once("register");
+
+    assertExists(msg);
+
+    raw = server.receive(); // for the two next tests
+  });
+
+  test("join channels on RPL_WELCOME", () => {
+    assertArrayIncludes(raw, ["JOIN #channel1,#channel2"]);
+  });
+
+  test("set as operator on RPL_WELCOME", () => {
+    assertArrayIncludes(raw, ["OPER oper pass"]);
+  });
+
+  test("join a channel on INVITE", async () => {
+    server.send(":someone!user@host INVITE me :#new_channel");
+    await client.once("invite");
+    raw = server.receive();
+
+    assertEquals(raw, ["JOIN #new_channel"]);
+  });
+
+  test("send PRIVMSG to channel", () => {
+    client.privmsg("#channel", "Hello world!");
+    raw = server.receive();
+
+    assertEquals(raw, ["PRIVMSG #channel :Hello world!"]);
+  });
+
+  test("leave a channel on KICK", async () => {
+    server.send(":someone!user@host KICK #channel me");
+    const msg = await client.once("kick");
+
+    assertEquals(msg, {
+      channel: "#channel",
+      comment: undefined,
+      nick: "me",
+      origin: {
+        nick: "someone",
+        userhost: "host",
+        username: "user",
+      },
+    });
+  });
+
+  test("be disconnected on connection close", async () => {
+    server.close();
+    const msg = await client.once("disconnected");
+
+    assertExists(msg);
+  });
 });

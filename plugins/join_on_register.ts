@@ -1,7 +1,6 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { JoinParams } from "./join.ts";
-import type { RegisterParams } from "./register.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { JoinParams } from "./join.ts";
+import { RegisterParams } from "./register.ts";
 
 export interface JoinOnRegisterParams {
   options: {

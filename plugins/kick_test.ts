@@ -1,50 +1,47 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { kick } from "./kick.ts";
 
-Deno.test("kick commands", async () => {
-  const { server, client, sanitize } = arrange([kick], {});
+describe("plugins/kick", (test) => {
+  const plugins = [kick];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send KICK", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.kick("#channel", "nick");
-  const raw1 = await server.once("KICK");
-  assertEquals(raw1, "KICK #channel nick");
+    client.kick("#channel", "someone");
+    client.kick("#channel", "someone", "Boom!");
+    const raw = server.receive();
 
-  client.kick("#channel", "nick", "Boom!");
-  const raw2 = await server.once("KICK");
-  assertEquals(raw2, "KICK #channel nick Boom!");
-
-  await sanitize();
-});
-
-Deno.test("kick events", async () => {
-  const { server, client, sanitize } = arrange([kick], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":nick!user@host KICK #channel nick2");
-  const msg1 = await client.once("kick");
-
-  assertEquals(msg1, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    channel: "#channel",
-    nick: "nick2",
-    comment: undefined,
+    assertEquals(raw, [
+      "KICK #channel someone",
+      "KICK #channel someone Boom!",
+    ]);
   });
 
-  server.send(":nick!user@host KICK #channel nick2 :Boom!");
-  const msg2 = await client.once("kick");
-  assertEquals(msg2, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    channel: "#channel",
-    nick: "nick2",
-    comment: "Boom!",
-  });
+  test("emit 'kick' on KILL", async () => {
+    const { client, server } = await mock(plugins, {});
+    const messages = [];
 
-  await sanitize();
+    server.send(":someone!user@host KICK #channel me");
+    messages.push(await client.once("kick"));
+
+    server.send(":someone!user@host KICK #channel me :Boom!");
+    messages.push(await client.once("kick"));
+
+    assertEquals(messages, [
+      {
+        origin: { nick: "someone", username: "user", userhost: "host" },
+        channel: "#channel",
+        nick: "me",
+        comment: undefined,
+      },
+      {
+        origin: { nick: "someone", username: "user", userhost: "host" },
+        channel: "#channel",
+        nick: "me",
+        comment: "Boom!",
+      },
+    ]);
+  });
 });

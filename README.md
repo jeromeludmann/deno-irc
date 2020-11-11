@@ -1,5 +1,7 @@
 # deno-irc
 
+![ci](https://github.com/jeromeludmann/deno-irc/workflows/ci/badge.svg)
+
 IRC client protocol module for [Deno](https://deno.land/).
 
 ## Overview
@@ -16,7 +18,10 @@ Any feedback and contributions are welcome.
 ## Contents
 
 - [Usage](#usage)
-- API
+  - [Events](#events)
+  - [Commands](#commands)
+  - [Errors](#errors)
+- [API](#api)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -27,14 +32,23 @@ Code is better than words:
 ```ts
 import { Client } from "https://deno.land/x/irc/mod.ts";
 
-const client = new Client({ nick: "my_nick" });
-client.connect("irc.freenode.net", 6667);
-client.on("register", () => client.join("#my_chan"));
+const client = new Client({
+  nick: "my_nick",
+  channels: ["#my_channel"],
+});
+
+client.on("join", (msg) => {
+  if (msg.channel === "#my_channel") {
+    client.privmsg("#my_channel", "Hello world!");
+  }
+});
+
+await client.connect("irc.freenode.net", 6667);
 ```
 
 Note that this code above requires the `--allow-net` option.
 
-There are only two main concepts to know to use this module: [events](#events) and [commands](#commands).
+There are only two main concepts to know to use `deno-irc`: [events](#events) and [commands](#commands).
 
 ### Events
 
@@ -44,11 +58,11 @@ They can be received by listening to their event names:
 
 ```ts
 client.on("join" (msg) => {
-  console.log(`${msg.origin.nick} joins ${msg.channel}`);
+  console.log(`${msg.origin.nick} has joined ${msg.channel}`);
 });
 ```
 
-Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the specificities of the protocol.
+Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the IRC protocol.
 
 ```ts
 client.on("nick" (msg) => {
@@ -56,37 +70,40 @@ client.on("nick" (msg) => {
 });
 
 client.on("privmsg", (msg) => {
-  console.log(`${msg.origin.nick} talks to ${msg.target}: ${msg.text}`);
+  const { origin, target, text } = msg;
+  console.log(`${origin.nick} on ${target} says ${text}`);
 });
 ```
 
-Some events can be filtered like this:
+Some events, like `"privmsg"` and `"notice"`, can be filtered like this:
 
 ```ts
 client.on("privmsg:channel", (msg) => {
-  console.log(`${msg.origin.nick} talks to ${msg.channel}: ${msg.text}`);
+  const { origin, channel, text } = msg;
+  console.log(`${origin.nick} on ${channel} says ${text}`);
 });
 
 client.on("privmsg:private", (msg) => {
-  console.log(`${msg.origin.nick} talks to you: ${msg.text}`);
+  const { origin, text } = msg;
+  console.log(`${origin.nick} says to you ${text}`);
 });
 ```
 
-There are also other methods which can be useful.
+There are also other methods related to events which can be useful.
 
-Following only resolve when the message has been received:
+Following only resolves when the message has been received:
 
 ```ts
 const msg = await client.once("join");
 ```
 
-Resolves when the message has been received, otherwise resolves after the given delay to `null`:
+Following resolves when the message has been received, otherwise resolves after the given delay to `null`:
 
 ```ts
 const msg = client.wait("join", 2000);
 
 if (msg === null) {
-  console.log("message never received");
+  console.log("message not received on time");
 }
 ```
 
@@ -108,31 +125,32 @@ client.topic("#channel", "New topic of the channel");
 client.quit("Goodbye!");
 ```
 
-### Uncaught errors
+### Errors
 
-When an error is thrown, it causes a crash.
+When an error is emitted, it will be thrown by default and causes a crash of the program.
 
-It is required to have event listeners for `"error:client"` and `"error:server"` to avoid the client from crashing.
+To avoid the client from crashing, it is required to have at least one event listener for the `"error"` event name.
 
-By listening to these events, errors will no longer be thrown and you will be able to handle them properly:
+By listening to the `"error"` event, errors will no longer be thrown and you will be able to handle them properly:
 
 ```ts
-client.on("error:client", (error) => {
-  switch (error.op) {
-    case "connect": // error while connecting
-    case "plugin": // error from internal plugin
-    default:
-      console.error(error);
-  }
-});
+client.on("error", (error) => {
+  switch (error.type) {
+    case "connect":
+    // errors while connecting
 
-client.on("error:server", (error) => {
-  switch (error.command) {
-    case "ERR_NICKNAMEINUSE": // nick is already in use
-    case "ERR_NOSUCHCHANNEL": // channel does not exist
-    case "ERROR": // error that causes a disconnection
-    default:
-      console.error(error);
+    case "read":
+    // errors while receiving messages from server
+
+    case "write":
+    // errors while sending messages to server
+
+    case "close":
+    // errors while disconnecting
+
+    case "plugin":
+    // errors coming from internal plugins
+    // (an "ERROR" IRC message also throw an error)
   }
 });
 ```
@@ -141,15 +159,22 @@ This behavior is heavily inspired by the [Node.js error handling](https://www.jo
 
 An early crash prevents loosing useful informations when the client tries something without success.
 
+## API
+
+_Work in progress. You can use for the moment the code completion support from your IDE to discover other commands and event names._
+
 ## Contributing
 
 _This is a first draft of a contributing section._
 
-This module is built around two patterns: event driven architecture and plugins.
+This module is mainly built around two patterns:
 
-It involves keeping the core as minimal as possible and delegates implementation of features to small independent parts (which are called plugins).
+- event driven architecture
+- internal plugins
 
-The core contains some internal parts related to main parsers, sockets and event emitter. The plugins contain all the extra features built on top of the core client.
+It involves keeping the client as minimal as possible (the _core_) and delegates implementation of features to highly cohesive decoupled parts (which are called _plugins_).
+
+The core contains some internal parts related to IRC protocol, TCP sockets and event system. Plugins contain all the extra features built on top of the core client.
 
 In most of the cases, it is quite handy to add new features using plugins without touching the core.
 

@@ -1,7 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { CtcpParams } from "./ctcp.ts";
-import { createCtcp } from "./ctcp.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { UserMask } from "../core/parsers.ts";
+import { createCtcp, CtcpParams } from "./ctcp.ts";
 
 export interface VersionParams {
   options: {
@@ -49,10 +48,10 @@ function commands(
   client: ExtendedClient<VersionParams & CtcpParams>,
 ) {
   client.version = (target) => {
-    if (target !== undefined) {
-      client.ctcp(target, "VERSION");
-    } else {
+    if (target === undefined) {
       client.send("VERSION");
+    } else {
+      client.ctcp(target, "VERSION");
     }
   };
 }
@@ -60,7 +59,7 @@ function commands(
 function events(
   client: ExtendedClient<VersionParams & CtcpParams>,
 ) {
-  client.on("raw:ctcp", (msg) => {
+  client.on("ctcp", (msg) => {
     if (msg.command !== "VERSION") {
       return;
     }

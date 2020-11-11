@@ -1,5 +1,4 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
 
 export interface RegisterParams {
   commands: {
@@ -21,11 +20,10 @@ export interface Register {
 }
 
 function commands(client: ExtendedClient<RegisterParams>) {
-  client.user = (username, realname) => {
+  client.user = (username, realname) =>
     client.send("USER", username, "0", "*", realname);
-  };
 
-  client.pass = client.send.bind(client, "PASS");
+  client.pass = (...params) => client.send("PASS", ...params);
 }
 
 function events(client: ExtendedClient<RegisterParams>) {

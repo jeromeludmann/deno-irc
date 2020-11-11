@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface KillParams {
   commands: {
@@ -21,7 +21,7 @@ export interface Kill {
 }
 
 function commands(client: ExtendedClient<KillParams>) {
-  client.kill = client.send.bind(client, "KILL");
+  client.kill = (...params) => client.send("KILL", ...params);
 }
 
 function events(client: ExtendedClient<KillParams>) {

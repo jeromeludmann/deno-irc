@@ -1,5 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, isChannel, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { isChannel } from "../core/helpers.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 import { isCtcp } from "./ctcp.ts";
 
 export interface PrivmsgParams {
@@ -42,7 +43,8 @@ export interface PrivatePrivmsg {
 }
 
 function commands(client: ExtendedClient<PrivmsgParams>) {
-  client.privmsg = client.msg = client.send.bind(client, "PRIVMSG");
+  client.privmsg = client.msg = (...params) =>
+    client.send("PRIVMSG", ...params);
 }
 
 function events(client: ExtendedClient<PrivmsgParams>) {

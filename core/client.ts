@@ -1,10 +1,10 @@
 import { EventEmitter } from "./events.ts";
-import type { Raw } from "./parsers.ts";
-import { Parser } from "./parsers.ts";
-import type { AnyCommand } from "./protocol.ts";
+import { Parser, Raw } from "./parsers.ts";
+import { AnyCommand } from "./protocol.ts";
 
-export interface ClientParams {
+export interface CoreParams {
   options: {
+    /** Size of the buffer. Default to `4096` bytes. */
     bufferSize?: number;
   };
   events: {
@@ -12,26 +12,17 @@ export interface ClientParams {
     "connected": RemoteAddr;
     "disconnected": RemoteAddr;
     "raw": Raw;
-    "error:client": ClientError;
+    "error": FatalError;
   };
 }
 
-type ClientOp = "connect" | "read" | "write" | "close" | "plugin";
-
-export class ClientError extends Error {
-  op: ClientOp;
-  cause?: Error;
-
-  constructor(op: ClientOp, cause: Error | string) {
-    if (typeof cause === "string") {
-      super(`${op}: ${cause}`);
-    } else {
-      super(`${op}: ${cause.message}`);
-      this.cause = cause;
-    }
-
-    this.name = ClientError.name;
-    this.op = op;
+export class FatalError extends Error {
+  constructor(
+    public type: "connect" | "read" | "write" | "close" | "plugin",
+    message: string,
+  ) {
+    super(`${type}: ${message}`);
+    this.name = FatalError.name;
   }
 }
 
@@ -40,10 +31,9 @@ type PluginParams = {
 };
 
 export type ExtendedClient<T extends PluginParams = {}> =
-  & { options: T["options"] }
   & T["commands"]
-  & Client<ClientParams["events"] & T["events"]>
-  & { state: T["state"] };
+  & CoreClient<CoreParams["events"] & T["events"]>
+  & { options: T["options"]; state: T["state"] };
 
 export type Plugin<T extends PluginParams = {}> = (
   client: ExtendedClient<T>,
@@ -60,54 +50,63 @@ const BUFFER_SIZE = 4096;
 
 const PORT = 6667;
 
-/** Core features of the IRC client. */
-export class Client<TEvents extends ClientParams["events"]>
-  extends EventEmitter<TEvents> {
-  private conn: Deno.Conn | null = null;
+export class CoreClient<
+  TEvents extends CoreParams["events"] = CoreParams["events"],
+> extends EventEmitter<
+  CoreParams["events"] & TEvents
+> {
+  protected connectImpl = Deno.connect;
+  protected conn: Deno.Conn | null = null;
+
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
-  private listenerCounts: Record<keyof TEvents, number>;
-  state: Readonly<{}> = {};
+
+  readonly state: Readonly<{}> = {};
 
   constructor(
-    public options: Readonly<ClientParams["options"]>,
     plugins: Plugin<any>[],
+    public options: Readonly<CoreParams["options"]>,
   ) {
     super();
+
     new Set(plugins).forEach((plugin) => plugin(this));
-    this.listenerCounts = this.getAllListenersCounts();
+    this.resetErrorThrowingBehavior();
   }
 
-  /**
-   * Connects to a server using a hostname and an optional port.
+  /** Connects to a server using a hostname and an optional port.
    *
-   * Resolves only when connection has been closed.
-   */
-  async connect(hostname: string, port = PORT): Promise<void> {
-    if (this.conn) {
-      this.conn?.close();
-      this.conn = null;
+   * Resolves when connected. */
+  async connect(hostname: string, port = PORT): Promise<Deno.Conn | null> {
+    if (this.conn !== null) {
+      this.close();
     }
 
     try {
       this.emit("connecting", { hostname, port });
-      this.conn = await Deno.connect({ hostname, port });
+      this.conn = await this.connectImpl({ hostname, port });
       this.emit("connected", getRemoteAddr(this.conn));
     } catch (error) {
-      this.emitError("error:client", new ClientError("connect", error));
-      return;
+      this.emit("error", new FatalError("connect", error.message));
+      return null;
     }
 
+    this.read(this.conn);
+    return this.conn;
+  }
+
+  private async read(conn: Deno.Conn): Promise<void> {
     const buffer = new Uint8Array(this.options.bufferSize ?? BUFFER_SIZE);
     let read: number | null;
 
     for (;;) {
       try {
-        read = await this.conn.read(buffer);
+        read = await conn.read(buffer);
         if (read === null) break;
       } catch (error) {
-        this.emitError("error:client", new ClientError("read", error));
+        if (!(error instanceof Deno.errors.BadResource)) {
+          this.emit("error", new FatalError("read", error.message));
+        }
         break;
       }
 
@@ -119,26 +118,37 @@ export class Client<TEvents extends ClientParams["events"]>
         try {
           this.emit("raw", msg);
         } catch (error) {
-          this.emitError("error:client", new ClientError("plugin", error));
+          this.emit("error", new FatalError("plugin", error.message));
         }
       }
     }
 
+    this.close();
+  }
+
+  private close() {
+    if (this.conn === null) {
+      return;
+    }
+
     try {
       this.conn.close();
-    } catch (error) {
-      this.emitError("error:client", new ClientError("close", error));
-    } finally {
       this.emit("disconnected", getRemoteAddr(this.conn));
+    } catch (error) {
+      this.emit("error", new FatalError("close", error.message));
+    } finally {
       this.conn = null;
     }
   }
 
-  /** Sends a raw message to the server. */
-  async send(command: AnyCommand, ...params: string[]): Promise<void> {
+  /** Sends a raw message to the server.
+   *
+   * Resolves with the raw message sent to the server,
+   * or `null` if nothing has been sent. */
+  async send(command: AnyCommand, ...params: string[]): Promise<string | null> {
     if (this.conn === null) {
-      this.emitError("error:client", new ClientError("write", "Not connected"));
-      return;
+      this.emit("error", new FatalError("write", "Unable to send message"));
+      return null;
     }
 
     const last = params.length - 1;
@@ -154,48 +164,18 @@ export class Client<TEvents extends ClientParams["events"]>
 
     try {
       await this.conn.write(bytes);
+      return raw;
     } catch (error) {
-      this.emitError("error:client", new ClientError("write", error));
+      if (!(error instanceof Deno.errors.BadResource)) {
+        this.emit("error", new FatalError("write", error.message));
+      }
+      return null;
     }
   }
 
   /** Disconnects from the server. */
-  async disconnect(): Promise<void> {
-    if (this.conn === null) {
-      return;
-    }
-
-    try {
-      this.conn.close();
-      await this.once("disconnected");
-    } catch (error) {
-      this.emitError("error:client", new ClientError("close", error));
-    }
-  }
-
-  /** Emits an error and throw it if there are no related event listeners. */
-  emitError(eventName: keyof TEvents, error: Error): void {
-    const hasEventListener =
-      this.getListenerCount(eventName) > (this.listenerCounts[eventName] ?? 0);
-
-    const isBadResource = (
-      error instanceof ClientError &&
-      error.cause instanceof Deno.errors.BadResource
-    );
-
-    if (!hasEventListener && !isBadResource) {
-      console.error(`
-\x1b[31m
-In order to prevent client from crashing, add an event listener to the event name "${eventName}":
-
-    client.on("${eventName}", (error) => {
-      // deal with error
-    });
-\x1b[39m`);
-      throw error;
-    }
-
-    this.emit(eventName, error as unknown as TEvents[keyof TEvents]);
+  disconnect(): void {
+    this.close();
   }
 }
 

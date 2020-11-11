@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface PartParams {
   commands: {
@@ -21,7 +21,7 @@ export interface Part {
 }
 
 function commands(client: ExtendedClient<PartParams>) {
-  client.part = client.send.bind(client, "PART");
+  client.part = (...params: string[]) => client.send("PART", ...params);
 }
 
 function events(client: ExtendedClient<PartParams>) {

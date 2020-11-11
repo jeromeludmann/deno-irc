@@ -1,5 +1,5 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin, parseUserMask } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 
 export interface KickParams {
   commands: {
@@ -23,7 +23,7 @@ export interface Kick {
 }
 
 function commands(client: ExtendedClient<KickParams>) {
-  client.kick = client.send.bind(client, "KICK");
+  client.kick = (...params: string[]) => client.send("KICK", ...params);
 }
 
 function events(client: ExtendedClient<KickParams>) {

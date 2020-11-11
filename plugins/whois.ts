@@ -1,5 +1,4 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
 
 export interface WhoisParams {
   commands: {
@@ -37,7 +36,7 @@ export interface WhoisReply {
 }
 
 function commands(client: ExtendedClient<WhoisParams>) {
-  client.whois = client.send.bind(client, "WHOIS");
+  client.whois = (...params: string[]) => client.send("WHOIS", ...params);
 }
 
 function events(client: ExtendedClient<WhoisParams>) {

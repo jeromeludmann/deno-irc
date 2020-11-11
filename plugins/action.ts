@@ -1,6 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
-import type { CtcpParams } from "./ctcp.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { UserMask } from "../core/parsers.ts";
+import { CtcpParams } from "./ctcp.ts";
 
 export interface ActionParams {
   commands: {
@@ -26,13 +26,12 @@ export interface CtcpAction {
 function commands(
   client: ExtendedClient<ActionParams & CtcpParams>,
 ) {
-  client.action = client.me = (target, text) => {
+  client.action = client.me = (target, text) =>
     client.ctcp(target, "ACTION", text);
-  };
 }
 
 function events(client: ExtendedClient<ActionParams & CtcpParams>) {
-  client.on("raw:ctcp", (msg) => {
+  client.on("ctcp", (msg) => {
     if (msg.command !== "ACTION") {
       return;
     }

@@ -1,37 +1,49 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { nick } from "./nick.ts";
 import { register } from "./register.ts";
 import { registerOnConnect } from "./register_on_connect.ts";
 import { userState } from "./user_state.ts";
 
-Deno.test("user state", async () => {
-  const { server, client, sanitize } = arrange(
-    [userState, nick, register, registerOnConnect],
-    { nick: "nick", username: "user", realname: "real name" },
-  );
+describe("plugins/user_state", (test) => {
+  const plugins = [userState, nick, register, registerOnConnect];
+  const options = { nick: "me", username: "user", realname: "real name" };
 
-  assertEquals(client.state, {
-    nick: "nick",
-    username: "user",
-    realname: "real name",
+  test("initialize user state", async () => {
+    const { client } = await mock(plugins, options);
+
+    assertEquals(client.state, {
+      nick: "me",
+      username: "user",
+      realname: "real name",
+    });
   });
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("update nick on RPL_WELCOME", async () => {
+    const { client, server } = await mock(plugins, options);
 
-  server.send(":serverhost 001 nick2 :Welcome to the server");
-  await client.once("register");
-  assertEquals(client.state.nick, "nick2");
+    server.send(":serverhost 001 new_nick :Welcome to the server");
+    await client.once("register");
 
-  server.send(":nick4!user@host NICK nick3");
-  await client.once("nick");
-  assertEquals(client.state.nick, "nick2");
+    assertEquals(client.state.nick, "new_nick");
+  });
 
-  server.send(":nick2!user@host NICK nick3");
-  await client.once("nick");
-  assertEquals(client.state.nick, "nick3");
+  test("track nick changes on NICK", async () => {
+    const { client, server } = await mock(plugins, options);
 
-  await sanitize();
+    server.send(":me!user@host NICK new_nick");
+    await client.once("nick");
+
+    assertEquals(client.state.nick, "new_nick");
+  });
+
+  test("not track nick changes on NICK", async () => {
+    const { client, server } = await mock(plugins, options);
+
+    server.send(":someone!user@host NICK new_nick");
+    await client.once("nick");
+
+    assertEquals(client.state.nick, "me");
+  });
 });

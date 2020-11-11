@@ -1,34 +1,29 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { nick } from "./nick.ts";
 
-Deno.test("nick commands", async () => {
-  const { server, client, sanitize } = arrange([nick], {});
+describe("plugins/nick", (test) => {
+  const plugins = [nick];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send NICK", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.nick("nick2");
-  const raw = await server.once("NICK");
-  assertEquals(raw, "NICK nick2");
+    client.nick("new_nick");
+    const raw = server.receive();
 
-  await sanitize();
-});
-
-Deno.test("nick events", async () => {
-  const { server, client, sanitize } = arrange([nick], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":nick!user@host NICK nick2");
-  const msg = await client.once("nick");
-  assertEquals(msg, {
-    origin: { nick: "nick", username: "user", userhost: "host" },
-    nick: "nick2",
+    assertEquals(raw, ["NICK new_nick"]);
   });
 
-  await sanitize();
+  test("emit 'nick' on NICK", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":someone!user@host NICK me");
+    const msg = await client.once("nick");
+
+    assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
+      nick: "me",
+    });
+  });
 });

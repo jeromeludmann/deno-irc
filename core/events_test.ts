@@ -1,138 +1,157 @@
+import { assertEquals, assertThrows } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
 import { EventEmitter } from "./events.ts";
-import { assertEquals } from "./test_deps.ts";
 
-Deno.test("add one listener and emit an event", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
-  let value: any;
+describe("core/events", (test) => {
+  test("add one listener and emit an event", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+    let value: any;
 
-  emitter.on("event", (val: any) => {
-    triggered++;
-    value = val;
+    emitter.on("event", (val: any) => {
+      triggered++;
+      value = val;
+    });
+    emitter.emit("event", { key: "value" });
+
+    assertEquals(triggered, 1);
+    assertEquals(value, { key: "value" });
   });
-  emitter.emit("event", { key: "value" });
 
-  assertEquals(triggered, 1);
-  assertEquals(value, { key: "value" });
-});
+  test("add two listeners and emit an event", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
 
-Deno.test("add two listeners and emit an event", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
+    emitter.on("event", () => triggered++);
+    emitter.on("event", () => triggered++);
+    emitter.emit("event", {});
 
-  emitter.on("event", () => {
-    triggered++;
+    assertEquals(triggered, 2);
   });
-  emitter.on("event", () => {
-    triggered++;
+
+  test("add one listener and emit a different event", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+
+    emitter.on("event", () => triggered++);
+    emitter.emit("event2", {});
+
+    assertEquals(triggered, 0);
   });
-  emitter.emit("event", {});
 
-  assertEquals(triggered, 2);
-});
+  test("add two listeners and remove one of them", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
 
-Deno.test("add one listener and emit a different event", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
+    const off1 = emitter.on("event", () => triggered++);
+    emitter.on("event", () => triggered++);
+    off1();
+    emitter.emit("event", {});
 
-  emitter.on("event", () => {
-    triggered++;
+    assertEquals(triggered, 1);
   });
-  emitter.emit("event2", {});
 
-  assertEquals(triggered, 0);
-});
+  test("add two listeners and remove all of them", async () => {
+    const emitter = new EventEmitter();
+    let triggered1 = 0;
+    let triggered2 = 0;
 
-Deno.test("add two listeners and remove one of them", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
+    const off1 = emitter.on("event", () => triggered1++);
+    const off2 = emitter.on("event", () => triggered2++);
+    off1();
+    off2();
+    emitter.emit("event", {});
 
-  const off1 = emitter.on("event", () => {
-    triggered++;
+    assertEquals(triggered1, 0);
+    assertEquals(triggered2, 0);
   });
-  emitter.on("event", () => {
-    triggered++;
+
+  test("add a listener twice and emit an event", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+    const listener = () => triggered++;
+
+    emitter.on("event", listener);
+    emitter.on("event", listener);
+    emitter.emit("event", {});
+
+    assertEquals(triggered, 2);
   });
-  off1();
-  emitter.emit("event", {});
 
-  assertEquals(triggered, 1);
-});
+  test("add a listener twice and remove it", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+    const listener = () => triggered++;
+    let off: () => void;
 
-Deno.test("add two listeners and remove all of them", async () => {
-  const emitter = new EventEmitter();
-  let triggered1 = 0;
-  let triggered2 = 0;
+    off = emitter.on("event", listener);
+    emitter.on("event", listener);
+    off();
+    emitter.emit("event", {});
 
-  const off1 = emitter.on("event", () => {
-    triggered1++;
+    assertEquals(triggered, 0);
   });
-  const off2 = emitter.on("event", () => {
-    triggered2++;
+
+  test("wait an event", async () => {
+    const emitter = new EventEmitter();
+
+    const [payload] = await Promise.all([
+      emitter.once("event"),
+      emitter.emit("event", { key: "value" }),
+    ]);
+
+    assertEquals(payload, { key: "value" });
   });
-  off1();
-  off2();
-  emitter.emit("event", {});
 
-  assertEquals(triggered1, 0);
-  assertEquals(triggered2, 0);
-});
+  test("wait an event for a given time", async () => {
+    const emitter = new EventEmitter();
 
-Deno.test("add a listener twice and emit an event", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
-  const listener = () => {
-    triggered++;
-  };
+    const [payload] = await Promise.all([
+      emitter.wait("event", 1),
+      emitter.emit("event", { key: "value" }),
+    ]);
 
-  emitter.on("event", listener);
-  emitter.on("event", listener);
-  emitter.emit("event", {});
+    assertEquals(payload, { key: "value" });
 
-  assertEquals(triggered, 2);
-});
+    const [never] = await Promise.all([
+      emitter.wait("event", 1),
+      emitter.emit("event2", { key: "value" }),
+    ]);
 
-Deno.test("add a listener twice and remove it", async () => {
-  const emitter = new EventEmitter();
-  let triggered = 0;
-  const listener = () => {
-    triggered++;
-  };
-  let off: () => void;
+    assertEquals(never, null);
+  });
 
-  off = emitter.on("event", listener);
-  emitter.on("event", listener);
-  off();
-  emitter.emit("event", {});
+  test("throw when emitting errors without bound listener", async () => {
+    const emitter = new EventEmitter();
 
-  assertEquals(triggered, 0);
-});
+    assertThrows(
+      () => emitter.emit("event", new Error("Boom!")),
+      Error,
+      "Boom!",
+    );
+  });
 
-Deno.test("wait an event", async () => {
-  const emitter = new EventEmitter();
+  test("not throw when emitting errors with bound listener", async () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
 
-  const [payload] = await Promise.all([
-    emitter.once("event"),
-    emitter.emit("event", { key: "value" }),
-  ]);
+    emitter.on("event", () => triggered++);
+    emitter.emit("event", new Error("Boom!"));
 
-  assertEquals(payload, { key: "value" });
-});
+    assertEquals(triggered, 1);
+  });
 
-Deno.test("wait an event for n ms.", async () => {
-  const emitter = new EventEmitter();
+  test("throw when emitting errors after reseting error throwing behavior", async () => {
+    const emitter = new EventEmitter();
 
-  const [payload] = await Promise.all([
-    emitter.wait("event", 10),
-    emitter.emit("event", { key: "value" }),
-  ]);
-
-  assertEquals(payload, { key: "value" });
-
-  const [never] = await Promise.all([
-    emitter.wait("event", 10),
-    emitter.emit("event2", { key: "value" }),
-  ]);
-
-  assertEquals(never, null);
+    assertThrows(
+      () => {
+        emitter.on("event", () => {});
+        emitter.resetErrorThrowingBehavior();
+        emitter.emit("event", new Error("Boom!"));
+      },
+      Error,
+      "Boom!",
+    );
+  });
 });

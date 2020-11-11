@@ -1,53 +1,49 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { whois } from "./whois.ts";
 
-Deno.test("whois commands", async () => {
-  const { server, client, sanitize } = arrange([whois], {});
+describe("plugins/whois", (test) => {
+  const plugins = [whois];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send WHOIS", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.whois("nick");
-  const raw1 = await server.once("WHOIS");
-  assertEquals(raw1, "WHOIS nick");
+    client.whois("someone");
+    client.whois("serverhost", "someone");
+    const raw = server.receive();
 
-  client.whois("serverhost", "nick");
-  const raw2 = await server.once("WHOIS");
-  assertEquals(raw2, "WHOIS serverhost nick");
-
-  await sanitize();
-});
-
-Deno.test("whois events", async () => {
-  const { server, client, sanitize } = arrange([whois], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":serverhost 311 nick nick2 username userhost * :real name");
-  server.send(":serverhost 319 nick nick2 :@#test1 #test2");
-  server.send(":serverhost 312 nick nick2 serverhost :IRC Server");
-  server.send(":serverhost 317 nick nick2 123 :seconds idle");
-  server.send(":serverhost 313 nick nick2 :is an IRC operator");
-  server.send(":serverhost 301 nick nick2 :is away");
-  server.send(":serverhost 318 nick nick2 :End of /WHOIS list.");
-
-  const msg = await client.once("whois_reply");
-  assertEquals(msg, {
-    nick: "nick2",
-    host: "userhost",
-    username: "username",
-    realname: "real name",
-    channels: ["@#test1", "#test2"],
-    server: "serverhost",
-    serverInfo: "IRC Server",
-    idle: 123,
-    operator: "is an IRC operator",
-    away: "is away",
+    assertEquals(raw, [
+      "WHOIS someone",
+      "WHOIS serverhost someone",
+    ]);
   });
 
-  await sanitize();
+  test("emit 'whois_reply' on RPL_ENDOFWHOIS", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send([
+      ":serverhost 311 me someone username userhost * :real name",
+      ":serverhost 319 me someone :@#channel1 +#channel2 #channel3",
+      ":serverhost 312 me someone serverhost :IRC Server",
+      ":serverhost 317 me someone 3600 :seconds idle",
+      ":serverhost 313 me someone :is an IRC operator",
+      ":serverhost 301 me someone :is away",
+      ":serverhost 318 me someone :End of /WHOIS list.",
+    ]);
+    const msg = await client.once("whois_reply");
+
+    assertEquals(msg, {
+      nick: "someone",
+      host: "userhost",
+      username: "username",
+      realname: "real name",
+      channels: ["@#channel1", "+#channel2", "#channel3"],
+      server: "serverhost",
+      serverInfo: "IRC Server",
+      idle: 3600,
+      operator: "is an IRC operator",
+      away: "is away",
+    });
+  });
 });

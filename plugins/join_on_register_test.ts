@@ -1,22 +1,36 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { join } from "./join.ts";
 import { joinOnRegister } from "./join_on_register.ts";
 import { register } from "./register.ts";
 
-Deno.test("join_on_register", async () => {
-  const { server, client, sanitize } = arrange(
-    [joinOnRegister, join, register],
-    { channels: ["#channel1", "#channel2"] },
-  );
+describe("plugins/join_on_register", (test) => {
+  const plugins = [joinOnRegister, join, register];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
+  test("join on RPL_WELCOME", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { channels: ["#channel1", "#channel2"] },
+    );
 
-  server.send(":serverhost 001 nick :Welcome to the server");
-  const raw = await server.once("JOIN");
-  assertEquals(raw, "JOIN #channel1,#channel2");
+    server.send(":serverhost 001 me :Welcome to the server");
+    await client.once("register");
+    const raw = server.receive();
 
-  await sanitize();
+    assertEquals(raw, ["JOIN #channel1,#channel2"]);
+  });
+
+  test("not join on RPL_WELCOME if disabled", async () => {
+    const { client, server } = await mock(
+      plugins,
+      { channels: [] },
+    );
+
+    server.send(":serverhost 001 me :Welcome to the server");
+    await client.once("register");
+    const raw = server.receive();
+
+    assertEquals(raw, []);
+  });
 });

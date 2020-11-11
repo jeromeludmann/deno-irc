@@ -1,10 +1,6 @@
-import type { ExtendedClient, UserMask } from "../core/mod.ts";
-import {
-  createPlugin,
-  isChannel,
-  isServerHost,
-  parseUserMask,
-} from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { isChannel, isServerHost } from "../core/helpers.ts";
+import { parseUserMask, UserMask } from "../core/parsers.ts";
 import { isCtcp } from "./ctcp.ts";
 
 export interface NoticeParams {
@@ -53,7 +49,7 @@ export interface PrivateNotice {
 }
 
 function commands(client: ExtendedClient<NoticeParams>) {
-  client.notice = client.send.bind(client, "NOTICE");
+  client.notice = (...params) => client.send("NOTICE", ...params);
 }
 
 function events(client: ExtendedClient<NoticeParams>) {

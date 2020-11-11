@@ -1,5 +1,4 @@
-import type { ExtendedClient } from "../core/mod.ts";
-import { createPlugin } from "../core/mod.ts";
+import { createPlugin, ExtendedClient } from "../core/client.ts";
 
 export interface MotdParams {
   commands: {
@@ -17,7 +16,7 @@ export interface Motd {
 }
 
 function commands(client: ExtendedClient<MotdParams>) {
-  client.motd = client.send.bind(client, "MOTD");
+  client.motd = (...params) => client.send("MOTD", ...params);
 }
 
 function events(client: ExtendedClient<MotdParams>) {

@@ -1,43 +1,47 @@
-import { assertEquals } from "../core/test_deps.ts";
-import { arrange } from "../core/test_helpers.ts";
+import { assertEquals } from "../deps.ts";
+import { describe } from "../testing/helpers.ts";
+import { mock } from "../testing/mock.ts";
 import { motd } from "./motd.ts";
 
-Deno.test("motd commands", async () => {
-  const { server, client, sanitize } = arrange([motd], {});
+describe("plugins/motd", (test) => {
+  const plugins = [motd];
 
-  server.listen();
-  client.connect(server.host, server.port);
-  await client.once("connected");
+  test("send MOTD", async () => {
+    const { client, server } = await mock(plugins, {});
 
-  client.motd();
-  const raw = await server.once("MOTD");
-  assertEquals(raw, "MOTD");
+    client.motd();
+    const raw = server.receive();
 
-  await sanitize();
-});
-
-Deno.test("motd events", async () => {
-  const { server, client, sanitize } = arrange([motd], {});
-
-  server.listen();
-  client.connect(server.host, server.port);
-  await server.waitClient();
-
-  server.send(":serverhost 422 nick :MOTD File is missing");
-  const msg1 = await client.once("motd");
-  assertEquals(msg1, { motd: undefined });
-
-  server.send(":serverhost 375 nick :- serverhost Message of the day - ");
-  server.send(":serverhost 372 nick :- Welcome to the");
-  server.send(":serverhost 372 nick :- fake server!");
-  server.send(":serverhost 376 nick :End of MOTD command");
-  const msg2 = await client.once("motd");
-  assertEquals(msg2, {
-    motd: [
-      "- Welcome to the",
-      "- fake server!",
-    ],
+    assertEquals(raw, ["MOTD"]);
   });
 
-  await sanitize();
+  test("emit 'motd' on RPL_ENDOFMOTD", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send([
+      ":serverhost 375 nick :- serverhost Message of the day - ",
+      ":serverhost 372 nick :- Welcome to the",
+      ":serverhost 372 nick :- fake server!",
+      ":serverhost 376 nick :End of MOTD command",
+    ]);
+    const msg = await client.once("motd");
+
+    assertEquals(msg, {
+      motd: [
+        "- Welcome to the",
+        "- fake server!",
+      ],
+    });
+  });
+
+  test("emit 'motd' on ERR_NOMOTD", async () => {
+    const { client, server } = await mock([motd], {});
+
+    server.send(":serverhost 422 nick :MOTD File is missing");
+    const msg = await client.once("motd");
+
+    assertEquals(msg, {
+      motd: undefined,
+    });
+  });
 });
