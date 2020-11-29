@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { serverError } from "./server_error.ts";
+import { throwOnError } from "./throw_on_error.ts";
 
-describe("plugins/server_error", (test) => {
-  const plugins = [serverError];
+describe("plugins/throw_on_error", (test) => {
+  const plugins = [throwOnError];
 
   test("emit 'error' on ERROR", async () => {
     const { client, server } = await mock(plugins, {});
@@ -12,10 +12,10 @@ describe("plugins/server_error", (test) => {
     server.send("ERROR :Closing link: (user@host) [Client exited]");
     const error = await client.once("error");
 
-    assertEquals(error.type, "plugin");
+    assertEquals(error.type, "read");
     assertEquals(
       error.message,
-      "plugin: Closing link: (user@host) [Client exited]",
+      "read: Closing link: (user@host) [Client exited]",
     );
   });
 });

@@ -146,11 +146,7 @@ client.on("error", (error) => {
     // errors while sending messages to server
 
     case "close":
-    // errors while disconnecting
-
-    case "plugin":
-    // errors coming from internal plugins
-    // (an "ERROR" IRC message also throw an error)
+    // errors while closing connection
   }
 });
 ```

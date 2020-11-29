@@ -27,10 +27,6 @@ describe("client", (test) => {
 
   let raw: string[] = [];
 
-  test("have options", () => {
-    assertEquals(client.options, options);
-  });
-
   test("have core commands", () => {
     assertExists(client.connect);
     assertExists(client.send);

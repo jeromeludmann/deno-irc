@@ -1,6 +1,11 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
-import { isChannel, isServerHost } from "../core/helpers.ts";
-import { parseUserMask, UserMask } from "../core/parsers.ts";
+import { Plugin } from "../core/client.ts";
+import {
+  isChannel,
+  isNick,
+  isServerHost,
+  isUserMask,
+} from "../core/helpers.ts";
+import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 import { isCtcp } from "./ctcp.ts";
 
 export interface NoticeParams {
@@ -8,6 +13,7 @@ export interface NoticeParams {
     /** Notifies a `target` with a `text`. */
     notice(target: string, text: string): void;
   };
+
   events: {
     "notice": Notice;
     "notice:server": ServerNotice;
@@ -19,8 +25,10 @@ export interface NoticeParams {
 export interface Notice {
   /** Raw prefix of the NOTICE. */
   prefix: string;
+
   /** Target of the NOTICE. */
   target: string;
+
   /** Text of the NOTICE. */
   text: string;
 }
@@ -28,6 +36,7 @@ export interface Notice {
 export interface ServerNotice {
   /** Origin of the NOTICE. */
   origin: string;
+
   /** Text of the NOTICE. */
   text: string;
 }
@@ -35,8 +44,10 @@ export interface ServerNotice {
 export interface ChannelNotice {
   /** User who sent the NOTICE. */
   origin: UserMask;
+
   /** Channel where the NOTICE is sent. */
   channel: string;
+
   /** Text of the NOTICE. */
   text: string;
 }
@@ -44,21 +55,27 @@ export interface ChannelNotice {
 export interface PrivateNotice {
   /** User who sent the NOTICE. */
   origin: UserMask;
+
   /** Text of the NOTICE. */
   text: string;
 }
 
-function commands(client: ExtendedClient<NoticeParams>) {
-  client.notice = (...params) => client.send("NOTICE", ...params);
-}
+export const notice: Plugin<NoticeParams> = (client) => {
+  client.notice = sendNotice;
+  client.on("raw", emitNotice);
+  client.on("notice", emitServerNotice);
+  client.on("notice", emitChannelNotice);
+  client.on("notice", emitPrivateNotice);
 
-function events(client: ExtendedClient<NoticeParams>) {
-  client.on("raw", (msg) => {
-    if (msg.command !== "NOTICE") {
-      return;
-    }
+  function sendNotice(...params: string[]) {
+    client.send("NOTICE", ...params);
+  }
 
-    if (isCtcp(msg)) {
+  function emitNotice(msg: Raw) {
+    if (
+      msg.command !== "NOTICE" ||
+      isCtcp(msg)
+    ) {
       return;
     }
 
@@ -69,29 +86,49 @@ function events(client: ExtendedClient<NoticeParams>) {
       target,
       text,
     });
+  }
 
-    if (isServerHost(msg.prefix)) {
-      return client.emit("notice:server", {
-        origin: msg.prefix,
-        text,
-      });
+  function emitServerNotice(msg: Notice) {
+    if (!isServerHost(msg.prefix)) {
+      return;
+    }
+
+    return client.emit("notice:server", {
+      origin: msg.prefix,
+      text: msg.text,
+    });
+  }
+
+  function emitChannelNotice(msg: Notice) {
+    if (
+      !isUserMask(msg.prefix) ||
+      !isChannel(msg.target)
+    ) {
+      return;
     }
 
     const origin = parseUserMask(msg.prefix);
 
-    if (isChannel(target)) {
-      client.emit("notice:channel", {
-        origin,
-        channel: target,
-        text,
-      });
-    } else {
-      client.emit("notice:private", {
-        origin,
-        text,
-      });
-    }
-  });
-}
+    client.emit("notice:channel", {
+      origin,
+      channel: msg.target,
+      text: msg.text,
+    });
+  }
 
-export const notice = createPlugin(commands, events);
+  function emitPrivateNotice(msg: Notice) {
+    if (
+      !isUserMask(msg.prefix) ||
+      !isNick(msg.target)
+    ) {
+      return;
+    }
+
+    const origin = parseUserMask(msg.prefix);
+
+    client.emit("notice:private", {
+      origin,
+      text: msg.text,
+    });
+  }
+};

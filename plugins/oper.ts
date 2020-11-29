@@ -1,4 +1,4 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 
 export interface OperParams {
   commands: {
@@ -7,8 +7,10 @@ export interface OperParams {
   };
 }
 
-function commands(client: ExtendedClient<OperParams>) {
-  client.oper = (...params) => client.send("OPER", ...params);
-}
+export const oper: Plugin<OperParams> = (client) => {
+  client.oper = sendOper;
 
-export const oper = createPlugin(commands);
+  function sendOper(...params: string[]) {
+    client.send("OPER", ...params);
+  }
+};

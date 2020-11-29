@@ -1,7 +1,8 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
+import { Raw } from "../core/parsers.ts";
 import { NickParams } from "./nick.ts";
 import { RegisterParams } from "./register.ts";
-import { UserStateParams } from "./user_state.ts";
+import { RegisterOnConnectParams } from "./register_on_connect.ts";
 
 export interface InvalidNamesParams {
   options: {
@@ -10,43 +11,35 @@ export interface InvalidNamesParams {
   };
 }
 
-function resolveInvalidNames(
-  client: ExtendedClient<
-    & InvalidNamesParams
-    & NickParams
-    & RegisterParams
-    & UserStateParams
-  >,
-) {
-  if (!!client.options.resolveInvalidNames === false) {
-    return;
+export const invalidNames: Plugin<
+  & NickParams
+  & RegisterParams
+  & RegisterOnConnectParams
+  & InvalidNamesParams
+> = (client, options) => {
+  const enabled = options.resolveInvalidNames ?? false;
+
+  if (enabled) {
+    client.on("raw", resolveInvalidNames);
   }
 
-  const randomize = () => `_${Math.random().toString(36).slice(2, 9)}`;
-
-  client.on("raw", (msg) => {
+  function resolveInvalidNames(msg: Raw) {
     switch (msg.command) {
-      case "ERR_NICKNAMEINUSE": {
-        // Adds trailing "_" to nick if it is already in use
+      case "ERR_NICKNAMEINUSE":
         const [, nick] = msg.params;
-        client.nick(`${nick}_`);
-        break;
-      }
+        return client.nick(`${nick}_`);
 
-      case "ERR_ERRONEUSNICKNAME": {
-        // Uses a random nick if invalid
-        client.nick(randomize());
-        break;
-      }
+      case "ERR_ERRONEUSNICKNAME":
+        return client.nick(randomize());
 
-      case "ERR_INVALIDUSERNAME": {
-        // Uses a random username if invalid
+      case "ERR_INVALIDUSERNAME":
         client.state.username = randomize();
-        client.user(client.state.username, client.state.realname);
-        break;
-      }
+        const { username, realname } = client.state;
+        return client.user(username, realname);
     }
-  });
-}
+  }
+};
 
-export const invalidNames = createPlugin(resolveInvalidNames);
+function randomize() {
+  return `_${Math.random().toString(36).slice(2, 9)}`;
+}

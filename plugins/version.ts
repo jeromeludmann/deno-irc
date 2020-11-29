@@ -1,6 +1,6 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { createCtcp, CtcpParams } from "./ctcp.ts";
+import { createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
 
 export interface VersionParams {
   options: {
@@ -13,10 +13,12 @@ export interface VersionParams {
       version?: string | false;
     };
   };
+
   commands: {
     /** Queries the client version of a `target`. */
     version(target?: string): void;
   };
+
   events: {
     "ctcp_version": CtcpVersion;
     "ctcp_version_reply": CtcpVersionReply;
@@ -26,6 +28,7 @@ export interface VersionParams {
 export interface CtcpVersion {
   /** User who sent the CTCP VERSION query. */
   origin: UserMask;
+
   /** Target who received the CTCP VERSION query. */
   target: string;
 }
@@ -33,33 +36,37 @@ export interface CtcpVersion {
 export interface CtcpVersionReply {
   /** User who sent the CTCP VERSION reply. */
   origin: UserMask;
+
   /** Target who received the CTCP VERSION reply. */
   target: string;
+
   /** Client version of the user. */
   version: string;
 }
 
-function options(client: ExtendedClient<VersionParams>) {
-  client.options.ctcpReplies ??= {};
-  client.options.ctcpReplies.version ??= "deno-irc";
-}
+export const version: Plugin<
+  & CtcpParams
+  & VersionParams
+> = (client, options) => {
+  const replyEnabled = !!options.ctcpReplies?.version;
+  const version = options.ctcpReplies?.version || "deno-irc";
 
-function commands(
-  client: ExtendedClient<VersionParams & CtcpParams>,
-) {
-  client.version = (target) => {
+  client.version = sendVersion;
+  client.on("ctcp", emitCtcpVersion);
+
+  if (replyEnabled) {
+    client.on("ctcp_version", replyToCtcpVersion);
+  }
+
+  function sendVersion(target?: string) {
     if (target === undefined) {
       client.send("VERSION");
     } else {
       client.ctcp(target, "VERSION");
     }
-  };
-}
+  }
 
-function events(
-  client: ExtendedClient<VersionParams & CtcpParams>,
-) {
-  client.on("ctcp", (msg) => {
+  function emitCtcpVersion(msg: Ctcp) {
     if (msg.command !== "VERSION") {
       return;
     }
@@ -80,24 +87,10 @@ function events(
           version: param!,
         });
     }
-  });
-}
-
-function replies(client: ExtendedClient<VersionParams>) {
-  const version = client.options.ctcpReplies?.version;
-
-  if (!version) {
-    return;
   }
 
-  client.on("ctcp_version", (msg) => {
-    client.send("NOTICE", msg.origin.nick, createCtcp("VERSION", version));
-  });
-}
-
-export const version = createPlugin(
-  options,
-  commands,
-  events,
-  replies,
-);
+  function replyToCtcpVersion(msg: CtcpVersion) {
+    const ctcpPayload = createCtcp("VERSION", version);
+    client.send("NOTICE", msg.origin.nick, ctcpPayload);
+  }
+};

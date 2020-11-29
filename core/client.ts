@@ -7,6 +7,7 @@ export interface CoreParams {
     /** Size of the buffer. Default to `4096` bytes. */
     bufferSize?: number;
   };
+
   events: {
     "connecting": RemoteAddr;
     "connected": RemoteAddr;
@@ -18,7 +19,7 @@ export interface CoreParams {
 
 export class FatalError extends Error {
   constructor(
-    public type: "connect" | "read" | "write" | "close" | "plugin",
+    public type: "connect" | "read" | "write" | "close",
     message: string,
   ) {
     super(`${type}: ${message}`);
@@ -26,25 +27,23 @@ export class FatalError extends Error {
   }
 }
 
-type PluginParams = {
+export type PluginParams = {
   [K in "options" | "commands" | "events" | "state"]?: Record<string, any>;
 };
 
 export type ExtendedClient<T extends PluginParams = {}> =
-  & T["commands"]
   & CoreClient<CoreParams["events"] & T["events"]>
-  & { options: T["options"]; state: T["state"] };
+  & { readonly state: T["state"] }
+  & T["commands"];
+
+export type ExtendedOptions<T extends PluginParams = {}> =
+  & CoreParams["options"]
+  & T["options"];
 
 export type Plugin<T extends PluginParams = {}> = (
   client: ExtendedClient<T>,
+  options: ExtendedOptions<T>,
 ) => void;
-
-/** Composes a plugin from its functions. */
-export function createPlugin<T extends PluginParams = {}>(
-  ...fns: Plugin<T>[]
-): Plugin<T> {
-  return (client: ExtendedClient<T>) => fns.forEach((fn) => fn(client));
-}
 
 const BUFFER_SIZE = 4096;
 
@@ -57,7 +56,7 @@ export class CoreClient<
 > {
   protected connectImpl = Deno.connect;
   protected conn: Deno.Conn | null = null;
-
+  private bufferSize: number;
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
@@ -66,11 +65,12 @@ export class CoreClient<
 
   constructor(
     plugins: Plugin<any>[],
-    public options: Readonly<CoreParams["options"]>,
+    options: Readonly<CoreParams["options"]>,
   ) {
     super();
 
-    new Set(plugins).forEach((plugin) => plugin(this));
+    this.bufferSize = options.bufferSize ?? BUFFER_SIZE;
+    new Set(plugins).forEach((plugin) => plugin(this, options));
     this.resetErrorThrowingBehavior();
   }
 
@@ -96,7 +96,7 @@ export class CoreClient<
   }
 
   private async read(conn: Deno.Conn): Promise<void> {
-    const buffer = new Uint8Array(this.options.bufferSize ?? BUFFER_SIZE);
+    const buffer = new Uint8Array(this.bufferSize);
     let read: number | null;
 
     for (;;) {
@@ -115,11 +115,7 @@ export class CoreClient<
       const messages = this.parser.parseMessages(raw);
 
       for (const msg of messages) {
-        try {
-          this.emit("raw", msg);
-        } catch (error) {
-          this.emit("error", new FatalError("plugin", error.message));
-        }
+        this.emit("raw", msg);
       }
     }
 

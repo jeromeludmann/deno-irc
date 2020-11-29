@@ -13,7 +13,7 @@ export async function mock<
   TPlugins extends Plugin<any>[],
   TOptions extends
     & CoreParams["options"]
-    & UnionToIntersection<Parameters<TPlugins[number]>[0]["options"]>,
+    & UnionToIntersection<Parameters<TPlugins[number]>[1]>,
 >(plugins: TPlugins, options: TOptions, mockOptions: MockOptions = {}) {
   const { withConnection = true } = mockOptions;
 
@@ -27,6 +27,7 @@ export async function mock<
 
   if (withConnection) {
     await client.connect("");
+    server.receive();
   }
 
   return { client, server, console };

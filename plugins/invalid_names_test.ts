@@ -4,11 +4,18 @@ import { mock } from "../testing/mock.ts";
 import { invalidNames } from "./invalid_names.ts";
 import { nick } from "./nick.ts";
 import { register } from "./register.ts";
-import { serverError } from "./server_error.ts";
-import { userState } from "./user_state.ts";
+import { registerOnConnect } from "./register_on_connect.ts";
+import { throwOnError } from "./throw_on_error.ts";
 
 describe("plugins/invalid_names", (test) => {
-  const plugins = [invalidNames, userState, nick, register, serverError];
+  const plugins = [
+    nick,
+    register,
+    registerOnConnect,
+    throwOnError,
+    invalidNames,
+  ];
+
   const options = { nick: "me" };
 
   test("change nickname on ERR_NICKNAMEINUSE", async () => {

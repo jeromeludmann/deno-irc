@@ -1,6 +1,6 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { AnyCtcpCommand, createCtcp, CtcpParams } from "./ctcp.ts";
+import { AnyCtcpCommand, createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
 
 export interface ClientinfoParams {
   options: {
@@ -9,10 +9,12 @@ export interface ClientinfoParams {
       clientinfo?: boolean;
     };
   };
+
   commands: {
     /** Queries the supported CTCP commands of a `target`. */
     clientinfo(target: string): void;
   };
+
   events: {
     "ctcp_clientinfo": CtcpClientinfo;
     "ctcp_clientinfo_reply": CtcpClientinfoReply;
@@ -22,6 +24,7 @@ export interface ClientinfoParams {
 export interface CtcpClientinfo {
   /** Origin of the CTCP CLIENTINFO query. */
   origin: UserMask;
+
   /** Target of the CTCP CLIENTINFO query. */
   target: string;
 }
@@ -29,23 +32,33 @@ export interface CtcpClientinfo {
 export interface CtcpClientinfoReply {
   /** User who sent the CTCP CLIENTINFO reply. */
   origin: UserMask;
+
   /** Target who received the CTCP CLIENTINFO reply. */
   target: string;
+
   /** Array of supported commands by the user. */
   supported: AnyCtcpCommand[];
 }
 
-function options(client: ExtendedClient<ClientinfoParams>) {
-  client.options.ctcpReplies ??= {};
-  client.options.ctcpReplies.clientinfo ??= true;
-}
+export const clientinfo: Plugin<
+  & CtcpParams
+  & ClientinfoParams
+> = (client, options) => {
+  const replyEnabled = options.ctcpReplies?.clientinfo ?? true;
+  const supported = ["PING", "TIME", "VERSION"];
 
-function commands(client: ExtendedClient<ClientinfoParams & CtcpParams>) {
-  client.clientinfo = (target) => client.ctcp(target, "CLIENTINFO");
-}
+  client.clientinfo = sendClientinfo;
+  client.on("ctcp", emitClientinfo);
 
-function events(client: ExtendedClient<ClientinfoParams & CtcpParams>) {
-  client.on("ctcp", (msg) => {
+  if (replyEnabled) {
+    client.on("ctcp_clientinfo", replyToClientinfo);
+  }
+
+  function sendClientinfo(target: string) {
+    client.ctcp(target, "CLIENTINFO");
+  }
+
+  function emitClientinfo(msg: Ctcp) {
     if (msg.command !== "CLIENTINFO") {
       return;
     }
@@ -67,21 +80,10 @@ function events(client: ExtendedClient<ClientinfoParams & CtcpParams>) {
           supported,
         });
     }
-  });
-}
-
-function replies(client: ExtendedClient<ClientinfoParams>) {
-  if (client.options.ctcpReplies?.clientinfo === false) {
-    return;
   }
 
-  client.on("ctcp_clientinfo", (msg) => {
-    client.send(
-      "NOTICE",
-      msg.origin.nick,
-      createCtcp("CLIENTINFO", "PING TIME VERSION"),
-    );
-  });
-}
-
-export const clientinfo = createPlugin(options, commands, events, replies);
+  function replyToClientinfo(msg: CtcpClientinfo) {
+    const ctcpPayload = createCtcp("CLIENTINFO", supported.join(" "));
+    client.send("NOTICE", msg.origin.nick, ctcpPayload);
+  }
+};

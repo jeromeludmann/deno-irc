@@ -1,13 +1,15 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
-import { parseUserMask, UserMask } from "../core/parsers.ts";
+import { Plugin } from "../core/client.ts";
+import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
 export interface TopicParams {
   commands: {
     /** Gets the `topic` of a `channel`. */
     topic(channel: string): void;
+
     /** Changes the `topic` of a `channel`. */
     topic(channel: string, topic: string): void;
   };
+
   events: {
     "topic_change": TopicChange;
     "topic_set": TopicSet;
@@ -18,8 +20,10 @@ export interface TopicParams {
 export interface TopicChange {
   /** User who changed the topic. */
   origin: UserMask;
+
   /** Channel where the topic is changed. */
   channel: string;
+
   /** New topic of the channel. */
   topic: string;
 }
@@ -27,6 +31,7 @@ export interface TopicChange {
 export interface TopicSet {
   /** Channel where the topic is set. */
   channel: string;
+
   /** New topic of the channel. */
   topic?: string;
 }
@@ -34,42 +39,77 @@ export interface TopicSet {
 export interface TopicSetBy {
   /** Channel where the topic is set. */
   channel: string;
+
   /** User who set the topic. */
   who: string; // can be a nick or an unparsed mask, depending on the server
+
   /** Date time of the topic. */
   time: Date;
 }
 
-function commands(client: ExtendedClient<TopicParams>) {
-  client.topic = (...params: string[]) => client.send("TOPIC", ...params);
-}
+export const topic: Plugin<TopicParams> = (client) => {
+  client.topic = sendTopic;
+  client.on("raw", emitTopicChange);
+  client.on("raw", emitTopicSet);
+  client.on("raw", emitTopicSetBy);
 
-function events(client: ExtendedClient<TopicParams>) {
-  client.on("raw", (msg) => {
+  function sendTopic(...params: string[]) {
+    client.send("TOPIC", ...params);
+  }
+
+  function emitTopicChange(msg: Raw) {
+    if (msg.command !== "TOPIC") {
+      return;
+    }
+
+    const origin = parseUserMask(msg.prefix);
+    const [channel, topic] = msg.params;
+
+    return client.emit("topic_change", {
+      origin,
+      channel,
+      topic,
+    });
+  }
+
+  function emitTopicSet(msg: Raw) {
     switch (msg.command) {
-      case "TOPIC": {
-        const origin = parseUserMask(msg.prefix);
-        const [channel, topic] = msg.params;
-        return client.emit("topic_change", { origin, channel, topic });
-      }
-
       case "RPL_TOPIC": {
         const [, channel, topic] = msg.params;
-        return client.emit("topic_set", { channel, topic });
+
+        return client.emit("topic_set", {
+          channel,
+          topic,
+        });
       }
 
       case "RPL_NOTOPIC": {
         const [, channel] = msg.params;
-        return client.emit("topic_set", { channel, topic: undefined });
-      }
 
-      case "RPL_TOPICWHOTIME": {
-        const [, channel, who, timestamp] = msg.params;
-        const time = new Date(parseInt(timestamp, 10) * 1000);
-        return client.emit("topic_set_by", { channel, who, time });
+        return client.emit("topic_set", {
+          channel,
+          topic: undefined,
+        });
       }
     }
-  });
-}
+  }
 
-export const topic = createPlugin(commands, events);
+  function emitTopicSetBy(msg: Raw) {
+    if (msg.command !== "RPL_TOPICWHOTIME") {
+      return;
+    }
+
+    const [, channel, who, timestamp] = msg.params;
+    const time = timestampToDate(timestamp);
+
+    return client.emit("topic_set_by", {
+      channel,
+      who,
+      time,
+    });
+  }
+};
+
+function timestampToDate(timestamp: string) {
+  return new Date(parseInt(timestamp, 10) * 1000);
+}

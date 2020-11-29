@@ -1,4 +1,4 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { JoinParams } from "./join.ts";
 import { RegisterParams } from "./register.ts";
 
@@ -9,20 +9,18 @@ export interface JoinOnRegisterParams {
   };
 }
 
-function autoJoin(
-  client: ExtendedClient<
-    JoinOnRegisterParams & JoinParams & RegisterParams
-  >,
-) {
-  const { channels } = client.options;
+export const joinOnRegister: Plugin<
+  & RegisterParams
+  & JoinParams
+  & JoinOnRegisterParams
+> = (client, options) => {
+  const channels = options.channels ?? [];
 
-  if (channels === undefined || channels.length === 0) {
-    return;
+  if (channels.length > 0) {
+    client.on("register", joinChannels);
   }
 
-  client.on("register", () => {
+  function joinChannels() {
     client.join(...channels);
-  });
-}
-
-export const joinOnRegister = createPlugin(autoJoin);
+  }
+};

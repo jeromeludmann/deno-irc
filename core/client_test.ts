@@ -1,7 +1,7 @@
 import { assertEquals, assertThrowsAsync } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { ExtendedClient, FatalError } from "./client.ts";
+import { FatalError, Plugin } from "./client.ts";
 
 describe("core/client", (test) => {
   test("connect to server", async () => {
@@ -130,13 +130,13 @@ describe("core/client", (test) => {
     assertEquals(addr, null);
   });
 
-  const throwOnConnect = (client: ExtendedClient) => {
+  const throwOnConnect: Plugin = (client) => {
     client.on("connected", () => {
       throw new Error("Boom!");
     });
   };
 
-  const catchErrors = (client: ExtendedClient) => {
+  const catchErrors: Plugin = (client) => {
     client.on("error", () => {});
   };
 

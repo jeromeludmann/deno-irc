@@ -4,8 +4,7 @@ import { mock } from "../testing/mock.ts";
 import { nick } from "./nick.ts";
 import { register } from "./register.ts";
 import { registerOnConnect } from "./register_on_connect.ts";
-import { serverError } from "./server_error.ts";
-import { userState } from "./user_state.ts";
+import { throwOnError } from "./throw_on_error.ts";
 import { verbose } from "./verbose.ts";
 
 describe("plugins/verbose", (test) => {
@@ -45,7 +44,7 @@ describe("plugins/verbose", (test) => {
 
   test("print emitted events", async () => {
     const { client, server, console } = await mock(
-      [...plugins, serverError],
+      [...plugins, throwOnError],
       options,
       { withConnection: false },
     );
@@ -56,19 +55,25 @@ describe("plugins/verbose", (test) => {
     await client.once("error");
 
     assertArrayIncludes(console.stdout, [
-      ["connecting", { hostname: "host", port: 6667 }],
-      ["connected", { hostname: "host", port: 6667 }],
+      ["connecting", {
+        hostname: "host",
+        port: 6667,
+      }],
+      ["connected", {
+        hostname: "host",
+        port: 6667,
+      }],
       ["error", {
         name: "FatalError",
-        type: "plugin",
-        message: "plugin: Closing link: (user@host) [Client exited]",
+        type: "read",
+        message: "read: Closing link: (user@host) [Client exited]",
       }],
     ]);
   });
 
   test("print state changes", async () => {
     const { client, server, console } = await mock(
-      [...plugins, userState, nick, register, registerOnConnect],
+      [...plugins, nick, register, registerOnConnect],
       { ...options, nick: "current_nick" },
     );
 
@@ -83,7 +88,7 @@ describe("plugins/verbose", (test) => {
 
   test("print nothing if disabled", async () => {
     const { client, server, console } = await mock(
-      [...plugins, userState, nick, register, registerOnConnect],
+      [...plugins, nick, register, registerOnConnect],
       { verbose: false, nick: "me" },
       { withConnection: false },
     );

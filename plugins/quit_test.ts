@@ -2,10 +2,10 @@ import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { quit } from "./quit.ts";
-import { serverError } from "./server_error.ts";
+import { throwOnError } from "./throw_on_error.ts";
 
 describe("plugins/quit", (test) => {
-  const plugins = [quit, serverError];
+  const plugins = [quit, throwOnError];
 
   test("send QUIT", async () => {
     const { client, server } = await mock(plugins, {});

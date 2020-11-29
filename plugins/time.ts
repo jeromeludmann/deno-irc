@@ -1,6 +1,6 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { createCtcp, CtcpParams } from "./ctcp.ts";
+import { createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
 
 export interface TimeParams {
   options: {
@@ -9,10 +9,12 @@ export interface TimeParams {
       time?: boolean;
     };
   };
+
   commands: {
     /** Queries the date time of a `target`. */
     time(target?: string): void;
   };
+
   events: {
     "ctcp_time": CtcpTime;
     "ctcp_time_reply": CtcpTimeReply;
@@ -22,6 +24,7 @@ export interface TimeParams {
 export interface CtcpTime {
   /** User who sent the CTCP TIME query. */
   origin: UserMask;
+
   /** Target who received the CTCP TIME query. */
   target: string;
 }
@@ -29,29 +32,33 @@ export interface CtcpTime {
 export interface CtcpTimeReply {
   /** User who sent the CTCP TIME reply. */
   origin: UserMask;
+
   /** Target who received the CTCP TIME reply. */
   target: string;
+
   /** Date time of the user. */
   time: string;
 }
 
-function options(client: ExtendedClient<TimeParams>) {
-  client.options.ctcpReplies ??= {};
-  client.options.ctcpReplies.time ??= true;
-}
+export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
+  const replyEnabled = options.ctcpReplies?.time ?? true;
 
-function commands(client: ExtendedClient<TimeParams & CtcpParams>) {
-  client.time = (target) => {
+  client.time = sendTime;
+  client.on("ctcp", emitCtcpTime);
+
+  if (replyEnabled) {
+    client.on("ctcp_time", replyToCtcpTime);
+  }
+
+  function sendTime(target?: string) {
     if (target === undefined) {
       client.send("TIME");
     } else {
       client.ctcp(target, "TIME");
     }
-  };
-}
+  }
 
-function events(client: ExtendedClient<TimeParams & CtcpParams>) {
-  client.on("ctcp", (msg) => {
+  function emitCtcpTime(msg: Ctcp) {
     if (msg.command !== "TIME") {
       return;
     }
@@ -72,23 +79,10 @@ function events(client: ExtendedClient<TimeParams & CtcpParams>) {
           time: param!,
         });
     }
-  });
-}
-
-function replies(client: ExtendedClient<TimeParams>) {
-  if (!client.options.ctcpReplies?.time) {
-    return;
   }
 
-  client.on("ctcp_time", (msg) => {
-    const time = new Date().toLocaleString();
-    client.send("NOTICE", msg.origin.nick, createCtcp("TIME", time));
-  });
-}
-
-export const time = createPlugin(
-  options,
-  commands,
-  events,
-  replies,
-);
+  function replyToCtcpTime(msg: CtcpTime) {
+    const ctcpPayload = createCtcp("TIME", new Date().toLocaleString());
+    client.send("NOTICE", msg.origin.nick, ctcpPayload);
+  }
+};

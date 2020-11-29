@@ -1,4 +1,4 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { OperParams } from "./oper.ts";
 import { RegisterParams } from "./register.ts";
 
@@ -8,26 +8,27 @@ export interface OperOnRegisterParams {
     oper?: {
       /** Username operator. */
       user: string;
+
       /** Password operator. */
       pass: string;
     };
   };
 }
 
-function autoOper(
-  client: ExtendedClient<
-    OperOnRegisterParams & OperParams & RegisterParams
-  >,
-) {
-  if (client.options.oper === undefined) {
-    return;
+export const operOnRegister: Plugin<
+  & RegisterParams
+  & OperParams
+  & OperOnRegisterParams
+> = (client, options) => {
+  const enabled = !!options.oper;
+  const user = options.oper?.user ?? "";
+  const pass = options.oper?.pass ?? "";
+
+  if (enabled) {
+    client.on("register", setAsOper);
   }
 
-  const { user, pass } = client.options.oper;
-
-  client.on("register", () => {
+  function setAsOper() {
     client.oper(user, pass);
-  });
-}
-
-export const operOnRegister = createPlugin(autoOper);
+  }
+};

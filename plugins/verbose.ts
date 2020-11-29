@@ -1,4 +1,4 @@
-import { createPlugin, ExtendedClient, FatalError } from "../core/client.ts";
+import { CoreClient, FatalError, Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 import { bold, dim, green, red } from "../deps.ts";
 
@@ -9,34 +9,22 @@ export interface VerboseParams {
   };
 }
 
-function options(client: ExtendedClient<VerboseParams>) {
-  client.options.verbose ??= false;
-}
+export const verbose: Plugin<VerboseParams> = (client, options) => {
+  const enabled = options.verbose ?? false;
 
-function receivedMessages(client: ExtendedClient<VerboseParams>) {
-  if (client.options.verbose === false) {
+  if (!enabled) {
     return;
   }
 
-  const emit = client.emit.bind(client);
-
-  client.emit = (event, payload) => {
+  hook(client, "emit", function logReceivedMsg(emit, event, payload) {
     if (event === "raw") {
       console.info(dim(`< ${(payload as Raw).raw}`));
     }
 
     return emit(event, payload);
-  };
-}
+  });
 
-function sentMessages(client: ExtendedClient<VerboseParams>) {
-  if (client.options.verbose === false) {
-    return;
-  }
-
-  const send = client.send.bind(client);
-
-  client.send = async (command, ...params) => {
+  hook(client, "send", async function logSentMsg(send, command, ...params) {
     console.info(bold(command), params);
 
     const raw = await send(command, ...params);
@@ -46,39 +34,31 @@ function sentMessages(client: ExtendedClient<VerboseParams>) {
     }
 
     return raw;
-  };
-}
+  });
 
-function emittedEvents(client: ExtendedClient<VerboseParams>) {
-  if (client.options.verbose === false) {
-    return;
-  }
-
-  const emit = client.emit.bind(client);
-
-  client.emit = (event, payload) => {
+  hook(client, "emit", function logEvents(emit, event, payload) {
     switch (event) {
       case "raw":
         break;
+
       case "error":
-        const { name, type, message } = (payload as FatalError);
-        console.info(bold(event), { name, type, message });
+        const { type, name, message } = (payload as FatalError);
+        console.info(bold(red(event)), { type, name, message });
         break;
+
       default:
         console.info(bold(event), payload);
     }
 
     return emit(event, payload);
-  };
-}
+  });
 
-function stateChanges(client: ExtendedClient<VerboseParams>) {
-  if (client.options.verbose === false) {
-    return;
-  }
-
-  (client as { state: unknown }).state = new Proxy(client.state, {
-    set(state: Record<string, any>, key: string, value: unknown) {
+  (client.state as unknown) = new Proxy(client.state, {
+    set: function logState(
+      state: Record<string, any>,
+      key: string,
+      value: unknown,
+    ) {
       const prev = JSON.stringify(state[key]);
       const next = JSON.stringify(value);
 
@@ -88,15 +68,24 @@ function stateChanges(client: ExtendedClient<VerboseParams>) {
       }
 
       state[key] = value;
+
       return true;
     },
   });
-}
+};
 
-export const verbose = createPlugin(
-  options,
-  receivedMessages,
-  sentMessages,
-  emittedEvents,
-  stateChanges,
-);
+function hook<
+  TClient extends CoreClient,
+  TProp extends keyof TClient,
+  TFunction extends TClient[TProp] extends (...args: any[]) => any
+    ? TClient[TProp]
+    : never,
+>(
+  client: TClient,
+  prop: TProp,
+  hook: (fn: TFunction, ...args: Parameters<TFunction>) => any,
+): void {
+  const fn = (client[prop] as any).bind(client);
+  (client[prop] as unknown) = (...args: Parameters<TFunction>) =>
+    hook(fn, ...args);
+}

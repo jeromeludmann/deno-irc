@@ -1,7 +1,7 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
-import { InviteParams } from "./invite.ts";
+import { Plugin } from "../core/client.ts";
+import { Invite, InviteParams } from "./invite.ts";
 import { JoinParams } from "./join.ts";
-import { UserStateParams } from "./user_state.ts";
+import { RegisterOnConnectParams } from "./register_on_connect.ts";
 
 export interface JoinOnInviteParams {
   options: {
@@ -10,27 +10,21 @@ export interface JoinOnInviteParams {
   };
 }
 
-function options(client: ExtendedClient<JoinOnInviteParams>) {
-  client.options.joinOnInvite ??= false;
-}
+export const joinOnInvite: Plugin<
+  & JoinParams
+  & InviteParams
+  & RegisterOnConnectParams
+  & JoinOnInviteParams
+> = (client, options) => {
+  const enabled = options.joinOnInvite ?? false;
 
-function autoJoin(
-  client: ExtendedClient<
-    & JoinOnInviteParams
-    & InviteParams
-    & JoinParams
-    & UserStateParams
-  >,
-) {
-  if (!client.options.joinOnInvite) {
-    return;
+  if (enabled) {
+    client.on("invite", joinChannel);
   }
 
-  client.on("invite", (msg) => {
+  function joinChannel(msg: Invite) {
     if (msg.nick === client.state.nick) {
       client.join(msg.channel);
     }
-  });
-}
-
-export const joinOnInvite = createPlugin(options, autoJoin);
+  }
+};

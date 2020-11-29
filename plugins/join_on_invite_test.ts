@@ -4,10 +4,20 @@ import { mock } from "../testing/mock.ts";
 import { invite } from "./invite.ts";
 import { join } from "./join.ts";
 import { joinOnInvite } from "./join_on_invite.ts";
-import { userState } from "./user_state.ts";
+import { nick } from "./nick.ts";
+import { register } from "./register.ts";
+import { registerOnConnect } from "./register_on_connect.ts";
 
 describe("plugins/join_on_invite", (test) => {
-  const plugins = [joinOnInvite, invite, join, userState];
+  const plugins = [
+    join,
+    invite,
+    nick,
+    register,
+    registerOnConnect,
+    joinOnInvite,
+  ];
+
   const options = { nick: "me" };
 
   test("join on INVITE", async () => {

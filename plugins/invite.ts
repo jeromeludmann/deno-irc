@@ -1,11 +1,12 @@
-import { createPlugin, ExtendedClient } from "../core/client.ts";
-import { parseUserMask, UserMask } from "../core/parsers.ts";
+import { Plugin } from "../core/client.ts";
+import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
 export interface InviteParams {
   commands: {
     /** Invites a `nick` to a `channel`. */
     invite(nick: string, channel: string): void;
   };
+
   events: {
     "invite": Invite;
   };
@@ -14,18 +15,23 @@ export interface InviteParams {
 export interface Invite {
   /** User who sent the INVITE. */
   origin: UserMask;
+
   /** Nick who was invited. */
   nick: string;
+
   /** Channel where the nick was invited. */
   channel: string;
 }
 
-function commands(client: ExtendedClient<InviteParams>) {
-  client.invite = (...params) => client.send("INVITE", ...params);
-}
+export const invite: Plugin<InviteParams> = (client) => {
+  client.invite = sendInvite;
+  client.on("raw", emitInvite);
 
-function events(client: ExtendedClient<InviteParams>) {
-  client.on("raw", (msg) => {
+  function sendInvite(...params: string[]) {
+    client.send("INVITE", ...params);
+  }
+
+  function emitInvite(msg: Raw) {
     if (msg.command !== "INVITE") {
       return;
     }
@@ -37,7 +43,5 @@ function events(client: ExtendedClient<InviteParams>) {
       nick,
       channel,
     });
-  });
-}
-
-export const invite = createPlugin(commands, events);
+  }
+};
