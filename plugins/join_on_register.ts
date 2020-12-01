@@ -1,11 +1,11 @@
 import { Plugin } from "../core/client.ts";
-import { JoinParams } from "./join.ts";
+import { ChannelWithKey, JoinParams } from "./join.ts";
 import { RegisterParams } from "./register.ts";
 
 export interface JoinOnRegisterParams {
   options: {
     /** Channels to join on connect. */
-    channels?: string[];
+    channels?: (string | ChannelWithKey)[];
   };
 }
 

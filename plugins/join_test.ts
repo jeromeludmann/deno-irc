@@ -10,12 +10,22 @@ describe("plugins/join", (test) => {
     const { client, server } = await mock(plugins, {});
 
     client.join("#channel");
+    client.join(["#channel", "key"]);
     client.join("#channel1", "#channel2");
+    client.join("#channel1", ["#channel2", "key2"]);
+    client.join(["#channel1", "key1"], "#channel2");
+    client.join(["#channel1", "key1"], ["#channel2", "key2"]);
+    client.join(["#channel1", "key1"], "#channel2", ["#channel3", "key3"]);
     const raw = server.receive();
 
     assertEquals(raw, [
       "JOIN #channel",
+      "JOIN #channel key",
       "JOIN #channel1,#channel2",
+      "JOIN #channel1,#channel2 ,key2",
+      "JOIN #channel1,#channel2 key1,",
+      "JOIN #channel1,#channel2 key1,key2",
+      "JOIN #channel1,#channel2,#channel3 key1,,key3",
     ]);
   });
 
