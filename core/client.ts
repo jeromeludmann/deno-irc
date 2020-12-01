@@ -1,10 +1,12 @@
-import { EventEmitter } from "./events.ts";
+import { EventEmitter, EventEmitterOptions } from "./events.ts";
 import { Parser, Raw } from "./parsers.ts";
 import { AnyCommand } from "./protocol.ts";
 
 export interface CoreParams {
-  options: {
-    /** Size of the buffer. Default to `4096` bytes. */
+  options: EventEmitterOptions & {
+    /** Size of the buffer that receives data from server.
+     *
+     * Default to `4096` bytes. */
     bufferSize?: number;
   };
 
@@ -16,6 +18,9 @@ export interface CoreParams {
     "error": FatalError;
   };
 }
+
+const BUFFER_SIZE = 4096;
+const PORT = 6667;
 
 export class FatalError extends Error {
   constructor(
@@ -45,10 +50,6 @@ export type Plugin<T extends PluginParams = {}> = (
   options: ExtendedOptions<T>,
 ) => void;
 
-const BUFFER_SIZE = 4096;
-
-const PORT = 6667;
-
 export class CoreClient<
   TEvents extends CoreParams["events"] = CoreParams["events"],
 > extends EventEmitter<
@@ -67,14 +68,15 @@ export class CoreClient<
     plugins: Plugin<any>[],
     options: Readonly<CoreParams["options"]>,
   ) {
-    super();
-
+    super(options);
     this.bufferSize = options.bufferSize ?? BUFFER_SIZE;
     new Set(plugins).forEach((plugin) => plugin(this, options));
     this.resetErrorThrowingBehavior();
   }
 
   /** Connects to a server using a hostname and an optional port.
+   *
+   * Default port to `6667`.
    *
    * Resolves when connected. */
   async connect(hostname: string, port = PORT): Promise<Deno.Conn | null> {

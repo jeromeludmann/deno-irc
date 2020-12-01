@@ -5,6 +5,7 @@ import { mockAll } from "./testing/mock.ts";
 
 describe("client", (test) => {
   const options: Required<ClientOptions> = {
+    maxListeners: 50,
     bufferSize: 512,
     password: "password",
     nick: "me",

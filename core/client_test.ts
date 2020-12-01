@@ -1,4 +1,4 @@
-import { assertEquals, assertThrowsAsync } from "../deps.ts";
+import { assertEquals, assertThrows, assertThrowsAsync } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { FatalError, Plugin } from "./client.ts";
@@ -160,5 +160,20 @@ describe("core/client", (test) => {
 
     assertEquals(error.name, "FatalError");
     assertEquals(error.type, "connect");
+  });
+
+  test("throw if too many registered listeners", async () => {
+    const { client } = await mock([], {});
+    const noop = () => {};
+
+    const subscribeForever = () => {
+      for (;;) client.on("raw", noop);
+    };
+
+    assertThrows(
+      subscribeForever,
+      Error,
+      'Too many listeners for "raw" event',
+    );
   });
 });
