@@ -2,16 +2,32 @@ type Listener<T> = (payload: T) => void;
 
 type Listeners<T> = Record<keyof T, Listener<any>[]>;
 
-type DefaultListenerCounts<T> = Record<keyof T, number>;
+type IgnoredListenerCounts<T> = Record<keyof T, number>;
 
 type InferredPayload<
   TEvents extends Record<string, any>,
   TEventName extends keyof TEvents,
 > = TEvents[TEventName];
 
+export interface EventEmitterOptions {
+  /** Number of maximum registrable listeners.
+   *
+   * Primarily used to avoid memory leaks.
+   *
+   * Default limit to `1000` listeners for each event. */
+  maxListeners?: number;
+}
+
+const MAX_LISTENERS = 1000;
+
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
-  private defaultListenerCounts = {} as DefaultListenerCounts<TEvents>;
+  private ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
+  private maxListeners: number;
+
+  constructor({ maxListeners }: EventEmitterOptions = {}) {
+    this.maxListeners = maxListeners ?? MAX_LISTENERS;
+  }
 
   /** Calls all the listeners of the `eventName` with the `eventPayload`. */
   emit<T extends keyof TEvents>(
@@ -20,7 +36,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   ): void {
     const isThrowable = (
       (eventPayload as unknown) instanceof Error &&
-      this.countListeners(eventName) === this.countDefaultListeners(eventName)
+      this.countListeners(eventName) === 0
     );
 
     if (isThrowable) {
@@ -41,8 +57,13 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     listener: Listener<InferredPayload<TEvents, T>>,
   ): () => void {
+    if (this.countListeners(eventName) === this.maxListeners) {
+      throw new Error(`Too many listeners for "${eventName}" event`);
+    }
+
     this.listeners[eventName] ??= [];
     this.listeners[eventName].push(listener);
+
     return () => this.off(eventName, listener);
   }
 
@@ -109,20 +130,29 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   }
 
   resetErrorThrowingBehavior(): void {
-    this.defaultListenerCounts = {} as DefaultListenerCounts<TEvents>;
+    this.ignoreCurrentListenerCounts();
+  }
+
+  private ignoreCurrentListenerCounts(): void {
+    this.ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
 
     for (const eventName in this.listeners) {
-      this.defaultListenerCounts[eventName] = this.listeners[eventName].length;
+      this.ignoredListenerCounts[eventName] = this.listeners[eventName].length;
     }
   }
 
   private countListeners<T extends keyof TEvents>(eventName: T): number {
-    return eventName in this.listeners ? this.listeners[eventName].length : 0;
-  }
+    if (!(eventName in this.listeners)) {
+      return 0;
+    }
 
-  private countDefaultListeners<T extends keyof TEvents>(eventName: T): number {
-    return eventName in this.defaultListenerCounts
-      ? this.defaultListenerCounts[eventName]
-      : 0;
+    const listenerCount = this.listeners[eventName].length;
+    const ignoredListenerCount = this.ignoredListenerCounts[eventName] ?? 0;
+
+    if (listenerCount < ignoredListenerCount) {
+      return 0;
+    }
+
+    return listenerCount - ignoredListenerCount;
   }
 }

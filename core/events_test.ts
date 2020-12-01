@@ -3,7 +3,7 @@ import { describe } from "../testing/helpers.ts";
 import { EventEmitter } from "./events.ts";
 
 describe("core/events", (test) => {
-  test("add one listener and emit an event", async () => {
+  test("add one listener and emit an event", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
     let value: any;
@@ -18,7 +18,7 @@ describe("core/events", (test) => {
     assertEquals(value, { key: "value" });
   });
 
-  test("add two listeners and emit an event", async () => {
+  test("add two listeners and emit an event", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
 
@@ -29,7 +29,7 @@ describe("core/events", (test) => {
     assertEquals(triggered, 2);
   });
 
-  test("add one listener and emit a different event", async () => {
+  test("add one listener and emit a different event", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
 
@@ -39,7 +39,7 @@ describe("core/events", (test) => {
     assertEquals(triggered, 0);
   });
 
-  test("add two listeners and remove one of them", async () => {
+  test("add two listeners and remove one of them", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
 
@@ -51,7 +51,7 @@ describe("core/events", (test) => {
     assertEquals(triggered, 1);
   });
 
-  test("add two listeners and remove all of them", async () => {
+  test("add two listeners and remove all of them", () => {
     const emitter = new EventEmitter();
     let triggered1 = 0;
     let triggered2 = 0;
@@ -66,7 +66,7 @@ describe("core/events", (test) => {
     assertEquals(triggered2, 0);
   });
 
-  test("add a listener twice and emit an event", async () => {
+  test("add a listener twice and emit an event", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
     const listener = () => triggered++;
@@ -78,7 +78,7 @@ describe("core/events", (test) => {
     assertEquals(triggered, 2);
   });
 
-  test("add a listener twice and remove it", async () => {
+  test("add a listener twice and remove it", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
     const listener = () => triggered++;
@@ -121,7 +121,7 @@ describe("core/events", (test) => {
     assertEquals(never, null);
   });
 
-  test("throw when emitting errors without bound listener", async () => {
+  test("throw when emitting errors without bound listener", () => {
     const emitter = new EventEmitter();
 
     assertThrows(
@@ -131,7 +131,7 @@ describe("core/events", (test) => {
     );
   });
 
-  test("not throw when emitting errors with bound listener", async () => {
+  test("not throw when emitting errors with bound listener", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
 
@@ -141,7 +141,7 @@ describe("core/events", (test) => {
     assertEquals(triggered, 1);
   });
 
-  test("throw when emitting errors after reseting error throwing behavior", async () => {
+  test("throw when emitting errors after reseting error throwing behavior", () => {
     const emitter = new EventEmitter();
 
     assertThrows(
@@ -152,6 +152,20 @@ describe("core/events", (test) => {
       },
       Error,
       "Boom!",
+    );
+  });
+
+  test("throw when reaching max listener count", () => {
+    const emitter = new EventEmitter({ maxListeners: 2 });
+    const noop = () => {};
+
+    emitter.on("event", noop);
+    emitter.on("event", noop);
+
+    assertThrows(
+      () => emitter.on("event", noop),
+      Error,
+      'Too many listeners for "event" event',
     );
   });
 });
