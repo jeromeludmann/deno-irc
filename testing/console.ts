@@ -9,7 +9,7 @@ export function mockConsole(): MockConsole {
   const stdout: any[][] = [];
   const stderr: any[][] = [];
 
-  console.info = console.log = mock(stdout);
+  console.info = mock(stdout);
   console.warn = console.error = mock(stderr);
 
   return { stdout, stderr };
