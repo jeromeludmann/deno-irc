@@ -1,6 +1,6 @@
 import { FatalError, Plugin } from "../core/client.ts";
 import { Parser } from "../core/parsers.ts";
-import { bold, dim, green, red } from "../deps.ts";
+import { bold, dim, green, red, reset } from "../deps.ts";
 
 export interface VerboseParams {
   options: {
@@ -16,44 +16,56 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     return;
   }
 
-  hook(
-    (client as unknown as { parser: Parser }).parser,
-    "parseMessages",
-    function logReceivedChunks(parseMessages, chunks) {
-      const raw = chunks.split("\r\n");
-      const last = raw.length - 1;
+  const parser = (client as unknown as { parser: Parser }).parser;
 
-      if (raw[last] === "") {
-        raw.pop();
-      } else {
-        raw[last] += bold(" // chunked");
-      }
+  hook(parser, "parseMessages", logReceivedMessages);
+  hook(client, "send", logSentMessages);
+  hook(client, "emit", logEvents);
+  (client.state as {}) = new Proxy(client.state, { set: logStateChanges });
 
-      for (const r of raw) {
-        console.info(dim(`< ${r}`));
-      }
+  let isPreviousChunked = false;
 
-      return parseMessages(chunks);
-    },
-  );
+  function logReceivedMessages(parseMessages: Function, chunks: string) {
+    const raw = chunks.split("\r\n");
 
-  hook(
-    client,
-    "send",
-    async function logSentMessages(send, command, ...params) {
-      console.info(bold(command), params);
+    if (isPreviousChunked) {
+      raw[0] = bold("chunked...") + reset(dim(raw[0]));
+    }
 
-      const raw = await send(command, ...params);
+    const last = raw.length - 1;
 
-      if (raw !== null) {
-        console.info(dim(`> ${raw}`));
-      }
+    if (raw[last] === "") {
+      raw.pop();
+      isPreviousChunked = false;
+    } else {
+      raw[last] += bold("...chunked");
+      isPreviousChunked = true;
+    }
 
-      return raw;
-    },
-  );
+    for (const r of raw) {
+      console.info(dim(`< ${r}`));
+    }
 
-  hook(client, "emit", function logEvents(emit, event, payload) {
+    return parseMessages(chunks);
+  }
+
+  async function logSentMessages(
+    send: Function,
+    command: string,
+    ...params: string[]
+  ) {
+    console.info(bold(command), params);
+
+    const raw = await send(command, ...params);
+
+    if (raw !== null) {
+      console.info(dim(`> ${raw}`));
+    }
+
+    return raw;
+  }
+
+  function logEvents(emit: Function, event: string, payload: unknown) {
     switch (event) {
       case "raw":
         break;
@@ -68,41 +80,39 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     }
 
     return emit(event, payload);
-  });
+  }
 
-  (client.state as unknown) = new Proxy(client.state, {
-    set: function logStateChanges(
-      state: Record<string, any>,
-      key: string,
-      value: unknown,
-    ) {
-      const prev = JSON.stringify(state[key]);
-      const next = JSON.stringify(value);
+  function logStateChanges(
+    state: Record<string, any>,
+    key: string,
+    value: unknown,
+  ) {
+    const prev = JSON.stringify(state[key]);
+    const next = JSON.stringify(value);
 
-      if (prev !== next) {
-        console.info(red(`- ${bold(key)} ${prev}`));
-        console.info(green(`+ ${bold(key)} ${next}`));
-      }
+    if (prev !== next) {
+      console.info(red(`- ${bold(key)} ${prev}`));
+      console.info(green(`+ ${bold(key)} ${next}`));
+    }
 
-      state[key] = value;
+    state[key] = value;
 
-      return true;
-    },
-  });
+    return true;
+  }
 };
 
 function hook<
   TObject extends Object,
-  TProp extends keyof TObject,
-  TFunction extends TObject[TProp] extends (...args: any[]) => any
-    ? TObject[TProp]
+  TMethodName extends keyof TObject,
+  TMethod extends TObject[TMethodName] extends (...args: any[]) => any
+    ? TObject[TMethodName]
     : never,
 >(
-  client: TObject,
-  prop: TProp,
-  hook: (fn: TFunction, ...args: Parameters<TFunction>) => any,
+  object: TObject,
+  methodName: TMethodName,
+  hook: (method: TMethod, ...args: Parameters<TMethod>) => any,
 ): void {
-  const fn = (client[prop] as any).bind(client);
-  (client[prop] as unknown) = (...args: Parameters<TFunction>) =>
+  const fn = (object[methodName] as any).bind(object);
+  (object[methodName] as unknown) = (...args: Parameters<TMethod>) =>
     hook(fn, ...args);
 }

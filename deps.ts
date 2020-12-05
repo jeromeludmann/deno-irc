@@ -3,6 +3,7 @@ export {
   dim,
   green,
   red,
+  reset,
   stripColor,
 } from "https://deno.land/std/fmt/colors.ts";
 export {
