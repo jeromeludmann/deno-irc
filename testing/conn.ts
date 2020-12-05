@@ -12,7 +12,7 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
 
-  sent: string[] = [];
+  raw: string[] = [];
 
   constructor(hostname: string, port: number) {
     super();
@@ -37,20 +37,27 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
       return null;
     }
 
-    const bytes = this.encoder.encode(raw.join("\r\n") + "\r\n");
-    this.decoder.decode(bytes);
+    const str = raw.join("\r\n") + "\r\n";
+    const bytes = this.encoder.encode(str);
+
     buffer.set(bytes);
 
     return bytes.length;
   }
 
   async write(bytes: Uint8Array): Promise<number> {
-    const raw = this.decoder.decode(bytes);
-    this.sent.push(...raw.split("\r\n").slice(0, -1));
+    const str = this.decoder.decode(bytes);
+    const raw = str.split("\r\n");
+    raw.pop();
+
+    this.raw.push(...raw);
+
     return bytes.length;
   }
 
-  closeWrite(): void {}
+  closeWrite(): void {
+    // Do nothing
+  }
 
   close(): void {
     this.emit("read", null);

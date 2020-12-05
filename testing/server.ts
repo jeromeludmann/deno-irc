@@ -16,12 +16,12 @@ export class MockServer {
     return this.client.conn;
   }
 
-  /** Gets the received raw messages. */
+  /** Receives the raw messages. */
   receive(): string[] {
     try {
-      return this.conn.sent;
+      return this.conn.raw;
     } finally {
-      this.conn.sent = [];
+      this.conn.raw = [];
     }
   }
 
@@ -34,7 +34,8 @@ export class MockServer {
     return this.conn.emit("read", raw);
   }
 
-  close(): void {
+  /** Closes the server. */
+  shutdown(): void {
     this.conn.emit("read", null);
   }
 }

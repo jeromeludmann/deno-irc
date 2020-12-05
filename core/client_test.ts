@@ -112,7 +112,7 @@ describe("core/client", (test) => {
     const { client, server } = await mock([], {}, { withConnection: false });
 
     await client.connect("host");
-    server.close();
+    server.shutdown();
     const msg = await client.once("disconnected");
 
     assertEquals(msg, {

@@ -151,7 +151,7 @@ describe("client", (test) => {
   });
 
   test("be disconnected on connection close", async () => {
-    server.close();
+    server.shutdown();
     const msg = await client.once("disconnected");
 
     assertExists(msg);
