@@ -131,22 +131,29 @@ When an error is emitted, it will be thrown by default and causes a crash of the
 
 To avoid the client from crashing, it is required to have at least one event listener for the `"error"` event name.
 
-By listening to the `"error"` event, errors will no longer be thrown and you will be able to handle them properly:
+By listening to the `"error"` event, errors will no longer be thrown:
+
+```ts
+client.on("error", console.error);
+```
+
+Even better, you can handle them by checking `error.type` property:
 
 ```ts
 client.on("error", (error) => {
   switch (error.type) {
-    case "connect":
-    // errors while connecting
-
-    case "read":
-    // errors while receiving messages from server
-
-    case "write":
-    // errors while sending messages to server
-
-    case "close":
-    // errors while closing connection
+    case "connect": {
+      // errors while connecting
+    }
+    case "read": {
+      // errors while receiving messages from server
+    }
+    case "write": {
+      // errors while sending messages to server
+    }
+    case "close": {
+      // errors while closing connection
+    }
   }
 });
 ```
