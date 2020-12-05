@@ -82,13 +82,11 @@ describe("core/client", (test) => {
         command: "PING",
         params: ["key"],
         prefix: "",
-        raw: "PING key",
       },
       {
         command: "RPL_WELCOME",
         params: ["me", "Welcome to the server"],
         prefix: "serverhost",
-        raw: ":serverhost 001 me :Welcome to the server",
       },
     ]);
   });

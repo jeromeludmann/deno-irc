@@ -31,9 +31,6 @@ export interface Raw {
 
   /** Parameters of the message. */
   params: string[];
-
-  /** Original raw string. */
-  raw: string;
 }
 
 // The following is called on each received raw message
@@ -82,9 +79,6 @@ function parseMessage(raw: string): Raw {
     const trailing = raw.slice(++start).trimRight();
     msg.params.push(trailing);
   }
-
-  // Keep the original raw string
-  msg.raw = raw;
 
   return msg;
 }

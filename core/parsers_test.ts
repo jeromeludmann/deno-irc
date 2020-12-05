@@ -19,7 +19,6 @@ describe("core/parsers", (test) => {
         prefix: "serverhost",
         command: "NOTICE",
         params: ["Auth", "*** Looking up your hostname..."],
-        raw: ":serverhost NOTICE Auth :*** Looking up your hostname...",
       },
     ]);
 
@@ -31,13 +30,11 @@ describe("core/parsers", (test) => {
         prefix: "serverhost",
         command: "RPL_WELCOME",
         params: ["nick", "Welcome to the server"],
-        raw: ":serverhost 001 nick :Welcome to the server",
       },
       {
         prefix: "nick!user@host",
         command: "JOIN",
         params: ["#channel"],
-        raw: ":nick!user@host JOIN #channel",
       },
     ]);
 
@@ -49,13 +46,11 @@ describe("core/parsers", (test) => {
         prefix: "",
         command: "PING",
         params: ["serverhost"],
-        raw: "PING serverhost",
       },
       {
         prefix: "nick!user@host",
         command: "PRIVMSG",
         params: ["#channel", ":!@ ;"],
-        raw: ":nick!user@host PRIVMSG #channel ::!@ ;",
       },
     ]);
   });

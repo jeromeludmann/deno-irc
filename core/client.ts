@@ -106,15 +106,14 @@ export class CoreClient<
         read = await conn.read(buffer);
         if (read === null) break;
       } catch (error) {
-        if (!(error instanceof Deno.errors.BadResource)) {
-          this.emit("error", new FatalError("read", error.message));
-        }
+        if (error instanceof Deno.errors.BadResource) break;
+        this.emit("error", new FatalError("read", error.message));
         break;
       }
 
       const bytes = buffer.subarray(0, read);
-      const raw = this.decoder.decode(bytes);
-      const messages = this.parser.parseMessages(raw);
+      const chunks = this.decoder.decode(bytes);
+      const messages = this.parser.parseMessages(chunks);
 
       for (const msg of messages) {
         this.emit("raw", msg);
@@ -164,9 +163,8 @@ export class CoreClient<
       await this.conn.write(bytes);
       return raw;
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) {
-        this.emit("error", new FatalError("write", error.message));
-      }
+      if (error instanceof Deno.errors.BadResource) return null;
+      this.emit("error", new FatalError("write", error.message));
       return null;
     }
   }

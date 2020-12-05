@@ -1,5 +1,5 @@
-import { CoreClient, FatalError, Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { FatalError, Plugin } from "../core/client.ts";
+import { Parser } from "../core/parsers.ts";
 import { bold, dim, green, red } from "../deps.ts";
 
 export interface VerboseParams {
@@ -16,25 +16,42 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     return;
   }
 
-  hook(client, "emit", function logReceivedMsg(emit, event, payload) {
-    if (event === "raw") {
-      console.info(dim(`< ${(payload as Raw).raw}`));
-    }
+  hook(
+    (client as unknown as { parser: Parser }).parser,
+    "parseMessages",
+    function logReceivedChunks(parseMessages, chunks) {
+      const raw = chunks.split("\r\n");
+      const last = raw.length - 1;
 
-    return emit(event, payload);
-  });
+      if (raw[last] === "") {
+        raw.pop();
+      } else {
+        raw[last] += bold(" // chunked");
+      }
 
-  hook(client, "send", async function logSentMsg(send, command, ...params) {
-    console.info(bold(command), params);
+      for (const r of raw) {
+        console.info(dim(`< ${r}`));
+      }
 
-    const raw = await send(command, ...params);
+      return parseMessages(chunks);
+    },
+  );
 
-    if (raw !== null) {
-      console.info(dim(`> ${raw}`));
-    }
+  hook(
+    client,
+    "send",
+    async function logSentMessages(send, command, ...params) {
+      console.info(bold(command), params);
 
-    return raw;
-  });
+      const raw = await send(command, ...params);
+
+      if (raw !== null) {
+        console.info(dim(`> ${raw}`));
+      }
+
+      return raw;
+    },
+  );
 
   hook(client, "emit", function logEvents(emit, event, payload) {
     switch (event) {
@@ -54,7 +71,7 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
   });
 
   (client.state as unknown) = new Proxy(client.state, {
-    set: function logState(
+    set: function logStateChanges(
       state: Record<string, any>,
       key: string,
       value: unknown,
@@ -75,13 +92,13 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
 };
 
 function hook<
-  TClient extends CoreClient,
-  TProp extends keyof TClient,
-  TFunction extends TClient[TProp] extends (...args: any[]) => any
-    ? TClient[TProp]
+  TObject extends Object,
+  TProp extends keyof TObject,
+  TFunction extends TObject[TProp] extends (...args: any[]) => any
+    ? TObject[TProp]
     : never,
 >(
-  client: TClient,
+  client: TObject,
   prop: TProp,
   hook: (fn: TFunction, ...args: Parameters<TFunction>) => any,
 ): void {
