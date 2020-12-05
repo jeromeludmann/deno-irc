@@ -102,24 +102,25 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     delay: number,
   ): Promise<InferredPayload<TEvents, T> | null> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      const listener = (payload: InferredPayload<TEvents, T>) => {
+        clearTimeout(timeout);
+        resolve(payload);
+      };
+
+      this.once(eventName, listener);
+
       const timeout = setTimeout(() => {
-        removeListener();
+        this.off(eventName, listener);
         resolve(null);
       }, delay);
-
-      const removeListener = this.on(eventName, (payload) => {
-        clearTimeout(timeout);
-        removeListener();
-        resolve(payload);
-      });
     });
   }
 
   /** Removes the `listener` of the `eventName`. */
   off<T extends keyof TEvents>(
     eventName: T,
-    listener?: Listener<InferredPayload<TEvents, T>>,
+    listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
     this.listeners[eventName] = this.listeners[eventName]
       .filter((fn) => fn !== listener);
@@ -129,6 +130,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
+  /** Resets the error throwing behavior based on current listener counts. */
   resetErrorThrowingBehavior(): void {
     this.ignoreCurrentListenerCounts();
   }
