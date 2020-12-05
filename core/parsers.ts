@@ -1,6 +1,5 @@
 import { AnyCommand, AnyNumeric, IRC_NUMERICS } from "./protocol.ts";
 
-/** Main parser used by the core client. */
 export class Parser {
   private chunk = "";
 
@@ -23,18 +22,22 @@ export class Parser {
   }
 }
 
-/** Raw shape of an IRC message. */
 export interface Raw {
   /** Prefix of the message. */
   prefix: string;
+
   /** Command of the message. */
   command: AnyCommand | AnyNumeric;
+
   /** Parameters of the message. */
   params: string[];
+
   /** Original raw string. */
   raw: string;
 }
 
+// The following is called on each received raw message
+// and must favor performance over readability.
 function parseMessage(raw: string): Raw {
   const msg = {} as Raw;
 
@@ -86,19 +89,20 @@ function parseMessage(raw: string): Raw {
   return msg;
 }
 
-/** User mask containing the nickname, the username and the userhost. */
 export interface UserMask {
   nick: string;
   username: string;
   userhost: string;
 }
 
-/** Gets a user mask object from a prefix string. */
+/** Gets a user mask from a raw prefix. */
 export function parseUserMask(prefix: string): UserMask {
   const usermask = prefix.match(/^(.+)!(.+)@(.+)$/);
+
   if (usermask === null) {
     throw new Error(`Not a user mask: ${prefix}`);
   }
+
   const [, nick, username, userhost] = usermask;
   return { nick, username, userhost };
 }

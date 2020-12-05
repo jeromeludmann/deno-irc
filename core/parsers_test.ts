@@ -5,45 +5,28 @@ import { Parser, parseUserMask } from "./parsers.ts";
 describe("core/parsers", (test) => {
   test("parse chunks of raw messages", () => {
     const parser = new Parser();
-    const messages = [];
-    const raw = [
-      ":serverhost NOTICE Auth :*** Looking up",
+
+    const raw1 = Array.from(
+      parser.parseMessages(":serverhost NOTICE Auth :*** Looking up"),
+    );
+    assertEquals(raw1, []);
+
+    const raw2 = Array.from(parser.parseMessages(
       " your hostname...\r\n:serverhost 001 nick :Wel",
-      "come to the server\r\n:nick!user@host JOIN #channel\r\n",
-      "PING serverhost\r\n:nick!user@host PRIVMSG #channel ::!@ ;\r\n",
-    ];
-
-    for (const msg of parser.parseMessages(raw[0])) {
-      messages.push(msg);
-    }
-
-    assertEquals(messages.length, 0);
-
-    for (const msg of parser.parseMessages(raw[1])) {
-      messages.push(msg);
-    }
-
-    assertEquals(messages.length, 1);
-
-    for (const msg of parser.parseMessages(raw[2])) {
-      messages.push(msg);
-    }
-
-    assertEquals(messages.length, 3);
-
-    for (const msg of parser.parseMessages(raw[3])) {
-      messages.push(msg);
-    }
-
-    assertEquals(messages.length, 5);
-
-    assertEquals(messages, [
+    ));
+    assertEquals(raw2, [
       {
         prefix: "serverhost",
         command: "NOTICE",
         params: ["Auth", "*** Looking up your hostname..."],
         raw: ":serverhost NOTICE Auth :*** Looking up your hostname...",
       },
+    ]);
+
+    const raw3 = Array.from(parser.parseMessages(
+      "come to the server\r\n:nick!user@host JOIN #channel\r\n",
+    ));
+    assertEquals(raw3, [
       {
         prefix: "serverhost",
         command: "RPL_WELCOME",
@@ -56,6 +39,12 @@ describe("core/parsers", (test) => {
         params: ["#channel"],
         raw: ":nick!user@host JOIN #channel",
       },
+    ]);
+
+    const raw4 = Array.from(parser.parseMessages(
+      "PING serverhost\r\n:nick!user@host PRIVMSG #channel ::!@ ;\r\n",
+    ));
+    assertEquals(raw4, [
       {
         prefix: "",
         command: "PING",
