@@ -122,12 +122,8 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
-    this.listeners[eventName] = this.listeners[eventName]
-      .filter((fn) => fn !== listener);
-
-    if (this.listeners[eventName].length === 0) {
-      delete this.listeners[eventName];
-    }
+    const listeners = this.listeners[eventName].filter((fn) => fn !== listener);
+    this.listeners[eventName] = listeners;
   }
 
   /** Resets the error throwing behavior based on current listener counts. */
