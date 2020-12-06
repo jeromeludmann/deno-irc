@@ -18,12 +18,18 @@ describe("plugins/motd", (test) => {
   test("emit 'motd' on RPL_ENDOFMOTD", async () => {
     const { client, server } = await mock(plugins, {});
 
-    server.send([
-      ":serverhost 375 nick :- serverhost Message of the day - ",
-      ":serverhost 372 nick :- Welcome to the",
-      ":serverhost 372 nick :- fake server!",
-      ":serverhost 376 nick :End of MOTD command",
-    ]);
+    const receiveMotd = () =>
+      server.send([
+        ":serverhost 375 nick :- serverhost Message of the day - ",
+        ":serverhost 372 nick :- Welcome to the",
+        ":serverhost 372 nick :- fake server!",
+        ":serverhost 376 nick :End of MOTD command",
+      ]);
+
+    receiveMotd();
+    await client.once("motd");
+
+    receiveMotd();
     const msg = await client.once("motd");
 
     assertEquals(msg, {

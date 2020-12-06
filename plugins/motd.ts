@@ -18,10 +18,10 @@ export interface Motd {
 }
 
 export const motd: Plugin<MotdParams> = (client) => {
-  let motd: string[] = [];
-
   client.motd = sendMotd;
   client.on("raw", emitMotd);
+
+  const motd: string[] = [];
 
   function sendMotd(...params: string[]) {
     client.send("MOTD", ...params);
@@ -30,7 +30,8 @@ export const motd: Plugin<MotdParams> = (client) => {
   function emitMotd(msg: Raw) {
     switch (msg.command) {
       case "RPL_MOTDSTART":
-        return motd = [];
+        motd.length = 0;
+        return;
 
       case "RPL_MOTD":
         const [, text] = msg.params;
