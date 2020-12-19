@@ -4,6 +4,7 @@ import { MockConn } from "./conn.ts";
 
 export class MockCoreClient extends CoreClient {
   protected connectImpl = mockConnect;
+  readonly conn: MockConn | null = null;
 }
 
 export class MockClient extends Client {

@@ -8,7 +8,7 @@ export class MockServer {
     this.client = client as unknown as { conn: MockConn | null };
   }
 
-  private get conn() {
+  private get conn(): MockConn {
     if (this.client.conn === null) {
       throw new Error("Missing mock connection");
     }

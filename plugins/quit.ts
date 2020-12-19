@@ -3,8 +3,10 @@ import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
 export interface QuitParams {
   commands: {
-    /** Leaves the server with an optional `comment`. */
-    quit(comment?: string): void;
+    /** Leaves the server with an optional `comment`.
+     *
+     * Resolves after closing link. */
+    quit(comment?: string): Promise<void>;
   };
 
   events: {
@@ -24,8 +26,9 @@ export const quit: Plugin<QuitParams> = (client) => {
   client.quit = sendQuit;
   client.on("raw", emitQuit);
 
-  function sendQuit(...params: string[]) {
-    client.send("QUIT", ...params);
+  async function sendQuit(...params: string[]) {
+    await client.send("QUIT", ...params);
+    client.disconnect();
   }
 
   function emitQuit(msg: Raw) {

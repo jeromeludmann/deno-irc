@@ -8,15 +8,40 @@ describe("plugins/quit", (test) => {
   const plugins = [quit, throwOnError];
 
   test("send QUIT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock(
+      plugins,
+      {},
+      { withConnection: false },
+    );
 
-    client.quit();
-    client.quit("Goodbye!");
-    const raw = server.receive();
+    const raw = [];
+    const connections = [];
+
+    await client.connect("");
+    raw.push(
+      ...(await Promise.all([
+        client.quit(),
+        server.receive(),
+      ]))[1],
+    );
+    connections.push(client.conn);
+
+    await client.connect("");
+    raw.push(
+      ...(await Promise.all([
+        client.quit("Goodbye!"),
+        server.receive(),
+      ]))[1],
+    );
+    connections.push(client.conn);
 
     assertEquals(raw, [
       "QUIT",
       "QUIT Goodbye!",
+    ]);
+    assertEquals(connections, [
+      null,
+      null,
     ]);
   });
 
