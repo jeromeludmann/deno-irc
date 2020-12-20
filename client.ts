@@ -19,6 +19,7 @@ import * as Part from "./plugins/part.ts";
 import * as Ping from "./plugins/ping.ts";
 import * as Privmsg from "./plugins/privmsg.ts";
 import * as Quit from "./plugins/quit.ts";
+import * as Reconnect from "./plugins/reconnect.ts";
 import * as Register from "./plugins/register.ts";
 import * as RegisterOnConnect from "./plugins/register_on_connect.ts";
 import * as ThrowOnError from "./plugins/throw_on_error.ts";
@@ -50,6 +51,7 @@ type ClientParams =
   & Ping.PingParams
   & Privmsg.PrivmsgParams
   & Quit.QuitParams
+  & Reconnect.ReconnectParams
   & Register.RegisterParams
   & RegisterOnConnect.RegisterOnConnectParams
   & Time.TimeParams
@@ -79,6 +81,7 @@ const plugins = [
   Ping.ping,
   Privmsg.privmsg,
   Quit.quit,
+  Reconnect.reconnect,
   Register.register,
   RegisterOnConnect.registerOnConnect,
   ThrowOnError.throwOnError,
