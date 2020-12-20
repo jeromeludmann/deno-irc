@@ -44,18 +44,19 @@ export interface CtcpVersionReply {
   version: string;
 }
 
+const DEFAULT_VERSION = "deno-irc";
+
 export const version: Plugin<
   & CtcpParams
   & VersionParams
 > = (client, options) => {
-  const replyEnabled = !!options.ctcpReplies?.version;
-  const version = options.ctcpReplies?.version || "deno-irc";
+  const version = options.ctcpReplies?.version ?? DEFAULT_VERSION;
 
   client.version = sendVersion;
   client.on("ctcp", emitCtcpVersion);
 
-  if (replyEnabled) {
-    client.on("ctcp_version", replyToCtcpVersion);
+  if (version !== false) {
+    client.on("ctcp_version", replyToCtcpVersion(version));
   }
 
   function sendVersion(target?: string) {
@@ -89,8 +90,10 @@ export const version: Plugin<
     }
   }
 
-  function replyToCtcpVersion(msg: CtcpVersion) {
-    const ctcpPayload = createCtcp("VERSION", version);
-    client.send("NOTICE", msg.origin.nick, ctcpPayload);
+  function replyToCtcpVersion(version: string) {
+    return (msg: CtcpVersion) => {
+      const ctcpPayload = createCtcp("VERSION", version);
+      client.send("NOTICE", msg.origin.nick, ctcpPayload);
+    };
   }
 };

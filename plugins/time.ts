@@ -40,13 +40,15 @@ export interface CtcpTimeReply {
   time: string;
 }
 
+const DEFAULT_REPLY = true;
+
 export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
-  const replyEnabled = options.ctcpReplies?.time ?? true;
+  const reply = options.ctcpReplies?.time ?? DEFAULT_REPLY;
 
   client.time = sendTime;
   client.on("ctcp", emitCtcpTime);
 
-  if (replyEnabled) {
+  if (reply) {
     client.on("ctcp_time", replyToCtcpTime);
   }
 

@@ -30,13 +30,15 @@ export const registerOnConnect: Plugin<
   & RegisterParams
   & RegisterOnConnectParams
 > = (client, options) => {
-  const nickname = options.nick;
-  const username = options.username ?? nickname;
-  const realname = options.realname ?? nickname;
-  const password = options.password;
+  const {
+    nick,
+    username = nick,
+    realname = nick,
+    password,
+  } = options;
 
   const { state } = client;
-  state.nick = nickname;
+  state.nick = nick;
   state.username = username;
   state.realname = realname;
 
@@ -50,7 +52,7 @@ export const registerOnConnect: Plugin<
       client.pass(password);
     }
 
-    client.nick(nickname);
+    client.nick(nick);
     client.user(username, realname);
   }
 

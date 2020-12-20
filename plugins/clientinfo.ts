@@ -40,17 +40,20 @@ export interface CtcpClientinfoReply {
   supported: AnyCtcpCommand[];
 }
 
+const DEFAULT_REPLY = true;
+
+const supported = ["PING", "TIME", "VERSION"];
+
 export const clientinfo: Plugin<
   & CtcpParams
   & ClientinfoParams
 > = (client, options) => {
-  const replyEnabled = options.ctcpReplies?.clientinfo ?? true;
-  const supported = ["PING", "TIME", "VERSION"];
+  const reply = options.ctcpReplies?.clientinfo ?? DEFAULT_REPLY;
 
   client.clientinfo = sendClientinfo;
   client.on("ctcp", emitClientinfo);
 
-  if (replyEnabled) {
+  if (reply) {
     client.on("ctcp_clientinfo", replyToClientinfo);
   }
 
