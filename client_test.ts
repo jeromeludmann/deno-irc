@@ -22,6 +22,7 @@ describe("client", (test) => {
     },
     resolveInvalidNames: true,
     verbose: true,
+    reconnect: true,
   };
 
   const { client, server } = mockAll(options);
@@ -68,6 +69,7 @@ describe("client", (test) => {
 
   test("have state initialized", () => {
     assertEquals(client.state, {
+      remoteAddr: { hostname: "", port: 0 },
       nick: "me",
       username: "user",
       realname: "real name",
@@ -79,9 +81,13 @@ describe("client", (test) => {
   });
 
   test("connect to server", async () => {
-    const conn = await client.connect("");
+    const conn = await client.connect("host");
 
     assertExists(conn);
+    assertEquals(client.state.remoteAddr, {
+      hostname: "host",
+      port: 6667,
+    });
   });
 
   test("register on connect", () => {

@@ -26,11 +26,16 @@ describe("plugins/myinfo", (test) => {
     server.send(":serverhost 004 me serverhost IRC-version iorsw ilmop");
     await client.once("myinfo");
 
-    assertEquals(client.state, {
-      serverHost: "serverhost",
-      serverVersion: "IRC-version",
-      availableUserModes: ["i", "o", "r", "s", "w"],
-      availableChannelModes: ["i", "l", "m", "o", "p"],
-    });
+    const {
+      serverHost,
+      serverVersion,
+      availableUserModes,
+      availableChannelModes,
+    } = client.state;
+
+    assertEquals(serverHost, "serverhost");
+    assertEquals(serverVersion, "IRC-version");
+    assertEquals(availableUserModes, ["i", "o", "r", "s", "w"]);
+    assertEquals(availableChannelModes, ["i", "l", "m", "o", "p"]);
   });
 });

@@ -54,11 +54,11 @@ describe("plugins/register_on_connect", (test) => {
   test("initialize user state", async () => {
     const { client } = await mock(plugins, options);
 
-    assertEquals(client.state, {
-      nick: "me",
-      username: "user",
-      realname: "real name",
-    });
+    const { nick, username, realname } = client.state;
+
+    assertEquals(nick, "me");
+    assertEquals(username, "user");
+    assertEquals(realname, "real name");
   });
 
   test("update nick on RPL_WELCOME", async () => {

@@ -17,10 +17,19 @@ export interface CoreParams {
     "raw": Raw;
     "error": FatalError;
   };
+
+  state: {
+    remoteAddr: RemoteAddr;
+  };
 }
 
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
+
+export interface RemoteAddr {
+  hostname: string;
+  port: number;
+}
 
 export class FatalError extends Error {
   constructor(
@@ -41,9 +50,10 @@ export type ExtendedClient<T extends PluginParams = {}> =
   & { readonly state: T["state"] }
   & T["commands"];
 
-export type ExtendedOptions<T extends PluginParams = {}> =
+export type ExtendedOptions<T extends PluginParams = {}> = Readonly<
   & CoreParams["options"]
-  & T["options"];
+  & T["options"]
+>;
 
 export type Plugin<T extends PluginParams = {}> = (
   client: ExtendedClient<T>,
@@ -61,15 +71,17 @@ export class CoreClient<
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
-
-  readonly state: Readonly<{}> = {};
+  readonly state: CoreParams["state"];
 
   constructor(
     plugins: Plugin<any>[],
     options: Readonly<CoreParams["options"]>,
   ) {
     super(options);
+
     this.bufferSize = options.bufferSize ?? BUFFER_SIZE;
+    this.state = { remoteAddr: { hostname: "", port: 0 } };
+
     new Set(plugins).forEach((plugin) => plugin(this, options));
     this.resetErrorThrowingBehavior();
   }
@@ -80,20 +92,25 @@ export class CoreClient<
    *
    * Resolves when connected. */
   async connect(hostname: string, port = PORT): Promise<Deno.Conn | null> {
+    this.state.remoteAddr = { hostname, port };
+
     if (this.conn !== null) {
       this.close();
     }
 
+    const { remoteAddr } = this.state;
+    this.emit("connecting", remoteAddr);
+
     try {
-      this.emit("connecting", { hostname, port });
       this.conn = await this.connectImpl({ hostname, port });
-      this.emit("connected", getRemoteAddr(this.conn));
+      this.emit("connected", remoteAddr);
     } catch (error) {
       this.emit("error", new FatalError("connect", error.message));
       return null;
     }
 
     this.read(this.conn);
+
     return this.conn;
   }
 
@@ -130,7 +147,7 @@ export class CoreClient<
 
     try {
       this.conn.close();
-      this.emit("disconnected", getRemoteAddr(this.conn));
+      this.emit("disconnected", this.state.remoteAddr);
     } catch (error) {
       this.emit("error", new FatalError("close", error.message));
     } finally {
@@ -173,15 +190,4 @@ export class CoreClient<
   disconnect(): void {
     this.close();
   }
-}
-
-export interface RemoteAddr {
-  hostname: string;
-  port: number;
-}
-
-function getRemoteAddr(conn: Deno.Conn): RemoteAddr {
-  const addr = conn.remoteAddr as Deno.NetAddr;
-  const { hostname, port } = addr;
-  return { hostname, port };
 }
