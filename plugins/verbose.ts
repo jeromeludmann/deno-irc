@@ -1,5 +1,4 @@
 import { FatalError, Plugin } from "../core/client.ts";
-import { Parser } from "../core/parsers.ts";
 import { bold, dim, green, red, reset } from "../deps.ts";
 
 export interface VerboseParams {
@@ -16,16 +15,11 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     return;
   }
 
-  const parser = (client as unknown as { parser: Parser }).parser;
-
-  hook(parser, "parseMessages", logReceivedMessages);
-  hook(client, "send", logSentMessages);
-  hook(client, "emit", logEvents);
-  (client.state as {}) = new Proxy(client.state, { set: logStateChanges });
-
   let isPreviousChunked = false;
 
-  function logReceivedMessages(parseMessages: Function, chunks: string) {
+  client.hooks.after("read", function logReceivedMessages(chunks) {
+    if (chunks === null) return null;
+
     const raw = chunks.split("\r\n");
 
     if (isPreviousChunked) {
@@ -45,27 +39,18 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     for (const r of raw) {
       console.info(dim(`< ${r}`));
     }
+  });
 
-    return parseMessages(chunks);
-  }
+  client.hooks.after("send", async function logSentMessages(raw) {
+    if (raw === null) return;
+    console.info(dim(`> ${raw}`));
+  });
 
-  async function logSentMessages(
-    send: Function,
-    command: string,
-    ...params: string[]
-  ) {
+  client.hooks.before("send", async function logCommands(command, ...params) {
     console.info(bold(command), params);
+  });
 
-    const raw = await send(command, ...params);
-
-    if (raw !== null) {
-      console.info(dim(`> ${raw}`));
-    }
-
-    return raw;
-  }
-
-  function logEvents(emit: Function, event: string, payload: unknown) {
+  client.hooks.before("emit", function logEvents(event, payload) {
     switch (event) {
       case "raw":
         break;
@@ -78,15 +63,9 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
       default:
         console.info(bold(event), payload);
     }
+  });
 
-    return emit(event, payload);
-  }
-
-  function logStateChanges(
-    state: Record<string, any>,
-    key: string,
-    value: unknown,
-  ) {
+  client.hooks.set("state", function logStateChanges(state, key, value) {
     const prev = JSON.stringify(state[key]);
     const next = JSON.stringify(value);
 
@@ -94,25 +73,5 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
       console.info(red(`- ${bold(key)} ${prev}`));
       console.info(green(`+ ${bold(key)} ${next}`));
     }
-
-    state[key] = value;
-
-    return true;
-  }
+  });
 };
-
-function hook<
-  TObject extends Object,
-  TMethodName extends keyof TObject,
-  TMethod extends TObject[TMethodName] extends (...args: any[]) => any
-    ? TObject[TMethodName]
-    : never,
->(
-  object: TObject,
-  methodName: TMethodName,
-  hook: (method: TMethod, ...args: Parameters<TMethod>) => any,
-): void {
-  const fn = (object[methodName] as any).bind(object);
-  (object[methodName] as unknown) = (...args: Parameters<TMethod>) =>
-    hook(fn, ...args);
-}

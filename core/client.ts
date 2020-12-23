@@ -1,4 +1,5 @@
 import { EventEmitter, EventEmitterOptions } from "./events.ts";
+import { Hooks } from "./hooks.ts";
 import { Parser, Raw } from "./parsers.ts";
 import { AnyCommand } from "./protocol.ts";
 
@@ -47,6 +48,7 @@ export type PluginParams = {
 
 export type ExtendedClient<T extends PluginParams = {}> =
   & CoreClient<CoreParams["events"] & T["events"]>
+  & { readonly hooks: Hooks<ExtendedClient<T> & { read: CoreClient["read"] }> }
   & { readonly state: T["state"] }
   & T["commands"];
 
@@ -67,10 +69,11 @@ export class CoreClient<
 > {
   protected connectImpl = Deno.connect;
   protected conn: Deno.Conn | null = null;
-  private bufferSize: number;
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
+  private buffer: Uint8Array;
+  protected hooks: Hooks<this>;
   readonly state: CoreParams["state"];
 
   constructor(
@@ -79,7 +82,8 @@ export class CoreClient<
   ) {
     super(options);
 
-    this.bufferSize = options.bufferSize ?? BUFFER_SIZE;
+    this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
+    this.hooks = new Hooks(this);
     this.state = { remoteAddr: { hostname: "", port: 0 } };
 
     new Set(plugins).forEach((plugin) => plugin(this, options));
@@ -109,27 +113,16 @@ export class CoreClient<
       return null;
     }
 
-    this.read(this.conn);
+    this.loop(this.conn);
 
     return this.conn;
   }
 
-  private async read(conn: Deno.Conn): Promise<void> {
-    const buffer = new Uint8Array(this.bufferSize);
-    let read: number | null;
-
+  protected async loop(conn: Deno.Conn): Promise<void> {
     for (;;) {
-      try {
-        read = await conn.read(buffer);
-        if (read === null) break;
-      } catch (error) {
-        if (error instanceof Deno.errors.BadResource) break;
-        this.emit("error", new FatalError("read", error.message));
-        break;
-      }
+      const chunks = await this.read(conn);
+      if (chunks === null) break;
 
-      const bytes = buffer.subarray(0, read);
-      const chunks = this.decoder.decode(bytes);
       const messages = this.parser.parseMessages(chunks);
 
       for (const msg of messages) {
@@ -140,7 +133,26 @@ export class CoreClient<
     this.close();
   }
 
-  private close() {
+  protected async read(conn: Deno.Conn): Promise<string | null> {
+    let read: number | null;
+
+    try {
+      read = await conn.read(this.buffer);
+      if (read === null) return null;
+    } catch (error) {
+      if (!(error instanceof Deno.errors.BadResource)) {
+        this.emit("error", new FatalError("read", error.message));
+      }
+      return null;
+    }
+
+    const bytes = this.buffer.subarray(0, read);
+    const chunks = this.decoder.decode(bytes);
+
+    return chunks;
+  }
+
+  protected close(): void {
     if (this.conn === null) {
       return;
     }
@@ -180,8 +192,9 @@ export class CoreClient<
       await this.conn.write(bytes);
       return raw;
     } catch (error) {
-      if (error instanceof Deno.errors.BadResource) return null;
-      this.emit("error", new FatalError("write", error.message));
+      if (!(error instanceof Deno.errors.BadResource)) {
+        this.emit("error", new FatalError("write", error.message));
+      }
       return null;
     }
   }
