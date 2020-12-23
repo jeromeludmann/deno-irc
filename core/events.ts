@@ -127,7 +127,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   }
 
   /** Resets the error throwing behavior based on current listener counts. */
-  resetErrorThrowingBehavior(): void {
+  protected resetErrorThrowingBehavior(): void {
     this.ignoreCurrentListenerCounts();
   }
 

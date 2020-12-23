@@ -147,7 +147,7 @@ describe("core/events", (test) => {
     assertThrows(
       () => {
         emitter.on("event", () => {});
-        emitter.resetErrorThrowingBehavior();
+        (emitter as any).resetErrorThrowingBehavior();
         emitter.emit("event", new Error("Boom!"));
       },
       Error,
