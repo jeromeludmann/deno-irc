@@ -22,7 +22,7 @@ describe("client", (test) => {
     },
     resolveInvalidNames: true,
     verbose: true,
-    reconnect: true,
+    reconnect: false,
   };
 
   const { client, server } = mockAll(options);

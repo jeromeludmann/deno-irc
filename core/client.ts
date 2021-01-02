@@ -67,14 +67,16 @@ export class CoreClient<
 > extends EventEmitter<
   CoreParams["events"] & TEvents
 > {
+  readonly state: CoreParams["state"];
+
   protected connectImpl = Deno.connect;
   protected conn: Deno.Conn | null = null;
+  protected hooks = new Hooks(this);
+
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private parser = new Parser();
   private buffer: Uint8Array;
-  protected hooks: Hooks<this>;
-  readonly state: CoreParams["state"];
 
   constructor(
     plugins: Plugin<any>[],
@@ -83,7 +85,6 @@ export class CoreClient<
     super(options);
 
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
-    this.hooks = new Hooks(this);
     this.state = { remoteAddr: { hostname: "", port: 0 } };
 
     new Set(plugins).forEach((plugin) => plugin(this, options));

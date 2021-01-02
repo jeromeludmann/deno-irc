@@ -52,6 +52,7 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
   client.on("raw", reconnectOnServerError);
   client.on("connecting", incrementAttempt);
   client.on("raw", resetAttempts);
+  client.hooks.before("connect", requireErrorListener);
 
   function reconnectOnConnectError(error: FatalError) {
     if (error.type === "connect") {
@@ -93,5 +94,14 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
       async () => await client.connect(hostname, port),
       delay * 1000,
     );
+  }
+
+  function requireErrorListener() {
+    if (client.count("error") === 0) {
+      client.emit(
+        "error",
+        new FatalError("connect", "'reconnect' requires an error listener"),
+      );
+    }
   }
 };

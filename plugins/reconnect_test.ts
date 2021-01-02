@@ -1,4 +1,5 @@
-import { assertEquals } from "../deps.ts";
+import { FatalError, Plugin } from "../core/client.ts";
+import { assertEquals, assertThrowsAsync } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { reconnect } from "./reconnect.ts";
@@ -56,5 +57,23 @@ describe("plugins/reconnect", (test) => {
     client.connect("bad_remote_host");
 
     assertEquals(reconnecting, 0);
+  });
+
+  test("throw if missing error listener", async () => {
+    let error;
+    const catchError: Plugin = async (client) =>
+      error = await client.once("error");
+
+    const { client } = await mock(
+      [...plugins, catchError],
+      { reconnect: true },
+      { withConnection: false },
+    );
+
+    assertThrowsAsync(
+      () => client.connect(""),
+      FatalError,
+      "connect: 'reconnect' requires an error listener",
+    );
   });
 });
