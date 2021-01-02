@@ -36,7 +36,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   ): void {
     const isThrowable = (
       (eventPayload as unknown) instanceof Error &&
-      this.countListeners(eventName) === 0
+      this.count(eventName) === 0
     );
 
     if (isThrowable) {
@@ -57,7 +57,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     listener: Listener<InferredPayload<TEvents, T>>,
   ): () => void {
-    if (this.countListeners(eventName) === this.maxListeners) {
+    if (this.count(eventName) === this.maxListeners) {
       throw new Error(`Too many listeners for "${eventName}" event`);
     }
 
@@ -126,20 +126,8 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     this.listeners[eventName] = listeners;
   }
 
-  /** Resets the error throwing behavior based on current listener counts. */
-  protected resetErrorThrowingBehavior(): void {
-    this.ignoreCurrentListenerCounts();
-  }
-
-  private ignoreCurrentListenerCounts(): void {
-    this.ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
-
-    for (const eventName in this.listeners) {
-      this.ignoredListenerCounts[eventName] = this.listeners[eventName].length;
-    }
-  }
-
-  private countListeners<T extends keyof TEvents>(eventName: T): number {
+  /** Counts the listeners of the `eventName`. */
+  count<T extends keyof TEvents>(eventName: T): number {
     if (!(eventName in this.listeners)) {
       return 0;
     }
@@ -152,5 +140,18 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
 
     return listenerCount - ignoredListenerCount;
+  }
+
+  /** Resets the error throwing behavior based on current listener counts. */
+  protected resetErrorThrowingBehavior(): void {
+    this.ignoreCurrentListenerCounts();
+  }
+
+  private ignoreCurrentListenerCounts(): void {
+    this.ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
+
+    for (const eventName in this.listeners) {
+      this.ignoredListenerCounts[eventName] = this.listeners[eventName].length;
+    }
   }
 }

@@ -38,6 +38,7 @@ describe("client", (test) => {
     assertExists(client.once);
     assertExists(client.wait);
     assertExists(client.off);
+    assertExists(client.count);
   });
 
   test("have plugin commands", () => {
