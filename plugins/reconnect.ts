@@ -52,7 +52,7 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
   client.on("raw", reconnectOnServerError);
   client.on("connecting", incrementAttempt);
   client.on("raw", resetAttempts);
-  client.hooks.before("connect", requireErrorListener);
+  client.hooks.beforeCall("connect", requireErrorListener);
 
   function reconnectOnConnectError(error: FatalError) {
     if (error.type === "connect") {

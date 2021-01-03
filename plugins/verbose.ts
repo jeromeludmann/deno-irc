@@ -15,21 +15,24 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     return;
   }
 
-  client.hooks.after("read", function logReceivedMessages(chunks) {
+  client.hooks.afterCall("read", function logReceivedMessages(chunks) {
     if (chunks === null) return;
     console.info(dim("read"), dim(bold("chunks")), dim(JSON.stringify(chunks)));
   });
 
-  client.hooks.after("send", async function logSentMessages(raw) {
+  client.hooks.afterCall("send", async function logSentMessages(raw) {
     if (raw === null) return;
     console.info(dim("send"), dim(bold("raw")), dim(JSON.stringify(raw)));
   });
 
-  client.hooks.before("send", async function logCommands(command, ...params) {
-    console.info("send", bold(command), params);
-  });
+  client.hooks.beforeCall(
+    "send",
+    async function logCommands(command, ...params) {
+      console.info("send", bold(command), params);
+    },
+  );
 
-  client.hooks.before("emit", function logEvents(event, payload) {
+  client.hooks.beforeCall("emit", function logEvents(event, payload) {
     switch (event) {
       case "raw":
         break;
@@ -44,13 +47,16 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
     }
   });
 
-  client.hooks.set("state", function logStateChanges(state, key, value) {
-    const prev = JSON.stringify(state[key]);
-    const next = JSON.stringify(value);
+  client.hooks.beforeMutate(
+    "state",
+    function logStateChanges(state, key, value) {
+      const prev = JSON.stringify(state[key]);
+      const next = JSON.stringify(value);
 
-    if (prev !== next) {
-      console.info("diff", bold(key), red(`- ${prev}`));
-      console.info("diff", bold(key), green(`+ ${next}`));
-    }
-  });
+      if (prev !== next) {
+        console.info("diff", bold(key), red(`- ${prev}`));
+        console.info("diff", bold(key), green(`+ ${next}`));
+      }
+    },
+  );
 };

@@ -8,7 +8,7 @@ describe("core/hooks", (test) => {
     const target = { fn: (arg: string) => results.push("fn") };
     const hooks = new Hooks(target);
 
-    hooks.before("fn", (arg) => results.push(arg));
+    hooks.beforeCall("fn", (arg) => results.push(arg));
     target.fn("arg");
 
     assertEquals(results, ["arg", "fn"]);
@@ -24,7 +24,7 @@ describe("core/hooks", (test) => {
     };
     const hooks = new Hooks(target);
 
-    hooks.after("fn", (val) => results.push(val));
+    hooks.afterCall("fn", (val) => results.push(val));
     await target.fn();
 
     assertEquals(results, ["fn", "value"]);
@@ -35,7 +35,7 @@ describe("core/hooks", (test) => {
     const target = { object: { key: "" } };
     const hooks = new Hooks(target);
 
-    hooks.set("object", (object, key, value) => results.push(key, value));
+    hooks.beforeMutate("object", (_, key, value) => results.push(key, value));
     target.object.key = "value";
 
     assertEquals(results, ["key", "value"]);
