@@ -7,10 +7,12 @@ import { register } from "./register.ts";
 
 describe("plugins/oper_on_register", (test) => {
   const plugins = [operOnRegister, oper, register];
-  const options = { oper: { user: "user", pass: "pass" } };
 
   test("oper on RPL_WELCOME", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock(
+      plugins,
+      { oper: { user: "user", pass: "pass" } },
+    );
 
     server.send(":serverhost 001 nick :Welcome to the server");
     await client.once("register");
@@ -20,12 +22,12 @@ describe("plugins/oper_on_register", (test) => {
   });
 
   test("not oper on RPL_WELCOME if disabled", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock(plugins, {});
 
     server.send(":serverhost 001 nick :Welcome to the server");
     await client.once("register");
     const raw = server.receive();
 
-    assertEquals(raw, ["OPER user pass"]);
+    assertEquals(raw, []);
   });
 });
