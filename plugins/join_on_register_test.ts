@@ -24,7 +24,7 @@ describe("plugins/join_on_register", (test) => {
   test("not join on RPL_WELCOME if disabled", async () => {
     const { client, server } = await mock(
       plugins,
-      { channels: [] },
+      { channels: undefined },
     );
 
     server.send(":serverhost 001 me :Welcome to the server");

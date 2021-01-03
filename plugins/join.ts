@@ -1,4 +1,4 @@
-import { FatalError, Plugin } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
 export interface JoinParams {
@@ -7,7 +7,7 @@ export interface JoinParams {
      *
      *      client.join("#channel");
      *      client.join("#channel1", ["#channel2", "key"]); */
-    join(...channels: (string | ChannelWithKey)[]): void;
+    join(...params: ChannelsDescription): void;
   };
 
   events: {
@@ -15,7 +15,10 @@ export interface JoinParams {
   };
 }
 
-export type ChannelWithKey = [channel: string, key: string];
+export type ChannelsDescription = [
+  channel: string | [channel: string, key: string],
+  ...channels: (string | [channel: string, key: string])[],
+];
 
 export interface Join {
   /** User who sent the JOIN. */
@@ -29,32 +32,27 @@ export const join: Plugin<JoinParams> = (client) => {
   client.join = sendJoin;
   client.on("raw", emitJoin);
 
-  function sendJoin(...params: (string | ChannelWithKey)[]) {
-    if (params.length === 0) {
-      client.emit(
-        "error",
-        new FatalError("write", "join requires at least one channel"),
-      );
-    }
-
-    const channels: string[] = [];
-    const keys: (string | null)[] = [];
+  function sendJoin(...params: ChannelsDescription) {
+    const channels = [];
+    const keys = [];
 
     for (const param of params) {
       if (typeof param === "string") {
         channels.push(param);
-        keys.push(null);
+        keys.push("");
       } else {
         channels.push(param[0]);
         keys.push(param[1]);
       }
     }
 
-    client.send(
-      "JOIN",
-      channels.join(","),
-      keys.some((key) => key !== null) ? keys.join(",") : "",
-    );
+    const commandParams = [channels.join(",")];
+
+    if (keys.some((key) => key !== "")) {
+      commandParams.push(keys.join(","));
+    }
+
+    client.send("JOIN", ...commandParams);
   }
 
   function emitJoin(msg: Raw) {
