@@ -186,8 +186,8 @@ export class CoreClient<
       params[last] = ":" + params[last];
     }
 
-    const raw = `${command} ${params.join(" ")}`.trimRight();
-    const bytes = this.encoder.encode(`${raw}\r\n`);
+    const raw = (command + " " + params.join(" ")).trimRight() + "\r\n";
+    const bytes = this.encoder.encode(raw);
 
     try {
       await this.conn.write(bytes);

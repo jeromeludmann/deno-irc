@@ -18,7 +18,7 @@ describe("plugins/verbose", (test) => {
     await client.once("raw");
 
     assertArrayIncludes(console.stdout, [
-      ["< :someone!user@host JOIN #channel"],
+      ["read", "chunks", '":someone!user@host JOIN #channel\\r\\n"'],
     ]);
   });
 
@@ -28,7 +28,7 @@ describe("plugins/verbose", (test) => {
     await client.send("JOIN", "#channel");
 
     assertArrayIncludes(console.stdout, [
-      ["> JOIN #channel"],
+      ["send", "raw", '"JOIN #channel\\r\\n"'],
     ]);
   });
 
@@ -38,7 +38,7 @@ describe("plugins/verbose", (test) => {
     await client.send("JOIN", "#channel");
 
     assertArrayIncludes(console.stdout, [
-      ["JOIN", ["#channel"]],
+      ["send", "JOIN", ["#channel"]],
     ]);
   });
 
@@ -55,15 +55,15 @@ describe("plugins/verbose", (test) => {
     await client.once("error");
 
     assertArrayIncludes(console.stdout, [
-      ["connecting", {
+      ["emit", "connecting", {
         hostname: "host",
         port: 6667,
       }],
-      ["connected", {
+      ["emit", "connected", {
         hostname: "host",
         port: 6667,
       }],
-      ["error", {
+      ["emit", "error", {
         name: "FatalError",
         type: "read",
         message: "read: Closing link: (user@host) [Client exited]",
@@ -81,8 +81,8 @@ describe("plugins/verbose", (test) => {
     await client.once("nick");
 
     assertArrayIncludes(console.stdout, [
-      ['- nick "current_nick"'],
-      ['+ nick "new_nick"'],
+      ["diff", "nick", '- "current_nick"'],
+      ["diff", "nick", '+ "new_nick"'],
     ]);
   });
 
