@@ -1,4 +1,5 @@
-import { FatalError, Plugin } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
+import { ClientError } from "../core/errors.ts";
 import { bold, dim, green, red } from "../deps.ts";
 
 export interface VerboseParams {
@@ -38,7 +39,7 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
         break;
 
       case "error":
-        const { type, name, message } = (payload as FatalError);
+        const { type, name, message } = (payload as ClientError);
         console.info("emit", bold(event), { type, name, message });
         break;
 

@@ -1,3 +1,4 @@
+import { ClientError, ErrorArgs, toClientError } from "./errors.ts";
 import { EventEmitter, EventEmitterOptions } from "./events.ts";
 import { Hooks } from "./hooks.ts";
 import { Parser, Raw } from "./parsers.ts";
@@ -16,7 +17,7 @@ export interface CoreParams {
     "connected": RemoteAddr;
     "disconnected": RemoteAddr;
     "raw": Raw;
-    "error": FatalError;
+    "error": ClientError;
   };
 
   state: {
@@ -30,16 +31,6 @@ const PORT = 6667;
 export interface RemoteAddr {
   hostname: string;
   port: number;
-}
-
-export class FatalError extends Error {
-  constructor(
-    public type: "connect" | "read" | "write" | "close",
-    message: string,
-  ) {
-    super(`${type}: ${message}`);
-    this.name = FatalError.name;
-  }
 }
 
 export type PluginParams = {
@@ -110,7 +101,7 @@ export class CoreClient<
       this.conn = await this.connectImpl({ hostname, port });
       this.emit("connected", remoteAddr);
     } catch (error) {
-      this.emit("error", new FatalError("connect", error.message));
+      this.emitError("connect", error);
       return null;
     }
 
@@ -142,7 +133,7 @@ export class CoreClient<
       if (read === null) return null;
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) {
-        this.emit("error", new FatalError("read", error.message));
+        this.emitError("read", error);
       }
       return null;
     }
@@ -162,7 +153,7 @@ export class CoreClient<
       this.conn.close();
       this.emit("disconnected", this.state.remoteAddr);
     } catch (error) {
-      this.emit("error", new FatalError("close", error.message));
+      this.emitError("close", error);
     } finally {
       this.conn = null;
     }
@@ -174,7 +165,7 @@ export class CoreClient<
    * or `null` if nothing has been sent. */
   async send(command: AnyCommand, ...params: string[]): Promise<string | null> {
     if (this.conn === null) {
-      this.emit("error", new FatalError("write", "Unable to send message"));
+      this.emitError("write", "Unable to send message", this.send);
       return null;
     }
 
@@ -194,7 +185,7 @@ export class CoreClient<
       return raw;
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) {
-        this.emit("error", new FatalError("write", error.message));
+        this.emitError("write", error);
       }
       return null;
     }
@@ -203,5 +194,10 @@ export class CoreClient<
   /** Disconnects from the server. */
   disconnect(): void {
     this.close();
+  }
+
+  /** Emits correctly an error. */
+  emitError(...args: ErrorArgs): void {
+    this.emit("error", toClientError(...args));
   }
 }

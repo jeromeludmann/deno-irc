@@ -1,4 +1,4 @@
-import { FatalError, Plugin } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
 export const throwOnError: Plugin = (client) => {
@@ -9,7 +9,6 @@ export const throwOnError: Plugin = (client) => {
       return;
     }
 
-    const message = msg.params.join(" ");
-    client.emit("error", new FatalError("read", message));
+    client.emitError("read", msg.params.join(" "), emitError);
   }
 };

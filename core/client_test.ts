@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows, assertThrowsAsync } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { FatalError, Plugin } from "./client.ts";
+import { Plugin } from "./client.ts";
 
 describe("core/client", (test) => {
   test("connect to server", async () => {
@@ -22,7 +22,7 @@ describe("core/client", (test) => {
     client.connect("bad_remote_host");
     const error = await client.once("error");
 
-    assertEquals(error.name, "FatalError");
+    assertEquals(error.name, "ConnectionRefused");
     assertEquals(error.type, "connect");
   });
 
@@ -31,7 +31,7 @@ describe("core/client", (test) => {
 
     assertThrowsAsync(
       () => client.connect("bad_remote_host"),
-      FatalError,
+      Error,
       "connect",
     );
   });
@@ -53,7 +53,7 @@ describe("core/client", (test) => {
       client.send("PING", "key"),
     ]);
 
-    assertEquals(error.name, "FatalError");
+    assertEquals(error.name, "Error");
     assertEquals(error.type, "write");
   });
 
@@ -62,7 +62,7 @@ describe("core/client", (test) => {
 
     assertThrowsAsync(
       () => client.send("PING", "key"),
-      FatalError,
+      Error,
       "write",
     );
   });
@@ -145,7 +145,7 @@ describe("core/client", (test) => {
 
     assertThrowsAsync(
       () => client.connect(""),
-      FatalError,
+      Error,
       "Boom!",
     );
   });
@@ -156,7 +156,7 @@ describe("core/client", (test) => {
     client.connect("");
     const error = await client.once("error");
 
-    assertEquals(error.name, "FatalError");
+    assertEquals(error.name, "Error");
     assertEquals(error.type, "connect");
   });
 

@@ -1,4 +1,5 @@
-import { FatalError, Plugin, RemoteAddr } from "../core/client.ts";
+import { Plugin, RemoteAddr } from "../core/client.ts";
+import { ClientError } from "../core/errors.ts";
 import { Raw } from "../core/parsers.ts";
 
 export interface ReconnectParams {
@@ -54,7 +55,7 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
   client.on("raw", resetAttempts);
   client.hooks.beforeCall("connect", requireErrorListener);
 
-  function reconnectOnConnectError(error: FatalError) {
+  function reconnectOnConnectError(error: ClientError) {
     if (error.type === "connect") {
       delayReconnect();
     }
@@ -97,11 +98,14 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
   }
 
   function requireErrorListener() {
-    if (client.count("error") === 0) {
-      client.emit(
-        "error",
-        new FatalError("connect", "'reconnect' requires an error listener"),
-      );
+    if (client.count("error") > 0) {
+      return;
     }
+
+    client.emitError(
+      "connect",
+      "'reconnect' requires an error listener",
+      requireErrorListener,
+    );
   }
 };

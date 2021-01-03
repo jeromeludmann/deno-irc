@@ -1,4 +1,4 @@
-import { FatalError, Plugin } from "../core/client.ts";
+import { Plugin } from "../core/client.ts";
 import { assertEquals, assertThrowsAsync } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
@@ -72,7 +72,7 @@ describe("plugins/reconnect", (test) => {
 
     assertThrowsAsync(
       () => client.connect(""),
-      FatalError,
+      Error,
       "connect: 'reconnect' requires an error listener",
     );
   });

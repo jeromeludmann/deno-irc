@@ -64,7 +64,7 @@ describe("plugins/verbose", (test) => {
         port: 6667,
       }],
       ["emit", "error", {
-        name: "FatalError",
+        name: "Error",
         type: "read",
         message: "read: Closing link: (user@host) [Client exited]",
       }],
