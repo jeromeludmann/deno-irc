@@ -1,6 +1,6 @@
 import { Plugin } from "../core/client.ts";
-import { isChannel, isNick } from "../core/helpers.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { isChannel, isNick } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
 
 export interface PrivmsgParams {

@@ -1,8 +1,8 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
-import { isChannel, isNick, isServerHost, isUserMask } from "./helpers.ts";
+import { isChannel, isNick, isServerHost, isUserMask } from "./strings.ts";
 
-describe("core/helpers", (test) => {
+describe("core/strings", (test) => {
   test("check user mask", () => {
     assertEquals(isUserMask("serverhost"), false);
     assertEquals(isUserMask("nick!user@host"), true);
