@@ -37,38 +37,22 @@ export interface Ctcp {
 }
 
 export const ctcp: Plugin<CtcpParams> = (client) => {
-  client.ctcp = sendCtcp;
-  client.on("raw", emitCtcp);
+  const sendCtcp = (target: string, command: string, param: string) => {
+    const ctcp = createCtcp(command, param);
+    client.send("PRIVMSG", target, ctcp);
+  };
 
-  function sendCtcp(target: string, command: string, param: string) {
-    client.send("PRIVMSG", target, createCtcp(command, param));
-  }
-
-  function emitCtcp(msg: Raw) {
+  const emitCtcp = (msg: Raw) => {
     if (!isCtcp(msg)) {
       return;
     }
 
-    const { command, params } = msg;
-    const [target, rawCtcp] = params;
-
-    const i = rawCtcp.indexOf(" ", 1);
-    const ctcpCommand = rawCtcp.slice(1, i) as AnyCtcpCommand;
-    const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
-
-    const ctcp: Ctcp = {
-      origin: parseUserMask(msg.prefix),
-      target,
-      command: ctcpCommand,
-      type: command === "PRIVMSG" ? "query" : "reply",
-    };
-
-    if (ctcpParam) {
-      ctcp.param = ctcpParam;
-    }
-
+    const ctcp = parseCtcp(msg);
     client.emit("ctcp", ctcp);
-  }
+  };
+
+  client.ctcp = sendCtcp;
+  client.on("raw", emitCtcp);
 };
 
 export function isCtcp(msg: Raw): boolean {
@@ -98,4 +82,25 @@ export function isCtcp(msg: Raw): boolean {
 export function createCtcp(command: string, param?: string): string {
   const ctcpParam = param === undefined ? "" : ` ${param}`;
   return `\x01${command}${ctcpParam}\x01`;
+}
+
+function parseCtcp(msg: Raw): Ctcp {
+  const { command, params: [target, rawCtcp] } = msg;
+
+  const i = rawCtcp.indexOf(" ", 1);
+  const ctcpCommand = rawCtcp.slice(1, i) as AnyCtcpCommand;
+  const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
+
+  const ctcp: Ctcp = {
+    origin: parseUserMask(msg.prefix),
+    target,
+    command: ctcpCommand,
+    type: command === "PRIVMSG" ? "query" : "reply",
+  };
+
+  if (ctcpParam) {
+    ctcp.param = ctcpParam;
+  }
+
+  return ctcp;
 }

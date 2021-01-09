@@ -48,68 +48,50 @@ export interface TopicSetBy {
 }
 
 export const topic: Plugin<TopicParams> = (client) => {
-  client.topic = sendTopic;
-  client.on("raw", emitTopicChange);
-  client.on("raw", emitTopicSet);
-  client.on("raw", emitTopicSetBy);
-
-  function sendTopic(...params: string[]) {
+  const sendTopic = (...params: string[]) => {
     client.send("TOPIC", ...params);
-  }
+  };
 
-  function emitTopicChange(msg: Raw) {
+  const emitTopicChange = (msg: Raw) => {
     if (msg.command !== "TOPIC") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [channel, topic] = msg.params;
+    const { prefix, params: [channel, topic] } = msg;
+    const origin = parseUserMask(prefix);
 
-    return client.emit("topic_change", {
-      origin,
-      channel,
-      topic,
-    });
-  }
+    client.emit("topic_change", { origin, channel, topic });
+  };
 
-  function emitTopicSet(msg: Raw) {
+  const emitTopicSet = (msg: Raw) => {
     switch (msg.command) {
       case "RPL_TOPIC": {
-        const [, channel, topic] = msg.params;
-
-        return client.emit("topic_set", {
-          channel,
-          topic,
-        });
+        const { params: [, channel, topic] } = msg;
+        client.emit("topic_set", { channel, topic });
+        break;
       }
-
       case "RPL_NOTOPIC": {
-        const [, channel] = msg.params;
-
-        return client.emit("topic_set", {
-          channel,
-          topic: undefined,
-        });
+        const { params: [, channel] } = msg;
+        const topic = undefined;
+        client.emit("topic_set", { channel, topic });
+        break;
       }
     }
-  }
+  };
 
-  function emitTopicSetBy(msg: Raw) {
+  const emitTopicSetBy = (msg: Raw) => {
     if (msg.command !== "RPL_TOPICWHOTIME") {
       return;
     }
 
-    const [, channel, who, timestamp] = msg.params;
-    const time = timestampToDate(timestamp);
+    const { params: [, channel, who, timestamp] } = msg;
+    const time = new Date(parseInt(timestamp, 10) * 1000);
 
-    return client.emit("topic_set_by", {
-      channel,
-      who,
-      time,
-    });
-  }
+    client.emit("topic_set_by", { channel, who, time });
+  };
+
+  client.topic = sendTopic;
+  client.on("raw", emitTopicChange);
+  client.on("raw", emitTopicSet);
+  client.on("raw", emitTopicSetBy);
 };
-
-function timestampToDate(timestamp: string) {
-  return new Date(parseInt(timestamp, 10) * 1000);
-}

@@ -50,17 +50,11 @@ export interface PrivatePrivmsg {
 }
 
 export const privmsg: Plugin<PrivmsgParams> = (client) => {
-  client.privmsg = sendPrivmsg;
-  client.msg = sendPrivmsg;
-  client.on("raw", emitPrivmsg);
-  client.on("privmsg", emitChannelPrivmsg);
-  client.on("privmsg", emitPrivatePrivmsg);
-
-  function sendPrivmsg(...params: string[]) {
+  const sendPrivmsg = (...params: string[]) => {
     client.send("PRIVMSG", ...params);
-  }
+  };
 
-  function emitPrivmsg(msg: Raw) {
+  const emitPrivmsg = (msg: Raw) => {
     if (
       msg.command !== "PRIVMSG" ||
       isCtcp(msg)
@@ -68,40 +62,33 @@ export const privmsg: Plugin<PrivmsgParams> = (client) => {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [target, text] = msg.params;
+    const { prefix, params: [target, text] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("privmsg", {
-      origin,
-      target,
-      text,
-    });
-  }
+    client.emit("privmsg", { origin, target, text });
+  };
 
-  function emitChannelPrivmsg(msg: Privmsg) {
+  const emitChannelPrivmsg = (msg: Privmsg) => {
     if (!isChannel(msg.target)) {
       return;
     }
 
-    const { origin, target, text } = msg;
+    const { origin, target: channel, text } = msg;
+    client.emit("privmsg:channel", { origin, channel, text });
+  };
 
-    client.emit("privmsg:channel", {
-      origin,
-      channel: target,
-      text,
-    });
-  }
-
-  function emitPrivatePrivmsg(msg: Privmsg) {
+  const emitPrivatePrivmsg = (msg: Privmsg) => {
     if (!isNick(msg.target)) {
       return;
     }
 
     const { origin, text } = msg;
+    client.emit("privmsg:private", { origin, text });
+  };
 
-    client.emit("privmsg:private", {
-      origin,
-      text,
-    });
-  }
+  client.privmsg = sendPrivmsg;
+  client.msg = sendPrivmsg;
+  client.on("raw", emitPrivmsg);
+  client.on("privmsg", emitChannelPrivmsg);
+  client.on("privmsg", emitPrivatePrivmsg);
 };

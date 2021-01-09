@@ -40,51 +40,50 @@ export interface CtcpTimeReply {
   time: string;
 }
 
-const DEFAULT_REPLY = true;
+const DEFAULT_TIME_REPLY = true;
 
 export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
-  const reply = options.ctcpReplies?.time ?? DEFAULT_REPLY;
+  const replyEnabled = options.ctcpReplies?.time ?? DEFAULT_TIME_REPLY;
 
-  client.time = sendTime;
-  client.on("ctcp", emitCtcpTime);
-
-  if (reply) {
-    client.on("ctcp_time", replyToCtcpTime);
-  }
-
-  function sendTime(target?: string) {
+  const sendTime = (target?: string) => {
     if (target === undefined) {
       client.send("TIME");
     } else {
       client.ctcp(target, "TIME");
     }
-  }
+  };
 
-  function emitCtcpTime(msg: Ctcp) {
+  const emitCtcpTime = (msg: Ctcp) => {
     if (msg.command !== "TIME") {
       return;
     }
 
-    const { origin, target, param } = msg;
+    const { origin, target, param: time } = msg;
 
     switch (msg.type) {
       case "query":
-        return client.emit("ctcp_time", {
-          origin,
-          target,
-        });
+        client.emit("ctcp_time", { origin, target });
+        break;
 
       case "reply":
-        return client.emit("ctcp_time_reply", {
-          origin,
-          target,
-          time: param!,
-        });
+        if (time === undefined) break;
+        client.emit("ctcp_time_reply", { origin, target, time });
+        break;
     }
+  };
+
+  client.time = sendTime;
+  client.on("ctcp", emitCtcpTime);
+
+  if (!replyEnabled) {
+    return;
   }
 
-  function replyToCtcpTime(msg: CtcpTime) {
-    const ctcpPayload = createCtcp("TIME", new Date().toLocaleString());
-    client.send("NOTICE", msg.origin.nick, ctcpPayload);
-  }
+  const replyToCtcpTime = (msg: CtcpTime) => {
+    const time = new Date().toLocaleString();
+    const ctcp = createCtcp("TIME", time);
+    client.send("NOTICE", msg.origin.nick, ctcp);
+  };
+
+  client.on("ctcp_time", replyToCtcpTime);
 };

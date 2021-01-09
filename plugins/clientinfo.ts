@@ -40,7 +40,7 @@ export interface CtcpClientinfoReply {
   supported: AnyCtcpCommand[];
 }
 
-const DEFAULT_REPLY = true;
+const DEFAULT_CLIENTINFO_REPLY = true;
 
 const supported = ["PING", "TIME", "VERSION"];
 
@@ -48,20 +48,14 @@ export const clientinfo: Plugin<
   & CtcpParams
   & ClientinfoParams
 > = (client, options) => {
-  const reply = options.ctcpReplies?.clientinfo ?? DEFAULT_REPLY;
+  const replyEnabled = options.ctcpReplies?.clientinfo ??
+    DEFAULT_CLIENTINFO_REPLY;
 
-  client.clientinfo = sendClientinfo;
-  client.on("ctcp", emitClientinfo);
-
-  if (reply) {
-    client.on("ctcp_clientinfo", replyToClientinfo);
-  }
-
-  function sendClientinfo(target: string) {
+  const sendClientinfo = (target: string) => {
     client.ctcp(target, "CLIENTINFO");
-  }
+  };
 
-  function emitClientinfo(msg: Ctcp) {
+  const emitClientinfo = (msg: Ctcp) => {
     if (msg.command !== "CLIENTINFO") {
       return;
     }
@@ -70,23 +64,28 @@ export const clientinfo: Plugin<
 
     switch (msg.type) {
       case "query":
-        return client.emit("ctcp_clientinfo", {
-          origin,
-          target,
-        });
+        client.emit("ctcp_clientinfo", { origin, target });
+        break;
 
       case "reply":
         const supported = (param?.split(" ") ?? []) as AnyCtcpCommand[];
-        return client.emit("ctcp_clientinfo_reply", {
-          origin,
-          target,
-          supported,
-        });
+        client.emit("ctcp_clientinfo_reply", { origin, target, supported });
+        break;
     }
+  };
+
+  client.clientinfo = sendClientinfo;
+  client.on("ctcp", emitClientinfo);
+
+  if (!replyEnabled) {
+    return;
   }
 
-  function replyToClientinfo(msg: CtcpClientinfo) {
-    const ctcpPayload = createCtcp("CLIENTINFO", supported.join(" "));
-    client.send("NOTICE", msg.origin.nick, ctcpPayload);
-  }
+  const replyToClientinfo = (msg: CtcpClientinfo) => {
+    const param = supported.join(" ");
+    const ctcp = createCtcp("CLIENTINFO", param);
+    client.send("NOTICE", msg.origin.nick, ctcp);
+  };
+
+  client.on("ctcp_clientinfo", replyToClientinfo);
 };

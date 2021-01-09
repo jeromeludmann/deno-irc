@@ -30,36 +30,34 @@ export interface Myinfo {
 
 export const myinfo: Plugin<MyinfoParams> = (client) => {
   const { state } = client;
-
   state.serverHost = "";
   state.serverVersion = "";
   state.availableUserModes = [];
   state.availableChannelModes = [];
 
-  client.on("raw", emitMyinfo);
-  client.on("myinfo", setMyinfoState);
-
-  function emitMyinfo(msg: Raw) {
+  const emitMyinfo = (msg: Raw) => {
     if (msg.command !== "RPL_MYINFO") {
       return;
     }
 
-    const [, host, version, userModes, channelModes] = msg.params;
+    const [, serverHost, serverVersion, userModes, channelModes] = msg.params;
+    const availableUserModes = userModes.split("");
+    const availableChannelModes = channelModes.split("");
 
-    return client.emit("myinfo", {
-      serverHost: host,
-      serverVersion: version,
-      availableUserModes: userModes.split(""),
-      availableChannelModes: channelModes.split(""),
-    });
-  }
+    client.emit(
+      "myinfo",
+      { serverHost, serverVersion, availableUserModes, availableChannelModes },
+    );
+  };
 
-  function setMyinfoState(msg: Myinfo) {
+  const setMyinfoState = (msg: Myinfo) => {
     const { state } = client;
-
     state.serverHost = msg.serverHost;
     state.serverVersion = msg.serverVersion;
     state.availableUserModes = msg.availableUserModes;
     state.availableChannelModes = msg.availableChannelModes;
-  }
+  };
+
+  client.on("raw", emitMyinfo);
+  client.on("myinfo", setMyinfoState);
 };

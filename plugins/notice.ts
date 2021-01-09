@@ -61,17 +61,11 @@ export interface PrivateNotice {
 }
 
 export const notice: Plugin<NoticeParams> = (client) => {
-  client.notice = sendNotice;
-  client.on("raw", emitNotice);
-  client.on("notice", emitServerNotice);
-  client.on("notice", emitChannelNotice);
-  client.on("notice", emitPrivateNotice);
-
-  function sendNotice(...params: string[]) {
+  const sendNotice = (...params: string[]) => {
     client.send("NOTICE", ...params);
-  }
+  };
 
-  function emitNotice(msg: Raw) {
+  const emitNotice = (msg: Raw) => {
     if (
       msg.command !== "NOTICE" ||
       isCtcp(msg)
@@ -79,27 +73,20 @@ export const notice: Plugin<NoticeParams> = (client) => {
       return;
     }
 
-    const [target, text] = msg.params;
+    const { prefix, params: [target, text] } = msg;
+    client.emit("notice", { prefix, target, text });
+  };
 
-    client.emit("notice", {
-      prefix: msg.prefix,
-      target,
-      text,
-    });
-  }
-
-  function emitServerNotice(msg: Notice) {
+  const emitServerNotice = (msg: Notice) => {
     if (!isServerHost(msg.prefix)) {
       return;
     }
 
-    return client.emit("notice:server", {
-      origin: msg.prefix,
-      text: msg.text,
-    });
-  }
+    const { prefix: origin, text } = msg;
+    client.emit("notice:server", { origin, text });
+  };
 
-  function emitChannelNotice(msg: Notice) {
+  const emitChannelNotice = (msg: Notice) => {
     if (
       !isUserMask(msg.prefix) ||
       !isChannel(msg.target)
@@ -107,16 +94,13 @@ export const notice: Plugin<NoticeParams> = (client) => {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
+    const { prefix, target: channel, text } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("notice:channel", {
-      origin,
-      channel: msg.target,
-      text: msg.text,
-    });
-  }
+    client.emit("notice:channel", { origin, channel, text });
+  };
 
-  function emitPrivateNotice(msg: Notice) {
+  const emitPrivateNotice = (msg: Notice) => {
     if (
       !isUserMask(msg.prefix) ||
       !isNick(msg.target)
@@ -124,11 +108,15 @@ export const notice: Plugin<NoticeParams> = (client) => {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
+    const { prefix, text } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("notice:private", {
-      origin,
-      text: msg.text,
-    });
-  }
+    client.emit("notice:private", { origin, text });
+  };
+
+  client.notice = sendNotice;
+  client.on("raw", emitNotice);
+  client.on("notice", emitServerNotice);
+  client.on("notice", emitChannelNotice);
+  client.on("notice", emitPrivateNotice);
 };

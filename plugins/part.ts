@@ -24,25 +24,21 @@ export interface Part {
 }
 
 export const part: Plugin<PartParams> = (client) => {
-  client.part = sendPart;
-  client.on("raw", emitPart);
-
-  function sendPart(...params: string[]) {
+  const sendPart = (...params: string[]) => {
     client.send("PART", ...params);
-  }
+  };
 
-  function emitPart(msg: Raw) {
+  const emitPart = (msg: Raw) => {
     if (msg.command !== "PART") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [channel, comment] = msg.params;
+    const { prefix, params: [channel, comment] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("part", {
-      origin,
-      channel,
-      comment,
-    });
-  }
+    client.emit("part", { origin, channel, comment });
+  };
+
+  client.part = sendPart;
+  client.on("raw", emitPart);
 };

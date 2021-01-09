@@ -10,21 +10,25 @@ export interface JoinOnInviteParams {
   };
 }
 
+const DEFAULT_JOIN_ON_INVITE = false;
+
 export const joinOnInvite: Plugin<
   & JoinParams
   & InviteParams
   & RegisterOnConnectParams
   & JoinOnInviteParams
 > = (client, options) => {
-  const enabled = options.joinOnInvite ?? false;
+  const enabled = options.joinOnInvite ?? DEFAULT_JOIN_ON_INVITE;
 
-  if (enabled) {
-    client.on("invite", joinChannel);
+  if (!enabled) {
+    return;
   }
 
-  function joinChannel(msg: Invite) {
+  const joinChannel = (msg: Invite) => {
     if (msg.nick === client.state.nick) {
       client.join(msg.channel);
     }
-  }
+  };
+
+  client.on("invite", joinChannel);
 };

@@ -30,47 +30,42 @@ export const registerOnConnect: Plugin<
   & RegisterParams
   & RegisterOnConnectParams
 > = (client, options) => {
-  const {
-    nick,
-    username = nick,
-    realname = nick,
-    password,
-  } = options;
+  const { nick, username = nick, realname = nick, password } = options;
 
   const { state } = client;
   state.nick = nick;
   state.username = username;
   state.realname = realname;
 
-  client.on("connected", register);
-  client.on("raw", resolveNotRegistered);
-  client.on("register", setNickState);
-  client.on("nick", trackNickChange);
-
-  function register() {
+  const register = () => {
     if (password !== undefined) {
       client.pass(password);
     }
 
     client.nick(nick);
     client.user(username, realname);
-  }
+  };
 
-  function resolveNotRegistered(msg: Raw) {
+  const resolveNotRegistered = (msg: Raw) => {
     if (msg.command === "ERR_NOTREGISTERED") {
       register();
     }
-  }
+  };
 
-  function setNickState(msg: Register) {
+  const setNickState = (msg: Register) => {
     client.state.nick = msg.nick;
-  }
+  };
 
-  function trackNickChange(msg: Nick) {
+  const trackNickChange = (msg: Nick) => {
     const { state } = client;
 
     if (msg.origin.nick === state.nick) {
       state.nick = msg.nick;
     }
-  }
+  };
+
+  client.on("connected", register);
+  client.on("raw", resolveNotRegistered);
+  client.on("register", setNickState);
+  client.on("nick", trackNickChange);
 };

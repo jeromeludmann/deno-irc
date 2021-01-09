@@ -24,28 +24,24 @@ export interface Register {
 }
 
 export const register: Plugin<RegisterParams> = (client) => {
-  client.user = sendUser;
-  client.pass = sendPass;
-  client.on("raw", emitRegister);
-
-  function sendUser(username: string, realname: string) {
+  const sendUser = (username: string, realname: string) => {
     client.send("USER", username, "0", "*", realname);
-  }
+  };
 
-  function sendPass(...params: string[]) {
+  const sendPass = (...params: string[]) => {
     client.send("PASS", ...params);
-  }
+  };
 
-  function emitRegister(msg: Raw) {
+  const emitRegister = (msg: Raw) => {
     if (msg.command !== "RPL_WELCOME") {
       return;
     }
 
-    const [nick, text] = msg.params;
+    const { params: [nick, text] } = msg;
+    client.emit("register", { nick, text });
+  };
 
-    return client.emit("register", {
-      nick,
-      text,
-    });
-  }
+  client.user = sendUser;
+  client.pass = sendPass;
+  client.on("raw", emitRegister);
 };

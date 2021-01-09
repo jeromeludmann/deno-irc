@@ -2,13 +2,14 @@ import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
 export const throwOnError: Plugin = (client) => {
-  client.on("raw", emitError);
-
-  function emitError(msg: Raw) {
+  const emitError = (msg: Raw) => {
     if (msg.command !== "ERROR") {
       return;
     }
 
-    client.emitError("read", msg.params.join(" "), emitError);
-  }
+    const error = msg.params.join(" ");
+    client.emitError("read", error, emitError);
+  };
+
+  client.on("raw", emitError);
 };

@@ -24,24 +24,21 @@ export interface Invite {
 }
 
 export const invite: Plugin<InviteParams> = (client) => {
-  client.invite = sendInvite;
-  client.on("raw", emitInvite);
-
-  function sendInvite(...params: string[]) {
+  const sendInvite = (...params: string[]) => {
     client.send("INVITE", ...params);
-  }
+  };
 
-  function emitInvite(msg: Raw) {
+  const emitInvite = (msg: Raw) => {
     if (msg.command !== "INVITE") {
       return;
     }
 
-    const [nick, channel] = msg.params;
+    const { prefix, params: [nick, channel] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("invite", {
-      origin: parseUserMask(msg.prefix),
-      nick,
-      channel,
-    });
-  }
+    client.emit("invite", { origin, nick, channel });
+  };
+
+  client.invite = sendInvite;
+  client.on("raw", emitInvite);
 };

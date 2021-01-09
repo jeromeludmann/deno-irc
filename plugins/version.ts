@@ -52,48 +52,44 @@ export const version: Plugin<
 > = (client, options) => {
   const version = options.ctcpReplies?.version ?? DEFAULT_VERSION;
 
-  client.version = sendVersion;
-  client.on("ctcp", emitCtcpVersion);
-
-  if (version !== false) {
-    client.on("ctcp_version", replyToCtcpVersion(version));
-  }
-
-  function sendVersion(target?: string) {
+  const sendVersion = (target?: string) => {
     if (target === undefined) {
       client.send("VERSION");
     } else {
       client.ctcp(target, "VERSION");
     }
-  }
+  };
 
-  function emitCtcpVersion(msg: Ctcp) {
+  const emitCtcpVersion = (msg: Ctcp) => {
     if (msg.command !== "VERSION") {
       return;
     }
 
-    const { origin, target, param } = msg;
+    const { origin, target, param: version } = msg;
 
     switch (msg.type) {
       case "query":
-        return client.emit("ctcp_version", {
-          origin,
-          target,
-        });
+        client.emit("ctcp_version", { origin, target });
+        break;
 
       case "reply":
-        return client.emit("ctcp_version_reply", {
-          origin,
-          target,
-          version: param!,
-        });
+        if (version === undefined) break;
+        client.emit("ctcp_version_reply", { origin, target, version });
+        break;
     }
+  };
+
+  client.version = sendVersion;
+  client.on("ctcp", emitCtcpVersion);
+
+  if (version === false) {
+    return;
   }
 
-  function replyToCtcpVersion(version: string) {
-    return (msg: CtcpVersion) => {
-      const ctcpPayload = createCtcp("VERSION", version);
-      client.send("NOTICE", msg.origin.nick, ctcpPayload);
-    };
-  }
+  const replyToCtcpVersion = (msg: CtcpVersion) => {
+    const ctcp = createCtcp("VERSION", version);
+    client.send("NOTICE", msg.origin.nick, ctcp);
+  };
+
+  client.on("ctcp_version", replyToCtcpVersion);
 };

@@ -29,10 +29,7 @@ export interface Join {
 }
 
 export const join: Plugin<JoinParams> = (client) => {
-  client.join = sendJoin;
-  client.on("raw", emitJoin);
-
-  function sendJoin(...params: ChannelsDescription) {
+  const sendJoin = (...params: ChannelsDescription) => {
     const channels = [];
     const keys = [];
 
@@ -53,19 +50,19 @@ export const join: Plugin<JoinParams> = (client) => {
     }
 
     client.send("JOIN", ...commandParams);
-  }
+  };
 
-  function emitJoin(msg: Raw) {
+  const emitJoin = (msg: Raw) => {
     if (msg.command !== "JOIN") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [channel] = msg.params;
+    const { prefix, params: [channel] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("join", {
-      origin,
-      channel,
-    });
-  }
+    client.emit("join", { origin, channel });
+  };
+
+  client.join = sendJoin;
+  client.on("raw", emitJoin);
 };

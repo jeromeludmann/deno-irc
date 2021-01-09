@@ -23,25 +23,22 @@ export interface Quit {
 }
 
 export const quit: Plugin<QuitParams> = (client) => {
-  client.quit = sendQuit;
-  client.on("raw", emitQuit);
-
-  async function sendQuit(...params: string[]) {
+  const sendQuit = async (...params: string[]) => {
     await client.send("QUIT", ...params);
     client.disconnect();
-  }
+  };
 
-  function emitQuit(msg: Raw) {
+  const emitQuit = (msg: Raw) => {
     if (msg.command !== "QUIT") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [comment] = msg.params;
+    const { prefix, params: [comment] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("quit", {
-      origin,
-      comment,
-    });
-  }
+    client.emit("quit", { origin, comment });
+  };
+
+  client.quit = sendQuit;
+  client.on("raw", emitQuit);
 };

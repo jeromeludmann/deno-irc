@@ -27,26 +27,21 @@ export interface Kick {
 }
 
 export const kick: Plugin<KickParams> = (client) => {
-  client.kick = sendKick;
-  client.on("raw", emitKick);
-
-  function sendKick(...params: string[]) {
+  const sendKick = (...params: string[]) => {
     client.send("KICK", ...params);
-  }
+  };
 
-  function emitKick(msg: Raw) {
+  const emitKick = (msg: Raw) => {
     if (msg.command !== "KICK") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [channel, nick, comment] = msg.params;
+    const { prefix, params: [channel, nick, comment] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("kick", {
-      origin,
-      channel,
-      nick,
-      comment,
-    });
-  }
+    client.emit("kick", { origin, channel, nick, comment });
+  };
+
+  client.kick = sendKick;
+  client.on("raw", emitKick);
 };

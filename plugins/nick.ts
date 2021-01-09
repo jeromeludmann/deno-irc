@@ -21,24 +21,21 @@ export interface Nick {
 }
 
 export const nick: Plugin<NickParams> = (client) => {
-  client.nick = sendNick;
-  client.on("raw", emitNick);
-
-  function sendNick(...params: string[]) {
+  const sendNick = (...params: string[]) => {
     client.send("NICK", ...params);
-  }
+  };
 
-  function emitNick(msg: Raw) {
+  const emitNick = (msg: Raw) => {
     if (msg.command !== "NICK") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [nick] = msg.params;
+    const { prefix, params: [nick] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("nick", {
-      origin,
-      nick,
-    });
-  }
+    client.emit("nick", { origin, nick });
+  };
+
+  client.nick = sendNick;
+  client.on("raw", emitNick);
 };

@@ -20,15 +20,15 @@ export const operOnRegister: Plugin<
   & OperParams
   & OperOnRegisterParams
 > = (client, options) => {
-  const enabled = !!options.oper;
-  const user = options.oper?.user ?? "";
-  const pass = options.oper?.pass ?? "";
+  const { user, pass } = options.oper ?? {};
 
-  if (enabled) {
-    client.on("register", setAsOper);
+  if (!user || !pass) {
+    return;
   }
 
-  function setAsOper() {
+  const setAsOperator = () => {
     client.oper(user, pass);
-  }
+  };
+
+  client.on("register", setAsOperator);
 };

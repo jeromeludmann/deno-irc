@@ -50,85 +50,62 @@ export interface WhoisReply {
 export const whois: Plugin<WhoisParams> = (client) => {
   const buffers: Record<string, Partial<WhoisReply>> = {};
 
-  client.whois = sendWhois;
-  client.on("raw", emitWhois);
-
-  function sendWhois(...params: string[]) {
+  const sendWhois = (...params: string[]) => {
     client.send("WHOIS", ...params);
-  }
+  };
 
-  function emitWhois(msg: Raw) {
+  const emitWhois = (msg: Raw) => {
     switch (msg.command) {
       case "RPL_WHOISUSER": {
         const [, nick, username, host, , realname] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].nick = nick;
         buffers[nick].host = host;
         buffers[nick].username = username;
         buffers[nick].realname = realname;
-
-        return;
+        break;
       }
-
       case "RPL_WHOISCHANNELS": {
         const [, nick, channels] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].channels = channels.split(" ");
-
-        return;
+        break;
       }
-
       case "RPL_AWAY": {
         const [, nick, away] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].away = away;
-
-        return;
+        break;
       }
-
       case "RPL_WHOISIDLE": {
         const [, nick, idle] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].idle = parseInt(idle, 10);
-
-        return;
+        break;
       }
-
       case "RPL_WHOISSERVER": {
         const [, nick, server, serverInfo] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].server = server;
         buffers[nick].serverInfo = serverInfo;
-
-        return;
+        break;
       }
-
       case "RPL_WHOISOPERATOR": {
         const [, nick, text] = msg.params;
-
         buffers[nick] ??= {};
         buffers[nick].operator = text;
-
-        return;
+        break;
       }
-
       case "RPL_ENDOFWHOIS": {
         const [, nick] = msg.params;
-
-        if (!(nick in buffers)) {
-          return;
-        }
-
+        if (!(nick in buffers)) break;
         client.emit("whois_reply", buffers[nick] as WhoisReply);
-
         delete buffers[nick];
-        return;
+        break;
       }
     }
-  }
+  };
+
+  client.whois = sendWhois;
+  client.on("raw", emitWhois);
 };

@@ -24,25 +24,21 @@ export interface Kill {
 }
 
 export const kill: Plugin<KillParams> = (client) => {
-  client.kill = sendKill;
-  client.on("raw", emitKill);
-
-  function sendKill(...params: string[]) {
+  const sendKill = (...params: string[]) => {
     client.send("KILL", ...params);
-  }
+  };
 
-  function emitKill(msg: Raw) {
+  const emitKill = (msg: Raw) => {
     if (msg.command !== "KILL") {
       return;
     }
 
-    const origin = parseUserMask(msg.prefix);
-    const [nick, comment] = msg.params;
+    const { prefix, params: [nick, comment] } = msg;
+    const origin = parseUserMask(prefix);
 
-    client.emit("kill", {
-      origin,
-      nick,
-      comment,
-    });
-  }
+    client.emit("kill", { origin, nick, comment });
+  };
+
+  client.kill = sendKill;
+  client.on("raw", emitKill);
 };

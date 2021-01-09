@@ -28,15 +28,11 @@ export interface CtcpAction {
 }
 
 export const action: Plugin<CtcpParams & ActionParams> = (client) => {
-  client.action = sendAction;
-  client.me = sendAction;
-  client.on("ctcp", emitAction);
-
-  function sendAction(target: string, text: string) {
+  const sendAction = (target: string, text: string) => {
     client.ctcp(target, "ACTION", text);
-  }
+  };
 
-  function emitAction(msg: Ctcp) {
+  const emitAction = (msg: Ctcp) => {
     if (
       msg.command !== "ACTION" ||
       msg.param === undefined
@@ -45,11 +41,10 @@ export const action: Plugin<CtcpParams & ActionParams> = (client) => {
     }
 
     const { origin, target, param: text } = msg;
+    client.emit("ctcp_action", { origin, target, text });
+  };
 
-    client.emit("ctcp_action", {
-      origin,
-      target,
-      text,
-    });
-  }
+  client.action = sendAction;
+  client.me = sendAction;
+  client.on("ctcp", emitAction);
 };

@@ -11,33 +11,40 @@ export interface InvalidNamesParams {
   };
 }
 
+const DEFAULT_RESOLVE_INVALID_NAMES = false;
+
 export const invalidNames: Plugin<
   & NickParams
   & RegisterParams
   & RegisterOnConnectParams
   & InvalidNamesParams
 > = (client, options) => {
-  const enabled = options.resolveInvalidNames ?? false;
+  const enabled = options.resolveInvalidNames ?? DEFAULT_RESOLVE_INVALID_NAMES;
 
-  if (enabled) {
-    client.on("raw", resolveInvalidNames);
+  if (!enabled) {
+    return;
   }
 
-  function resolveInvalidNames(msg: Raw) {
+  const resolveInvalidNames = (msg: Raw) => {
     switch (msg.command) {
       case "ERR_NICKNAMEINUSE":
         const [, nick] = msg.params;
-        return client.nick(`${nick}_`);
+        client.nick(`${nick}_`);
+        break;
 
       case "ERR_ERRONEUSNICKNAME":
-        return client.nick(randomize());
+        client.nick(randomize());
+        break;
 
       case "ERR_INVALIDUSERNAME":
         client.state.username = randomize();
-        const { username, realname } = client.state;
-        return client.user(username, realname);
+        const { state: { username, realname } } = client;
+        client.user(username, realname);
+        break;
     }
-  }
+  };
+
+  client.on("raw", resolveInvalidNames);
 };
 
 function randomize() {
