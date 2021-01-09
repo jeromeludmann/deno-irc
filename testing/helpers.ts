@@ -12,5 +12,6 @@ function prettify(describeName: string, testName: string) {
 
 // https://stackoverflow.com/a/50375286/13457771
 export type UnionToIntersection<U> =
+  // deno-lint-ignore no-explicit-any
   (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I
     : never;

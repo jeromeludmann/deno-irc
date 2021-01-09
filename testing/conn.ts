@@ -45,14 +45,14 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
     return bytes.length;
   }
 
-  async write(bytes: Uint8Array): Promise<number> {
+  write(bytes: Uint8Array): Promise<number> {
     const str = this.decoder.decode(bytes);
     const raw = str.split("\r\n");
     raw.pop();
 
     this.raw.push(...raw);
 
-    return bytes.length;
+    return Promise.resolve(bytes.length);
   }
 
   closeWrite(): void {

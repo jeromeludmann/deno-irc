@@ -34,23 +34,22 @@ export interface RemoteAddr {
 }
 
 export type PluginParams = {
-  [K in "options" | "commands" | "events" | "state"]?: Record<string, any>;
+  [K in "options" | "commands" | "events" | "state"]?: Record<string, unknown>;
 };
 
-export type ExtendedClient<T extends PluginParams = {}> =
+export type ExtendedClient<T extends PluginParams> =
   & CoreClient<CoreParams["events"] & T["events"]>
   & { readonly hooks: Hooks<ExtendedClient<T> & { read: CoreClient["read"] }> }
   & { readonly state: T["state"] }
   & T["commands"];
 
-export type ExtendedOptions<T extends PluginParams = {}> = Readonly<
+export type ExtendedOptions<T extends PluginParams> =
   & CoreParams["options"]
-  & T["options"]
->;
+  & T["options"];
 
-export type Plugin<T extends PluginParams = {}> = (
+export type Plugin<T extends PluginParams = Record<string, void>> = (
   client: ExtendedClient<T>,
-  options: ExtendedOptions<T>,
+  options: Readonly<ExtendedOptions<T>>,
 ) => void;
 
 export class CoreClient<
@@ -70,6 +69,7 @@ export class CoreClient<
   private buffer: Uint8Array;
 
   constructor(
+    // deno-lint-ignore no-explicit-any
     plugins: Plugin<any>[],
     options: Readonly<CoreParams["options"]>,
   ) {

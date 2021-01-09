@@ -10,6 +10,7 @@ export type ErrorArgs = [
 ] | [
   type: ClientErrorType,
   error: string,
+  // deno-lint-ignore ban-types
   callSite: Function,
 ];
 

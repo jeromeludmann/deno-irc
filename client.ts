@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-empty-interface
 import * as Core from "./core/client.ts";
 import * as Action from "./plugins/action.ts";
 import * as Clientinfo from "./plugins/clientinfo.ts";

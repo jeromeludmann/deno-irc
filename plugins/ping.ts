@@ -67,15 +67,16 @@ export const ping: Plugin<CtcpParams & PingParams> = (client, options) => {
 
   const emitPing = (msg: Raw) => {
     switch (msg.command) {
-      case "PING":
+      case "PING": {
         const { params: keys } = msg;
         client.emit("ping", { keys });
         break;
-
-      case "PONG":
+      }
+      case "PONG": {
         const { prefix: origin, params: [daemon, key] } = msg;
         client.emit("pong", { origin, daemon, key });
         break;
+      }
     }
   };
 

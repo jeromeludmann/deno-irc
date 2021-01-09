@@ -35,16 +35,17 @@ export const verbose: Plugin<VerboseParams> = (client, options) => {
 
   const logEvents = (event: string, payload: unknown) => {
     switch (event) {
-      case "raw":
+      case "raw": {
         break;
-
-      case "error":
+      }
+      case "error": {
         const { type, name, message } = (payload as ClientError);
         console.info("emit", bold(event), { type, name, message });
         break;
-
-      default:
+      }
+      default: {
         console.info("emit", bold(event), payload);
+      }
     }
   };
 

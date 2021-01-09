@@ -27,20 +27,21 @@ export const invalidNames: Plugin<
 
   const resolveInvalidNames = (msg: Raw) => {
     switch (msg.command) {
-      case "ERR_NICKNAMEINUSE":
+      case "ERR_NICKNAMEINUSE": {
         const [, nick] = msg.params;
         client.nick(`${nick}_`);
         break;
-
-      case "ERR_ERRONEUSNICKNAME":
+      }
+      case "ERR_ERRONEUSNICKNAME": {
         client.nick(randomize());
         break;
-
-      case "ERR_INVALIDUSERNAME":
+      }
+      case "ERR_INVALIDUSERNAME": {
         client.state.username = randomize();
         const { state: { username, realname } } = client;
         client.user(username, realname);
         break;
+      }
     }
   };
 

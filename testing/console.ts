@@ -1,22 +1,22 @@
 import { stripColor } from "../deps.ts";
 
-export interface MockConsole {
-  stdout: any[][];
-  stderr: any[][];
+export interface MockConsoleOutput {
+  stdout: unknown[][];
+  stderr: unknown[][];
 }
 
-export function mockConsole(): MockConsole {
-  const stdout: any[][] = [];
-  const stderr: any[][] = [];
+export function mockConsole(): MockConsoleOutput {
+  const output = { stdout: [], stderr: [] };
 
-  console.info = mock(stdout);
-  console.warn = console.error = mock(stderr);
+  console.info = mock(output.stdout);
+  console.warn = mock(output.stderr);
+  console.error = mock(output.stderr);
 
-  return { stdout, stderr };
+  return output;
 }
 
-function mock(output: any[][]) {
-  return (...args: any[]) => {
+function mock(output: unknown[][]) {
+  return (...args: string[]) => {
     output.push(
       args.map((arg) => typeof arg === "string" ? stripColor(arg) : arg),
     );

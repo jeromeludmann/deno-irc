@@ -10,6 +10,7 @@ export interface MockOptions {
 }
 
 export async function mock<
+  // deno-lint-ignore no-explicit-any
   TPlugins extends Plugin<any>[],
   TOptions extends
     & CoreParams["options"]

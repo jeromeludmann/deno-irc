@@ -3,7 +3,7 @@ import { describe } from "../testing/helpers.ts";
 import { Hooks } from "./hooks.ts";
 
 describe("core/hooks", (test) => {
-  test("add a hook before calling method", async () => {
+  test("add a hook before calling method", () => {
     const results: string[] = [];
     const target = { fn: (arg: string) => results.push("fn") };
     const hooks = new Hooks(target);
@@ -17,9 +17,9 @@ describe("core/hooks", (test) => {
   test("add a hook after calling method", async () => {
     const results: string[] = [];
     const target = {
-      fn: async () => {
+      fn: () => {
         results.push("fn");
-        return "value";
+        return Promise.resolve("value");
       },
     };
     const hooks = new Hooks(target);

@@ -1,4 +1,5 @@
-type AsyncReturnType<T extends () => any> = ReturnType<T> extends
+// deno-lint-ignore-file ban-types no-explicit-any
+type AsyncReturnType<T extends () => unknown> = ReturnType<T> extends
   PromiseLike<infer U> ? U : ReturnType<T>;
 
 export class Hooks<T extends Record<PropertyKey, any>> {
@@ -14,7 +15,7 @@ export class Hooks<T extends Record<PropertyKey, any>> {
   >(key: K, hook: H): void {
     this.hookCall(key, (fn, ...args) => {
       hook(...args);
-      return fn(...args as any[]);
+      return fn(...args as unknown[]);
     });
   }
 
@@ -27,7 +28,7 @@ export class Hooks<T extends Record<PropertyKey, any>> {
     H extends (value: AsyncReturnType<F>) => void,
   >(key: K, hook: H): void {
     this.hookCall(key, async (fn, ...args) => {
-      const value = await fn(...args as any[]);
+      const value = await fn(...args as unknown[]);
       hook(value);
       return value;
     });

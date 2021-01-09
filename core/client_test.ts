@@ -22,7 +22,7 @@ describe("core/client", (test) => {
     client.connect("bad_remote_host");
     const error = await client.once("error");
 
-    assertEquals(error.name, "ConnectionRefused");
+    assertEquals(error.name, "Error");
     assertEquals(error.type, "connect");
   });
 

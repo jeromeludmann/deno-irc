@@ -3,7 +3,7 @@ import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { invite } from "./invite.ts";
 
-describe("plugins/invite", async (test) => {
+describe("plugins/invite", (test) => {
   const plugins = [invite];
 
   test("send INVITE", async () => {

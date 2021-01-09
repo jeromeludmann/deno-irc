@@ -63,14 +63,15 @@ export const clientinfo: Plugin<
     const { origin, target, param } = msg;
 
     switch (msg.type) {
-      case "query":
+      case "query": {
         client.emit("ctcp_clientinfo", { origin, target });
         break;
-
-      case "reply":
+      }
+      case "reply": {
         const supported = (param?.split(" ") ?? []) as AnyCtcpCommand[];
         client.emit("ctcp_clientinfo_reply", { origin, target, supported });
         break;
+      }
     }
   };
 

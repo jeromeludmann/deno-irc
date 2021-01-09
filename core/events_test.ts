@@ -6,9 +6,9 @@ describe("core/events", (test) => {
   test("add one listener and emit an event", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
-    let value: any;
+    let value: unknown;
 
-    emitter.on("event", (val: any) => {
+    emitter.on("event", (val) => {
       triggered++;
       value = val;
     });
@@ -82,9 +82,8 @@ describe("core/events", (test) => {
     const emitter = new EventEmitter();
     let triggered = 0;
     const listener = () => triggered++;
-    let off: () => void;
 
-    off = emitter.on("event", listener);
+    const off = emitter.on("event", listener);
     emitter.on("event", listener);
     off();
     emitter.emit("event", {});
@@ -147,7 +146,8 @@ describe("core/events", (test) => {
     assertThrows(
       () => {
         emitter.on("event", () => {});
-        (emitter as any).resetErrorThrowingBehavior();
+        (emitter as unknown as { resetErrorThrowingBehavior: () => void })
+          .resetErrorThrowingBehavior();
         emitter.emit("event", new Error("Boom!"));
       },
       Error,

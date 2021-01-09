@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 type Listener<T> = (payload: T) => void;
 
 type Listeners<T> = Record<keyof T, Listener<any>[]>;
@@ -5,7 +6,7 @@ type Listeners<T> = Record<keyof T, Listener<any>[]>;
 type IgnoredListenerCounts<T> = Record<keyof T, number>;
 
 type InferredPayload<
-  TEvents extends Record<string, any>,
+  TEvents extends Record<string, unknown>,
   TEventName extends keyof TEvents,
 > = TEvents[TEventName];
 
@@ -98,7 +99,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   }
 
   /** Waits for an `eventName` during `delay` in ms. */
-  async wait<T extends keyof TEvents>(
+  wait<T extends keyof TEvents>(
     eventName: T,
     delay: number,
   ): Promise<InferredPayload<TEvents, T> | null> {
