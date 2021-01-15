@@ -12,7 +12,7 @@ export class Hooks<T extends Record<PropertyKey, any>> {
     F extends T[K] extends Function ? T[K] : never,
     H extends (...args: Parameters<F>) => void,
   >(key: K, hook: H): void {
-    this.hook(key, (fn, ...args) => {
+    this.hookCall(key, (fn, ...args) => {
       hook(...args);
       return fn(...args as any[]);
     });
@@ -26,7 +26,7 @@ export class Hooks<T extends Record<PropertyKey, any>> {
     F extends T[K] extends Function ? T[K] : never,
     H extends (value: AsyncReturnType<F>) => void,
   >(key: K, hook: H): void {
-    this.hook(key, async (fn, ...args) => {
+    this.hookCall(key, async (fn, ...args) => {
       const value = await fn(...args as any[]);
       hook(value);
       return value;
@@ -36,21 +36,21 @@ export class Hooks<T extends Record<PropertyKey, any>> {
   /** Hooks before mutating object. */
   beforeMutate<
     K extends { [K in keyof T]: T[K] extends Function ? never : K }[keyof T],
-    H extends (target: T[K], key: keyof T[K], value: T[K][keyof T[K]]) => void,
+    H extends (obj: T[K], key: keyof T[K], value: T[K][keyof T[K]]) => void,
   >(key: K, hook: H): void {
     this.target[key] = new Proxy(this.target[key], {
-      set: (obj, prop, value) => {
-        hook(obj, prop, value);
-        obj[prop] = value;
+      set: (obj, key, value) => {
+        hook(obj, key, value);
+        obj[key] = value;
         return true;
       },
     });
   }
 
-  private hook<
+  private hookCall<
     K extends { [K in keyof T]: T[K] extends Function ? K : never }[keyof T],
     F extends T[K] extends Function ? T[K] : never,
-    H extends (callback: F, ...args: Parameters<F>) => void,
+    H extends (fn: F, ...args: Parameters<F>) => void,
   >(key: K, hook: H): void {
     const fn = this.target[key].bind(this.target);
     (this.target as any)[key] = (...args: Parameters<F>) => hook(fn, ...args);
