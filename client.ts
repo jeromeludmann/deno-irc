@@ -3,6 +3,7 @@ import * as Core from "./core/client.ts";
 import * as Action from "./plugins/action.ts";
 import * as Clientinfo from "./plugins/clientinfo.ts";
 import * as Ctcp from "./plugins/ctcp.ts";
+import * as ErrReply from "./plugins/err_reply.ts";
 import * as InvalidNames from "./plugins/invalid_names.ts";
 import * as Invite from "./plugins/invite.ts";
 import * as Join from "./plugins/join.ts";
@@ -35,6 +36,7 @@ type ClientParams =
   & Action.ActionParams
   & Clientinfo.ClientinfoParams
   & Ctcp.CtcpParams
+  & ErrReply.ErrReplyParams
   & InvalidNames.InvalidNamesParams
   & Invite.InviteParams
   & Join.JoinParams
@@ -65,6 +67,7 @@ const plugins = [
   Action.action,
   Clientinfo.clientinfo,
   Ctcp.ctcp,
+  ErrReply.errReply,
   InvalidNames.invalidNames,
   Invite.invite,
   Join.join,
