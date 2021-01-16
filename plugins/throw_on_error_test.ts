@@ -15,7 +15,7 @@ describe("plugins/throw_on_error", (test) => {
     assertEquals(error.type, "read");
     assertEquals(
       error.message,
-      "read: Closing link: (user@host) [Client exited]",
+      "ERROR: Closing link: (user@host) [Client exited]",
     );
   });
 });

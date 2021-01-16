@@ -66,7 +66,7 @@ describe("plugins/verbose", (test) => {
       ["emit", "error", {
         name: "Error",
         type: "read",
-        message: "read: Closing link: (user@host) [Client exited]",
+        message: "ERROR: Closing link: (user@host) [Client exited]",
       }],
     ]);
   });

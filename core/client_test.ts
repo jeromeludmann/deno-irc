@@ -32,7 +32,7 @@ describe("core/client", (test) => {
     assertThrowsAsync(
       () => client.connect("bad_remote_host"),
       Error,
-      "connect",
+      "Connection refused",
     );
   });
 
@@ -63,7 +63,7 @@ describe("core/client", (test) => {
     assertThrowsAsync(
       () => client.send("PING", "key"),
       Error,
-      "write",
+      "Unable to send message",
     );
   });
 

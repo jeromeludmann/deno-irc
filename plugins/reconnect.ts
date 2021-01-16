@@ -94,7 +94,7 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
       return;
     }
 
-    const error = "'reconnect' requires an error listener";
+    const error = "plugins/reconnect requires an error listener";
     client.emitError("connect", error, requireErrorListener);
   };
 

@@ -23,7 +23,6 @@ export function toClientError(
   }
 
   (error as ClientError).type = type;
-  error.message = `${type}: ${error.message}`;
 
   return error as ClientError;
 }

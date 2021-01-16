@@ -8,8 +8,7 @@ describe("core/errors", (test) => {
 
     assertEquals(error.type, "read");
     assertEquals(error.name, "Error");
-    assertEquals(error.message, "read: Boom!");
-    assertMatch(error.stack!, /^Error: read: Boom!/);
+    assertEquals(error.message, "Boom!");
   });
 
   test("convert string and call site to ClientError", () => {
@@ -17,7 +16,6 @@ describe("core/errors", (test) => {
 
     assertEquals(error.type, "write");
     assertEquals(error.name, "Error");
-    assertEquals(error.message, "write: Boom!");
-    assertMatch(error.stack!, /^Error: write: Boom!/);
+    assertEquals(error.message, "Boom!");
   });
 });

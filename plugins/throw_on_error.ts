@@ -7,8 +7,10 @@ export const throwOnError: Plugin = (client) => {
       return;
     }
 
-    const error = msg.params.join(" ");
-    client.emitError("read", error, emitError);
+    const { command, params } = msg;
+    const message = command + ": " + params.join(": ");
+
+    client.emitError("read", message, emitError);
   };
 
   client.on("raw", emitError);
