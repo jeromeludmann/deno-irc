@@ -55,8 +55,8 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
     return Promise.resolve(bytes.length);
   }
 
-  closeWrite(): void {
-    // Do nothing
+  closeWrite(): Promise<void> {
+    return Promise.resolve();
   }
 
   close(): void {
