@@ -11,7 +11,8 @@ IRC is not dead yet.
 This module aims to provide to Deno community an easy way to communicate with
 IRC through an abstraction built on top of the client protocol.
 
-Semantic Versioning will be used but breaking changes are expected on minor versions prior to `1.0.0`.
+Semantic Versioning will be used but breaking changes are expected on minor
+versions prior to `1.0.0`.
 
 Any feedback and contributions are welcome.
 
@@ -48,7 +49,8 @@ await client.connect("irc.freenode.net", 6667);
 
 Note that this code above requires the `--allow-net` option.
 
-There are only two main concepts to know to use `deno-irc`: [events](#events) and [commands](#commands).
+There are only two main concepts to know to use `deno-irc`: [events](#events)
+and [commands](#commands).
 
 ### Events
 
@@ -62,7 +64,8 @@ client.on("join" (msg) => {
 });
 ```
 
-Thanks to TypeScript, type of `msg` is always inferred from the event name so you do not have to worry about what is in the object or about the IRC protocol.
+Thanks to TypeScript, type of `msg` is always inferred from the event name so
+you do not have to worry about what is in the object or about the IRC protocol.
 
 ```ts
 client.on("nick" (msg) => {
@@ -97,7 +100,8 @@ Following only resolves when the message has been received:
 const msg = await client.once("join");
 ```
 
-Following resolves when the message has been received, otherwise resolves after the given delay to `null`:
+Following resolves when the message has been received, otherwise resolves after
+the given delay to `null`:
 
 ```ts
 const msg = client.wait("join", 2000);
@@ -127,9 +131,11 @@ client.quit("Goodbye!");
 
 ### Errors
 
-When an error is emitted, it will be thrown by default and causes a crash of the program.
+When an error is emitted, it will be thrown by default and causes a crash of the
+program.
 
-To avoid the client from crashing, it is required to have at least one event listener for the `"error"` event name.
+To avoid the client from crashing, it is required to have at least one event
+listener for the `"error"` event name.
 
 By listening to the `"error"` event, errors will no longer be thrown:
 
@@ -158,13 +164,16 @@ client.on("error", (error) => {
 });
 ```
 
-This behavior is heavily inspired by the [Node.js error handling](https://www.joyent.com/node-js/production/design/errors).
+This behavior is heavily inspired by the
+[Node.js error handling](https://www.joyent.com/node-js/production/design/errors).
 
-An early crash prevents loosing useful informations when the client tries something without success.
+An early crash prevents loosing useful informations when the client tries
+something without success.
 
 ## API
 
-_Work in progress. You can use for the moment the code completion support from your IDE to discover other commands and event names._
+_Work in progress. You can use for the moment the code completion support from
+your IDE to discover other commands and event names._
 
 ## Contributing
 
@@ -175,15 +184,21 @@ This module is mainly built around two patterns:
 - event driven architecture
 - internal plugins
 
-It involves keeping the client as minimal as possible (the _core_) and delegates implementation of features to highly cohesive decoupled parts (which are called _plugins_).
+It involves keeping the client as minimal as possible (the _core_) and delegates
+implementation of features to highly cohesive decoupled parts (which are called
+_plugins_).
 
-The core contains some internal parts related to IRC protocol, TCP sockets and event system. Plugins contain all the extra features built on top of the core client.
+The core contains some internal parts related to IRC protocol, TCP sockets and
+event system. Plugins contain all the extra features built on top of the core
+client.
 
-In most of the cases, it is quite handy to add new features using plugins without touching the core.
+In most of the cases, it is quite handy to add new features using plugins
+without touching the core.
 
 ### Run unit tests
 
-All added parts (core and plugins) should be tested to ensure they work as expected:
+All added parts (core and plugins) should be tested to ensure they work as
+expected:
 
 ```sh
 make test
