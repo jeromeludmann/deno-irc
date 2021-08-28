@@ -3,12 +3,18 @@ import { CoreClient } from "../core/client.ts";
 import { MockConn } from "./conn.ts";
 
 export class MockCoreClient extends CoreClient {
-  protected connectImpl = mockConnect;
+  protected connectImpl = {
+    withTls: mockConnect,
+    noTls: mockConnect,
+  };
   readonly conn: MockConn | null = null;
 }
 
 export class MockClient extends Client {
-  protected connectImpl = mockConnect;
+  protected connectImpl = {
+    withTls: mockConnect,
+    noTls: mockConnect,
+  };
 }
 
 function mockConnect<T extends Deno.ConnectOptions>(options: T) {
