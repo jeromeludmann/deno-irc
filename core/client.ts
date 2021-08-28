@@ -31,6 +31,7 @@ const PORT = 6667;
 export interface RemoteAddr {
   hostname: string;
   port: number;
+  tls?: boolean;
 }
 
 export type PluginParams = {
@@ -52,6 +53,12 @@ export type Plugin<T extends PluginParams = Record<string, void>> = (
   options: Readonly<ExtendedOptions<T>>,
 ) => void;
 
+/** How to connect to a server */
+interface ConnectImpl {
+  noTls(opts: Deno.ConnectOptions): Promise<Deno.Conn>;
+  withTls(opts: Deno.ConnectTlsOptions): Promise<Deno.Conn>;
+}
+
 export class CoreClient<
   TEvents extends CoreParams["events"] = CoreParams["events"],
 > extends EventEmitter<
@@ -59,7 +66,10 @@ export class CoreClient<
 > {
   readonly state: CoreParams["state"];
 
-  protected connectImpl = Deno.connect;
+  protected connectImpl: ConnectImpl = {
+    noTls: Deno.connect,
+    withTls: Deno.connectTls,
+  };
   protected conn: Deno.Conn | null = null;
   protected hooks = new Hooks(this);
 
@@ -76,7 +86,7 @@ export class CoreClient<
     super(options);
 
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
-    this.state = { remoteAddr: { hostname: "", port: 0 } };
+    this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
 
     new Set(plugins).forEach((plugin) => plugin(this, options));
     this.resetErrorThrowingBehavior();
@@ -85,10 +95,15 @@ export class CoreClient<
   /** Connects to a server using a hostname and an optional port.
    *
    * Default port to `6667`.
+   * If `tls=true`, attempt to connect using a TLS connection.
    *
    * Resolves when connected. */
-  async connect(hostname: string, port = PORT): Promise<Deno.Conn | null> {
-    this.state.remoteAddr = { hostname, port };
+  async connect(
+    hostname: string,
+    port = PORT,
+    tls = false,
+  ): Promise<Deno.Conn | null> {
+    this.state.remoteAddr = { hostname, port, tls };
 
     if (this.conn !== null) {
       this.close();
@@ -98,7 +113,9 @@ export class CoreClient<
     this.emit("connecting", remoteAddr);
 
     try {
-      this.conn = await this.connectImpl({ hostname, port });
+      this.conn = await (tls
+        ? this.connectImpl.withTls({ hostname, port })
+        : this.connectImpl.noTls({ hostname, port }));
       this.emit("connected", remoteAddr);
     } catch (error) {
       this.emitError("connect", error);
