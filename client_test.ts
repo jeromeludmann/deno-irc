@@ -70,7 +70,7 @@ describe("client", (test) => {
 
   test("have state initialized", () => {
     assertEquals(client.state, {
-      remoteAddr: { hostname: "", port: 0, tls: false, },
+      remoteAddr: { hostname: "", port: 0, tls: false },
       nick: "me",
       username: "user",
       realname: "real name",

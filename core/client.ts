@@ -86,7 +86,7 @@ export class CoreClient<
     super(options);
 
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
-    this.state = { remoteAddr: { hostname: "", port: 0, tls: false, } };
+    this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
 
     new Set(plugins).forEach((plugin) => plugin(this, options));
     this.resetErrorThrowingBehavior();
@@ -98,7 +98,11 @@ export class CoreClient<
    * If `tls=true`, attempt to connect using a TLS connection.
    *
    * Resolves when connected. */
-  async connect(hostname: string, port = PORT, tls=false): Promise<Deno.Conn | null> {
+  async connect(
+    hostname: string,
+    port = PORT,
+    tls = false,
+  ): Promise<Deno.Conn | null> {
     this.state.remoteAddr = { hostname, port, tls };
 
     if (this.conn !== null) {
@@ -109,10 +113,9 @@ export class CoreClient<
     this.emit("connecting", remoteAddr);
 
     try {
-      this.conn =
-        await (tls
-               ? this.connectImpl.withTls({ hostname, port })
-               : this.connectImpl.noTls({hostname, port}));
+      this.conn = await (tls
+        ? this.connectImpl.withTls({ hostname, port })
+        : this.connectImpl.noTls({ hostname, port }));
       this.emit("connected", remoteAddr);
     } catch (error) {
       this.emitError("connect", error);
