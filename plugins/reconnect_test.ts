@@ -60,9 +60,7 @@ describe("plugins/reconnect", (test) => {
   });
 
   test("throw if missing error listener", async () => {
-    let error;
-    const catchError: Plugin = async (client) =>
-      error = await client.once("error");
+    const catchError: Plugin = async (client) => await client.once("error");
 
     const { client } = await mock(
       [...plugins, catchError],
