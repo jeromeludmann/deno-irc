@@ -5,7 +5,7 @@ import { Hooks } from "./hooks.ts";
 describe("core/hooks", (test) => {
   test("add a hook before calling method", () => {
     const results: string[] = [];
-    const target = { fn: (arg: string) => results.push("fn") };
+    const target = { fn: (_arg: string) => results.push("fn") };
     const hooks = new Hooks(target);
 
     hooks.beforeCall("fn", (arg) => results.push(arg));
