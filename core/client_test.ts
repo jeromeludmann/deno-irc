@@ -13,6 +13,7 @@ describe("core/client", (test) => {
     assertEquals(addr, {
       hostname: "host",
       port: 6668,
+      tls: false,
     });
   });
 
@@ -103,6 +104,7 @@ describe("core/client", (test) => {
     assertEquals(addr, {
       hostname: "host",
       port: 6667,
+      tls: false,
     });
   });
 
@@ -116,6 +118,7 @@ describe("core/client", (test) => {
     assertEquals(msg, {
       hostname: "host",
       port: 6667,
+      tls: false,
     });
   });
 

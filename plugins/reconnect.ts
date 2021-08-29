@@ -60,9 +60,9 @@ export const reconnect: Plugin<ReconnectParams> = (client, options) => {
     const { remoteAddr } = client.state;
     client.emit("reconnecting", remoteAddr);
 
-    const { hostname, port } = remoteAddr;
+    const { hostname, port, tls } = remoteAddr;
     timeout = setTimeout(
-      async () => await client.connect(hostname, port),
+      async () => await client.connect(hostname, port, tls),
       delay * 1000,
     );
   };

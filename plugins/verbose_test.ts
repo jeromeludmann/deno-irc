@@ -58,10 +58,12 @@ describe("plugins/verbose", (test) => {
       ["emit", "connecting", {
         hostname: "host",
         port: 6667,
+        tls: false,
       }],
       ["emit", "connected", {
         hostname: "host",
         port: 6667,
+        tls: false,
       }],
       ["emit", "error", {
         name: "Error",

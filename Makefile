@@ -4,7 +4,7 @@ all:
 	@make lint fmt test
 
 lint:
-	deno lint --unstable $(sources)
+	deno lint $(sources)
 
 fmt:
 	deno fmt --check $(sources)

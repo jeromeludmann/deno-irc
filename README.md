@@ -44,7 +44,12 @@ client.on("join", (msg) => {
   }
 });
 
+
+// no TLS
 await client.connect("irc.libera.chat", 6667);
+
+// with TLS
+await client.connect("irc.libera.chat", 7000, true);
 ```
 
 Note that this code above requires the `--allow-net` option.
