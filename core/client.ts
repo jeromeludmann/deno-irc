@@ -149,9 +149,7 @@ export class CoreClient<
       read = await conn.read(this.buffer);
       if (read === null) return null;
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) {
-        this.emitError("read", error);
-      }
+      this.emitError("read", error);
       return null;
     }
 
@@ -201,9 +199,7 @@ export class CoreClient<
       await this.conn.write(bytes);
       return raw;
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) {
-        this.emitError("write", error);
-      }
+      this.emitError("write", error);
       return null;
     }
   }
@@ -215,6 +211,14 @@ export class CoreClient<
 
   /** Emits correctly an error. */
   emitError(...args: ErrorArgs): void {
+    const [, error] = args;
+    const isSilentError = (
+      error instanceof Deno.errors.BadResource ||
+      error instanceof Deno.errors.Interrupted
+    );
+    if (isSilentError) {
+      return;
+    }
     this.emit("error", toClientError(...args));
   }
 }
