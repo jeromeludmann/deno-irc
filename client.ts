@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-empty-interface
 import * as Core from "./core/client.ts";
 import * as Action from "./plugins/action.ts";
+import * as ChannelList from "./plugins/channel_list.ts";
 import * as Clientinfo from "./plugins/clientinfo.ts";
 import * as Ctcp from "./plugins/ctcp.ts";
 import * as ErrReply from "./plugins/err_reply.ts";
@@ -34,6 +35,7 @@ import * as Whois from "./plugins/whois.ts";
 type ClientParams =
   & Core.CoreParams
   & Action.ActionParams
+  & ChannelList.ChannelListParams
   & Clientinfo.ClientinfoParams
   & Ctcp.CtcpParams
   & ErrReply.ErrReplyParams
@@ -65,6 +67,7 @@ type ClientParams =
 
 const plugins = [
   Action.action,
+  ChannelList.channelList,
   Clientinfo.clientinfo,
   Ctcp.ctcp,
   ErrReply.errReply,
