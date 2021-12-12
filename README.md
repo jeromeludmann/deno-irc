@@ -199,12 +199,23 @@ client.
 In most of the cases, it is quite handy to add new features using plugins
 without touching the core.
 
-### Run unit tests
+All added parts (core and plugins) should be [checked](#run-linter),
+[formatted](#run-formatter) and [tested](#run-unit-tests) to ensure they work as
+expected.
 
-All added parts (core and plugins) should be tested to ensure they work as
-expected:
+All-in-one command exists for this purpose:
 
 ```sh
+make
+```
+
+You also can specifically use one of them:
+
+```sh
+make lint
+
+make fmt
+
 make test
 ```
 
