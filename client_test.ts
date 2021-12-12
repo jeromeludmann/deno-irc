@@ -1,7 +1,9 @@
-import { ClientOptions } from "./client.ts";
+import { Client, ClientOptions } from "./client.ts";
 import { assertArrayIncludes, assertEquals, assertExists } from "./deps.ts";
 import { describe } from "./testing/helpers.ts";
-import { mockAll } from "./testing/mock.ts";
+import { MockClient } from "./testing/client.ts";
+import { MockServer } from "./testing/server.ts";
+import { mockConsole } from "./testing/console.ts";
 
 describe("client", (test) => {
   const options: Required<ClientOptions> = {
@@ -25,9 +27,17 @@ describe("client", (test) => {
     reconnect: false,
   };
 
-  const { client, server } = mockAll(options);
-
+  let client: MockClient;
+  let server: MockServer;
   let raw: string[] = [];
+
+  test("can be instantiated", () => {
+    client = new MockClient(options);
+    server = new MockServer(client);
+    mockConsole();
+
+    assertEquals(client instanceof Client, true);
+  });
 
   test("have core commands", () => {
     assertExists(client.connect);

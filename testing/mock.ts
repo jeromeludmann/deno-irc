@@ -1,6 +1,5 @@
-import { ClientOptions } from "../client.ts";
 import { CoreParams, Plugin } from "../core/client.ts";
-import { MockClient, MockCoreClient } from "./client.ts";
+import { MockCoreClient } from "./client.ts";
 import { mockConsole } from "./console.ts";
 import { UnionToIntersection } from "./helpers.ts";
 import { MockServer } from "./server.ts";
@@ -31,12 +30,5 @@ export async function mock<
     server.receive();
   }
 
-  return { client, server, console };
-}
-
-export function mockAll(options: ClientOptions) {
-  const console = mockConsole();
-  const client = new MockClient(options);
-  const server = new MockServer(client);
   return { client, server, console };
 }
