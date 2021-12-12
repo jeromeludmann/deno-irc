@@ -138,8 +138,8 @@ client.quit("Goodbye!");
 When an error is emitted, it will be thrown by default and causes a crash of the
 program.
 
-To avoid the client from crashing, it is required to have at least one event
-listener for the `"error"` event name.
+To avoid the client from crashing, **it is required to have at least one event
+listener for the `"error"` event name**.
 
 By listening to the `"error"` event, errors will no longer be thrown:
 
