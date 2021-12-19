@@ -1,5 +1,5 @@
 import { Plugin } from "../core/client.ts";
-import { assertEquals, assertThrowsAsync } from "../deps.ts";
+import { assertEquals, assertRejects } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { reconnect } from "./reconnect.ts";
@@ -68,7 +68,7 @@ describe("plugins/reconnect", (test) => {
       { withConnection: false },
     );
 
-    assertThrowsAsync(
+    assertRejects(
       () => client.connect(""),
       Error,
       "plugins/reconnect requires an error listener",

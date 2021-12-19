@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows, assertThrowsAsync } from "../deps.ts";
+import { assertEquals, assertRejects, assertThrows } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { Plugin } from "./client.ts";
@@ -30,7 +30,7 @@ describe("core/client", (test) => {
   test("throw on connect", async () => {
     const { client } = await mock([], {}, { withConnection: false });
 
-    assertThrowsAsync(
+    assertRejects(
       () => client.connect("bad_remote_host"),
       Error,
       "Connection refused",
@@ -61,7 +61,7 @@ describe("core/client", (test) => {
   test("throw on send", async () => {
     const { client } = await mock([], {}, { withConnection: false });
 
-    assertThrowsAsync(
+    assertRejects(
       () => client.send("PING", "key"),
       Error,
       "Unable to send message",
@@ -146,7 +146,7 @@ describe("core/client", (test) => {
   test("throw if no listeners bound to 'error'", async () => {
     const { client } = await mock(plugins, {}, { withConnection: false });
 
-    assertThrowsAsync(
+    assertRejects(
       () => client.connect(""),
       Error,
       "Boom!",
