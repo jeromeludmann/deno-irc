@@ -39,13 +39,18 @@ export class Hooks<T extends Record<PropertyKey, any>> {
     K extends { [K in keyof T]: T[K] extends Function ? never : K }[keyof T],
     H extends (obj: T[K], key: keyof T[K], value: T[K][keyof T[K]]) => void,
   >(key: K, hook: H): void {
-    this.target[key] = new Proxy(this.target[key], {
+    const proxyHandler: ProxyHandler<T[K]> = {
+      get: (obj, key) =>
+        typeof obj[key] === "object"
+          ? new Proxy(obj[key], proxyHandler)
+          : obj[key],
       set: (obj, key, value) => {
         hook(obj, key, value);
         obj[key] = value;
         return true;
       },
-    });
+    };
+    this.target[key] = new Proxy(this.target[key], proxyHandler);
   }
 
   private hookCall<
