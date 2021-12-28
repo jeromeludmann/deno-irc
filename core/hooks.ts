@@ -49,6 +49,11 @@ export class Hooks<T extends Record<PropertyKey, any>> {
         obj[key] = value;
         return true;
       },
+      deleteProperty: (obj, key) => {
+        hook(obj, key, undefined);
+        delete obj[key];
+        return true;
+      },
     };
     this.target[key] = new Proxy(this.target[key], proxyHandler);
   }
