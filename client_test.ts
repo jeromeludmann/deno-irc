@@ -59,6 +59,7 @@ describe("client", (test) => {
     assertExists(client.join);
     assertExists(client.kick);
     assertExists(client.kill);
+    assertExists(client.list);
     assertExists(client.motd);
     assertExists(client.privmsg);
     assertExists(client.nick);
