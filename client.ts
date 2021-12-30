@@ -13,6 +13,7 @@ import * as JoinOnInvite from "./plugins/join_on_invite.ts";
 import * as JoinOnRegister from "./plugins/join_on_register.ts";
 import * as Kick from "./plugins/kick.ts";
 import * as Kill from "./plugins/kill.ts";
+import * as Mode from "./plugins/mode.ts";
 import * as Motd from "./plugins/motd.ts";
 import * as Myinfo from "./plugins/myinfo.ts";
 import * as Nick from "./plugins/nick.ts";
@@ -48,6 +49,7 @@ type ClientParams =
   & JoinOnRegister.JoinOnRegisterParams
   & Kick.KickParams
   & Kill.KillParams
+  & Mode.ModeParams
   & Motd.MotdParams
   & Myinfo.MyinfoParams
   & Nick.NickParams
@@ -82,6 +84,7 @@ const plugins = [
   Kick.kick,
   Kill.kill,
   Motd.motd,
+  Mode.modePlugin,
   Myinfo.myinfoPlugin,
   Nick.nick,
   Notice.notice,
