@@ -7,6 +7,7 @@ import * as Ctcp from "./plugins/ctcp.ts";
 import * as ErrReply from "./plugins/err_reply.ts";
 import * as InvalidNames from "./plugins/invalid_names.ts";
 import * as Invite from "./plugins/invite.ts";
+import * as Isupport from "./plugins/isupport.ts";
 import * as Join from "./plugins/join.ts";
 import * as JoinOnInvite from "./plugins/join_on_invite.ts";
 import * as JoinOnRegister from "./plugins/join_on_register.ts";
@@ -41,6 +42,7 @@ type ClientParams =
   & ErrReply.ErrReplyParams
   & InvalidNames.InvalidNamesParams
   & Invite.InviteParams
+  & Isupport.IsupportParams
   & Join.JoinParams
   & JoinOnInvite.JoinOnInviteParams
   & JoinOnRegister.JoinOnRegisterParams
@@ -73,6 +75,7 @@ const plugins = [
   ErrReply.errReply,
   InvalidNames.invalidNames,
   Invite.invite,
+  Isupport.isupportPlugin,
   Join.join,
   JoinOnInvite.joinOnInvite,
   JoinOnRegister.joinOnRegister,

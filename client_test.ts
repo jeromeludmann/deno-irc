@@ -4,6 +4,7 @@ import { describe } from "./testing/helpers.ts";
 import { MockClient } from "./testing/client.ts";
 import { MockServer } from "./testing/server.ts";
 import { mockConsole } from "./testing/console.ts";
+import { getDefaults } from "./plugins/isupport.ts";
 
 describe("client", (test) => {
   const options: Required<ClientOptions> = {
@@ -85,6 +86,7 @@ describe("client", (test) => {
       nick: "me",
       username: "user",
       realname: "real name",
+      supported: getDefaults(),
     });
   });
 
