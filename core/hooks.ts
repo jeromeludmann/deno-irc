@@ -1,6 +1,5 @@
 // deno-lint-ignore-file ban-types no-explicit-any
-type AsyncReturnType<T extends () => unknown> = ReturnType<T> extends
-  PromiseLike<infer U> ? U : ReturnType<T>;
+type AsyncReturnType<T extends () => unknown> = Awaited<ReturnType<T>>;
 
 export class Hooks<T extends Record<PropertyKey, any>> {
   constructor(private target: T) {}
