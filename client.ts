@@ -79,7 +79,7 @@ const plugins = [
   Kick.kick,
   Kill.kill,
   Motd.motd,
-  Myinfo.myinfo,
+  Myinfo.myinfoPlugin,
   Nick.nick,
   Notice.notice,
   Oper.oper,

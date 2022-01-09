@@ -85,10 +85,6 @@ describe("client", (test) => {
       nick: "me",
       username: "user",
       realname: "real name",
-      serverHost: "",
-      serverVersion: "",
-      availableUserModes: [],
-      availableChannelModes: [],
     });
   });
 

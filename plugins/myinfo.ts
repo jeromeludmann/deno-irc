@@ -1,63 +1,49 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Plugin } from "../core/client.ts";
+import { type Raw } from "../core/parsers.ts";
+
+export interface Server {
+  host: string;
+  version: string;
+}
+
+export interface MyinfoEvent {
+  server: Server;
+  modes: {
+    user: string[];
+    channel: string[];
+  };
+}
 
 export interface MyinfoParams {
-  state: {
-    serverHost: string;
-    serverVersion: string;
-    availableUserModes: string[];
-    availableChannelModes: string[];
-  };
-
   events: {
-    "myinfo": Myinfo;
+    "myinfo": MyinfoEvent;
+  };
+  state: {
+    server?: Server;
   };
 }
 
-export interface Myinfo {
-  /** Hostname of the server. */
-  serverHost: string;
-
-  /** Version of the server. */
-  serverVersion: string;
-
-  /** Available user modes on the server. */
-  availableUserModes: string[];
-
-  /** Available channel modes on the server. */
-  availableChannelModes: string[];
-}
-
-export const myinfo: Plugin<MyinfoParams> = (client) => {
-  const { state } = client;
-  state.serverHost = "";
-  state.serverVersion = "";
-  state.availableUserModes = [];
-  state.availableChannelModes = [];
-
-  const emitMyinfo = (msg: Raw) => {
+export const myinfoPlugin: Plugin<MyinfoParams> = (client) => {
+  const emitMyinfoEvent = (msg: Raw) => {
     if (msg.command !== "RPL_MYINFO") {
       return;
     }
 
-    const [, serverHost, serverVersion, userModes, channelModes] = msg.params;
-    const availableUserModes = userModes.split("");
-    const availableChannelModes = channelModes.split("");
+    const [, host, version, userModes, channelModes] = msg.params;
 
-    client.emit(
-      "myinfo",
-      { serverHost, serverVersion, availableUserModes, availableChannelModes },
-    );
+    const user = userModes.split("");
+    const channel = channelModes.split("");
+
+    client.emit("myinfo", {
+      server: { host, version },
+      modes: { user, channel },
+    });
   };
 
-  const setMyinfoState = (msg: Myinfo) => {
-    const { state } = client;
-    state.serverHost = msg.serverHost;
-    state.serverVersion = msg.serverVersion;
-    state.availableUserModes = msg.availableUserModes;
-    state.availableChannelModes = msg.availableChannelModes;
+  const setServerState = (msg: MyinfoEvent) => {
+    client.state.server = msg.server;
   };
 
-  client.on("raw", emitMyinfo);
-  client.on("myinfo", setMyinfoState);
+  client.on("raw", emitMyinfoEvent);
+  client.on("myinfo", setServerState);
 };
