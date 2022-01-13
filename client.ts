@@ -18,6 +18,7 @@ import * as Motd from "./plugins/motd.ts";
 import * as Myinfo from "./plugins/myinfo.ts";
 import * as Names from "./plugins/names.ts";
 import * as Nick from "./plugins/nick.ts";
+import * as Nicklist from "./plugins/nicklist.ts";
 import * as Notice from "./plugins/notice.ts";
 import * as Oper from "./plugins/oper.ts";
 import * as OperOnRegister from "./plugins/oper_on_register.ts";
@@ -55,6 +56,7 @@ type ClientParams =
   & Myinfo.MyinfoParams
   & Names.NamesParams
   & Nick.NickParams
+  & Nicklist.NicklistParams
   & Notice.NoticeParams
   & Oper.OperParams
   & OperOnRegister.OperOnRegisterParams
@@ -90,6 +92,7 @@ const plugins = [
   Myinfo.myinfoPlugin,
   Names.namesPlugin,
   Nick.nick,
+  Nicklist.nicklistPlugin,
   Notice.notice,
   Oper.oper,
   OperOnRegister.operOnRegister,

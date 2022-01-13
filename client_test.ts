@@ -87,6 +87,7 @@ describe("client", (test) => {
       username: "user",
       realname: "real name",
       supported: getDefaults(),
+      nicklists: {},
     });
   });
 
