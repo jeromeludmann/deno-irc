@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { kill } from "./kill.ts";
+import { killPlugin } from "./kill.ts";
 
 describe("plugins/kill", (test) => {
-  const plugins = [kill];
+  const plugins = [killPlugin];
 
   test("send KILL", async () => {
     const { client, server } = await mock(plugins, {});

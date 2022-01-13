@@ -8,21 +8,7 @@ import {
 } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface NoticeParams {
-  commands: {
-    /** Notifies a `target` with a `text`. */
-    notice(target: string, text: string): void;
-  };
-
-  events: {
-    "notice": Notice;
-    "notice:server": ServerNotice;
-    "notice:channel": ChannelNotice;
-    "notice:private": PrivateNotice;
-  };
-}
-
-export interface Notice {
+export interface NoticeEvent {
   /** Raw prefix of the NOTICE. */
   prefix: string;
 
@@ -33,7 +19,7 @@ export interface Notice {
   text: string;
 }
 
-export interface ServerNotice {
+export interface ServerNoticeEvent {
   /** Origin of the NOTICE. */
   origin: string;
 
@@ -41,7 +27,7 @@ export interface ServerNotice {
   text: string;
 }
 
-export interface ChannelNotice {
+export interface ChannelNoticeEvent {
   /** User who sent the NOTICE. */
   origin: UserMask;
 
@@ -52,7 +38,7 @@ export interface ChannelNotice {
   text: string;
 }
 
-export interface PrivateNotice {
+export interface PrivateNoticeEvent {
   /** User who sent the NOTICE. */
   origin: UserMask;
 
@@ -60,7 +46,20 @@ export interface PrivateNotice {
   text: string;
 }
 
-export const notice: Plugin<NoticeParams> = (client) => {
+export interface NoticeParams {
+  commands: {
+    /** Notifies a `target` with a `text`. */
+    notice(target: string, text: string): void;
+  };
+  events: {
+    "notice": NoticeEvent;
+    "notice:server": ServerNoticeEvent;
+    "notice:channel": ChannelNoticeEvent;
+    "notice:private": PrivateNoticeEvent;
+  };
+}
+
+export const noticePlugin: Plugin<NoticeParams> = (client) => {
   const sendNotice = (...params: string[]) => {
     client.send("NOTICE", ...params);
   };
@@ -77,7 +76,7 @@ export const notice: Plugin<NoticeParams> = (client) => {
     client.emit("notice", { prefix, target, text });
   };
 
-  const emitServerNotice = (msg: Notice) => {
+  const emitServerNotice = (msg: NoticeEvent) => {
     if (!isServerHost(msg.prefix)) {
       return;
     }
@@ -86,7 +85,7 @@ export const notice: Plugin<NoticeParams> = (client) => {
     client.emit("notice:server", { origin, text });
   };
 
-  const emitChannelNotice = (msg: Notice) => {
+  const emitChannelNotice = (msg: NoticeEvent) => {
     if (
       !isUserMask(msg.prefix) ||
       !isChannel(msg.target)
@@ -100,7 +99,7 @@ export const notice: Plugin<NoticeParams> = (client) => {
     client.emit("notice:channel", { origin, channel, text });
   };
 
-  const emitPrivateNotice = (msg: Notice) => {
+  const emitPrivateNotice = (msg: NoticeEvent) => {
     if (
       !isUserMask(msg.prefix) ||
       !isNick(msg.target)

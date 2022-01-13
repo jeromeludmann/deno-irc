@@ -1,12 +1,12 @@
 import { type Plugin } from "../core/client.ts";
 import { type IsupportParams } from "./isupport.ts";
-import { type Join, type JoinParams } from "./join.ts";
-import { type Kick, type KickParams } from "./kick.ts";
-import { type Kill, type KillParams } from "./kill.ts";
+import { type JoinEvent, type JoinParams } from "./join.ts";
+import { type KickEvent, type KickParams } from "./kick.ts";
+import { type KillEvent, type KillParams } from "./kill.ts";
 import { type ChannelModeEvent, type ModeParams } from "./mode.ts";
 import { type Names, type NamesParams, type NamesReplyEvent } from "./names.ts";
-import { type Part, type PartParams } from "./part.ts";
-import { type Quit, type QuitParams } from "./quit.ts";
+import { type PartEvent, type PartParams } from "./part.ts";
+import { type QuitEvent, type QuitParams } from "./quit.ts";
 import { type RegisterOnConnectParams } from "./register_on_connect.ts";
 
 export type Nicklist = { prefix: string; nick: string }[];
@@ -70,7 +70,7 @@ export const nicklistPlugin: Plugin<
     return groups.flat();
   };
 
-  const addNick = (msg: Join) => {
+  const addNick = (msg: JoinEvent) => {
     const { origin: { nick }, channel } = msg;
 
     if (nick === client.state.nick) {
@@ -117,7 +117,7 @@ export const nicklistPlugin: Plugin<
     client.emit("nicklist", { channel, nicklist });
   };
 
-  const removeNick = (msg: Part | Kick | Quit | Kill) => {
+  const removeNick = (msg: PartEvent | QuitEvent | KickEvent | KillEvent) => {
     const remove = (nick: string, channel?: string) => {
       if (channel === undefined) {
         for (const channel in namesMap) {

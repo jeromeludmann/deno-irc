@@ -1,14 +1,14 @@
 import { assertArrayIncludes, assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nick } from "./nick.ts";
-import { register } from "./register.ts";
-import { registerOnConnect } from "./register_on_connect.ts";
-import { throwOnError } from "./throw_on_error.ts";
-import { verbose } from "./verbose.ts";
+import { nickPlugin } from "./nick.ts";
+import { registerPlugin } from "./register.ts";
+import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { throwOnErrorPlugin } from "./throw_on_error.ts";
+import { verbosePlugin } from "./verbose.ts";
 
 describe("plugins/verbose", (test) => {
-  const plugins = [verbose];
+  const plugins = [verbosePlugin];
   const options = { verbose: true };
 
   test("print received raw messages", async () => {
@@ -44,7 +44,7 @@ describe("plugins/verbose", (test) => {
 
   test("print emitted events", async () => {
     const { client, server, console } = await mock(
-      [...plugins, throwOnError],
+      [...plugins, throwOnErrorPlugin],
       options,
       { withConnection: false },
     );
@@ -75,7 +75,7 @@ describe("plugins/verbose", (test) => {
 
   test("print state changes", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nick, register, registerOnConnect],
+      [...plugins, nickPlugin, registerPlugin, registerOnConnectPlugin],
       { ...options, nick: "current_nick" },
     );
 
@@ -90,7 +90,7 @@ describe("plugins/verbose", (test) => {
 
   test("print nothing if disabled", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nick, register, registerOnConnect],
+      [...plugins, nickPlugin, registerPlugin, registerOnConnectPlugin],
       { verbose: false, nick: "me" },
       { withConnection: false },
     );

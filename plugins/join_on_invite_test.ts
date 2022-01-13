@@ -1,21 +1,21 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { invite } from "./invite.ts";
-import { join } from "./join.ts";
-import { joinOnInvite } from "./join_on_invite.ts";
-import { nick } from "./nick.ts";
-import { register } from "./register.ts";
-import { registerOnConnect } from "./register_on_connect.ts";
+import { invitePlugin } from "./invite.ts";
+import { joinPlugin } from "./join.ts";
+import { joinOnInvitePlugin } from "./join_on_invite.ts";
+import { nickPlugin } from "./nick.ts";
+import { registerPlugin } from "./register.ts";
+import { registerOnConnectPlugin } from "./register_on_connect.ts";
 
 describe("plugins/join_on_invite", (test) => {
   const plugins = [
-    join,
-    invite,
-    nick,
-    register,
-    registerOnConnect,
-    joinOnInvite,
+    joinPlugin,
+    invitePlugin,
+    nickPlugin,
+    registerPlugin,
+    registerOnConnectPlugin,
+    joinOnInvitePlugin,
   ];
 
   const options = { nick: "me" };

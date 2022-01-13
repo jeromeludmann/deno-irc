@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nick } from "./nick.ts";
+import { nickPlugin } from "./nick.ts";
 
 describe("plugins/nick", (test) => {
-  const plugins = [nick];
+  const plugins = [nickPlugin];
 
   test("send NICK", async () => {
     const { client, server } = await mock(plugins, {});

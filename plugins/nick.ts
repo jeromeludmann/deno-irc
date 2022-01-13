@@ -1,18 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface NickParams {
-  commands: {
-    /** Sets the `nick` of the client (once connected). */
-    nick(nick: string): void;
-  };
-
-  events: {
-    "nick": Nick;
-  };
-}
-
-export interface Nick {
+export interface NickEvent {
   /** User who sent the NICK. */
   origin: UserMask;
 
@@ -20,7 +9,17 @@ export interface Nick {
   nick: string;
 }
 
-export const nick: Plugin<NickParams> = (client) => {
+export interface NickParams {
+  commands: {
+    /** Sets the `nick` of the client (once connected). */
+    nick(nick: string): void;
+  };
+  events: {
+    "nick": NickEvent;
+  };
+}
+
+export const nickPlugin: Plugin<NickParams> = (client) => {
   const sendNick = (...params: string[]) => {
     client.send("NICK", ...params);
   };

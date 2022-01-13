@@ -1,27 +1,8 @@
 import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { AnyCtcpCommand, createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
+import { AnyCtcpCommand, createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
 
-export interface ClientinfoParams {
-  options: {
-    ctcpReplies?: {
-      /** Replies to CTCP CLIENTINFO. */
-      clientinfo?: boolean;
-    };
-  };
-
-  commands: {
-    /** Queries the supported CTCP commands of a `target`. */
-    clientinfo(target: string): void;
-  };
-
-  events: {
-    "ctcp_clientinfo": CtcpClientinfo;
-    "ctcp_clientinfo_reply": CtcpClientinfoReply;
-  };
-}
-
-export interface CtcpClientinfo {
+export interface CtcpClientinfoEvent {
   /** Origin of the CTCP CLIENTINFO query. */
   origin: UserMask;
 
@@ -29,7 +10,7 @@ export interface CtcpClientinfo {
   target: string;
 }
 
-export interface CtcpClientinfoReply {
+export interface CtcpClientinfoReplyEvent {
   /** User who sent the CTCP CLIENTINFO reply. */
   origin: UserMask;
 
@@ -40,11 +21,28 @@ export interface CtcpClientinfoReply {
   supported: AnyCtcpCommand[];
 }
 
+export interface ClientinfoParams {
+  options: {
+    ctcpReplies?: {
+      /** Replies to CTCP CLIENTINFO. */
+      clientinfo?: boolean;
+    };
+  };
+  commands: {
+    /** Queries the supported CTCP commands of a `target`. */
+    clientinfo(target: string): void;
+  };
+  events: {
+    "ctcp_clientinfo": CtcpClientinfoEvent;
+    "ctcp_clientinfo_reply": CtcpClientinfoReplyEvent;
+  };
+}
+
 const DEFAULT_CLIENTINFO_REPLY = true;
 
 const supported = ["PING", "TIME", "VERSION"];
 
-export const clientinfo: Plugin<
+export const clientinfoPlugin: Plugin<
   & CtcpParams
   & ClientinfoParams
 > = (client, options) => {
@@ -55,7 +53,7 @@ export const clientinfo: Plugin<
     client.ctcp(target, "CLIENTINFO");
   };
 
-  const emitClientinfo = (msg: Ctcp) => {
+  const emitClientinfo = (msg: CtcpEvent) => {
     if (msg.command !== "CLIENTINFO") {
       return;
     }
@@ -82,7 +80,7 @@ export const clientinfo: Plugin<
     return;
   }
 
-  const replyToClientinfo = (msg: CtcpClientinfo) => {
+  const replyToClientinfo = (msg: CtcpClientinfoEvent) => {
     const param = supported.join(" ");
     const ctcp = createCtcp("CLIENTINFO", param);
     client.send("NOTICE", msg.origin.nick, ctcp);

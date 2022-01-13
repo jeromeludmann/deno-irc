@@ -2,10 +2,10 @@ import { Raw } from "../core/parsers.ts";
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { ctcp, isCtcp } from "./ctcp.ts";
+import { ctcpPlugin, isCtcp } from "./ctcp.ts";
 
 describe("plugins/ctcp", (test) => {
-  const plugins = [ctcp];
+  const plugins = [ctcpPlugin];
 
   test("send CTCP", async () => {
     const { client, server } = await mock(plugins, {});

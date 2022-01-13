@@ -1,21 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
-export interface WhoisParams {
-  commands: {
-    /** Gets the WHOIS informations of a `nick`. */
-    whois(nick: string): void;
-
-    /** Gets the WHOIS informations of a `nick` for a given `server`. */
-    whois(server: string, nick: string): void;
-  };
-
-  events: {
-    "whois_reply": WhoisReply;
-  };
-}
-
-export interface WhoisReply {
+export interface WhoisReplyEvent {
   /** Nick. */
   nick: string;
 
@@ -47,8 +33,21 @@ export interface WhoisReply {
   away?: string;
 }
 
-export const whois: Plugin<WhoisParams> = (client) => {
-  const buffers: Record<string, Partial<WhoisReply>> = {};
+export interface WhoisParams {
+  commands: {
+    /** Gets the WHOIS informations of a `nick`. */
+    whois(nick: string): void;
+
+    /** Gets the WHOIS informations of a `nick` for a given `server`. */
+    whois(server: string, nick: string): void;
+  };
+  events: {
+    "whois_reply": WhoisReplyEvent;
+  };
+}
+
+export const whoisPlugin: Plugin<WhoisParams> = (client) => {
+  const buffers: Record<string, Partial<WhoisReplyEvent>> = {};
 
   const sendWhois = (...params: string[]) => {
     client.send("WHOIS", ...params);
@@ -99,7 +98,7 @@ export const whois: Plugin<WhoisParams> = (client) => {
       case "RPL_ENDOFWHOIS": {
         const [, nick] = msg.params;
         if (!(nick in buffers)) break;
-        client.emit("whois_reply", buffers[nick] as WhoisReply);
+        client.emit("whois_reply", buffers[nick] as WhoisReplyEvent);
         delete buffers[nick];
         break;
       }

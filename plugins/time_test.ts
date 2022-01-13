@@ -2,11 +2,11 @@
 import { assertEquals, assertMatch } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { ctcp } from "./ctcp.ts";
-import { time } from "./time.ts";
+import { ctcpPlugin } from "./ctcp.ts";
+import { timePlugin } from "./time.ts";
 
 describe("plugins/time", (test) => {
-  const plugins = [ctcp, time];
+  const plugins = [ctcpPlugin, timePlugin];
 
   test("send TIME", async () => {
     const { client, server } = await mock(plugins, {});

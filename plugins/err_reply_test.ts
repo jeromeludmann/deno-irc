@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { errReply } from "./err_reply.ts";
+import { errReplyPlugin } from "./err_reply.ts";
 
 describe("plugins/err_reply", (test) => {
-  const plugins = [errReply];
+  const plugins = [errReplyPlugin];
 
   test("emit 'err_reply' on ERR_NOSUCHCHANNEL", async () => {
     const { client, server } = await mock(plugins, {});

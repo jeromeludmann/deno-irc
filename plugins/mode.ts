@@ -64,7 +64,6 @@ export interface ModeParams {
      *      client.mode("#chan", "+iko", "secret", "nick"); */
     mode(target: string, modes?: string, ...args: string[]): void;
   };
-
   events: {
     "mode": ModeEvent;
     "mode:user": UserModeEvent;

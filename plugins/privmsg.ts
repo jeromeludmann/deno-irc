@@ -3,23 +3,7 @@ import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 import { isChannel, isNick } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface PrivmsgParams {
-  commands: {
-    /** Sends a message `text` to a `target`. */
-    privmsg(target: string, text: string): void;
-
-    /** Sends a message `text` to a `target`. */
-    msg: PrivmsgParams["commands"]["privmsg"];
-  };
-
-  events: {
-    "privmsg": Privmsg;
-    "privmsg:channel": ChannelPrivmsg;
-    "privmsg:private": PrivatePrivmsg;
-  };
-}
-
-export interface Privmsg {
+export interface PrivmsgEvent {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
 
@@ -30,7 +14,7 @@ export interface Privmsg {
   text: string;
 }
 
-export interface ChannelPrivmsg {
+export interface ChannelPrivmsgEvent {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
 
@@ -41,7 +25,7 @@ export interface ChannelPrivmsg {
   text: string;
 }
 
-export interface PrivatePrivmsg {
+export interface PrivatePrivmsgEvent {
   /** User who sent the PRIVMSG. */
   origin: UserMask;
 
@@ -49,7 +33,22 @@ export interface PrivatePrivmsg {
   text: string;
 }
 
-export const privmsg: Plugin<PrivmsgParams> = (client) => {
+export interface PrivmsgParams {
+  commands: {
+    /** Sends a message `text` to a `target`. */
+    privmsg(target: string, text: string): void;
+
+    /** Sends a message `text` to a `target`. */
+    msg: PrivmsgParams["commands"]["privmsg"];
+  };
+  events: {
+    "privmsg": PrivmsgEvent;
+    "privmsg:channel": ChannelPrivmsgEvent;
+    "privmsg:private": PrivatePrivmsgEvent;
+  };
+}
+
+export const privmsgPlugin: Plugin<PrivmsgParams> = (client) => {
   const sendPrivmsg = (...params: string[]) => {
     client.send("PRIVMSG", ...params);
   };
@@ -68,7 +67,7 @@ export const privmsg: Plugin<PrivmsgParams> = (client) => {
     client.emit("privmsg", { origin, target, text });
   };
 
-  const emitChannelPrivmsg = (msg: Privmsg) => {
+  const emitChannelPrivmsg = (msg: PrivmsgEvent) => {
     if (!isChannel(msg.target)) {
       return;
     }
@@ -77,7 +76,7 @@ export const privmsg: Plugin<PrivmsgParams> = (client) => {
     client.emit("privmsg:channel", { origin, channel, text });
   };
 
-  const emitPrivatePrivmsg = (msg: Privmsg) => {
+  const emitPrivatePrivmsg = (msg: PrivmsgEvent) => {
     if (!isNick(msg.target)) {
       return;
     }

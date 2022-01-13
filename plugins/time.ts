@@ -1,27 +1,8 @@
 import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
+import { createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
 
-export interface TimeParams {
-  options: {
-    ctcpReplies?: {
-      /** Replies to CTCP TIME. */
-      time?: boolean;
-    };
-  };
-
-  commands: {
-    /** Queries the date time of a `target`. */
-    time(target?: string): void;
-  };
-
-  events: {
-    "ctcp_time": CtcpTime;
-    "ctcp_time_reply": CtcpTimeReply;
-  };
-}
-
-export interface CtcpTime {
+export interface CtcpTimeEvent {
   /** User who sent the CTCP TIME query. */
   origin: UserMask;
 
@@ -29,7 +10,7 @@ export interface CtcpTime {
   target: string;
 }
 
-export interface CtcpTimeReply {
+export interface CtcpTimeReplyEvent {
   /** User who sent the CTCP TIME reply. */
   origin: UserMask;
 
@@ -40,9 +21,29 @@ export interface CtcpTimeReply {
   time: string;
 }
 
+export interface TimeParams {
+  options: {
+    ctcpReplies?: {
+      /** Replies to CTCP TIME. */
+      time?: boolean;
+    };
+  };
+  commands: {
+    /** Queries the date time of a `target`. */
+    time(target?: string): void;
+  };
+  events: {
+    "ctcp_time": CtcpTimeEvent;
+    "ctcp_time_reply": CtcpTimeReplyEvent;
+  };
+}
+
 const DEFAULT_TIME_REPLY = true;
 
-export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
+export const timePlugin: Plugin<CtcpParams & TimeParams> = (
+  client,
+  options,
+) => {
   const replyEnabled = options.ctcpReplies?.time ?? DEFAULT_TIME_REPLY;
 
   const sendTime = (target?: string) => {
@@ -53,7 +54,7 @@ export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
     }
   };
 
-  const emitCtcpTime = (msg: Ctcp) => {
+  const emitCtcpTime = (msg: CtcpEvent) => {
     if (msg.command !== "TIME") {
       return;
     }
@@ -79,7 +80,7 @@ export const time: Plugin<CtcpParams & TimeParams> = (client, options) => {
     return;
   }
 
-  const replyToCtcpTime = (msg: CtcpTime) => {
+  const replyToCtcpTime = (msg: CtcpTimeEvent) => {
     const time = new Date().toLocaleString();
     const ctcp = createCtcp("TIME", time);
     client.send("NOTICE", msg.origin.nick, ctcp);

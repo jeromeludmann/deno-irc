@@ -21,7 +21,6 @@ export interface ReconnectParams {
       delay?: number;
     };
   };
-
   events: {
     "reconnecting": RemoteAddr;
   };
@@ -31,7 +30,7 @@ const DEFAULT_RECONNECT = false;
 const DEFAULT_ATTEMPTS = 10;
 const DEFAULT_DELAY = 5;
 
-export const reconnect: Plugin<ReconnectParams> = (client, options) => {
+export const reconnectPlugin: Plugin<ReconnectParams> = (client, options) => {
   let config = options.reconnect ?? DEFAULT_RECONNECT;
 
   if (!config) {

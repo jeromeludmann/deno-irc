@@ -12,7 +12,7 @@ export interface VerboseParams {
 
 const DEFAULT_VERBOSE = false;
 
-export const verbose: Plugin<VerboseParams> = (client, options) => {
+export const verbosePlugin: Plugin<VerboseParams> = (client, options) => {
   const enabled = options.verbose ?? DEFAULT_VERBOSE;
 
   if (!enabled) {

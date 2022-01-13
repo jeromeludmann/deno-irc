@@ -1,19 +1,19 @@
 import { assertEquals, assertMatch } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { invalidNames } from "./invalid_names.ts";
-import { nick } from "./nick.ts";
-import { register } from "./register.ts";
-import { registerOnConnect } from "./register_on_connect.ts";
-import { throwOnError } from "./throw_on_error.ts";
+import { invalidNamesPlugin } from "./invalid_names.ts";
+import { nickPlugin } from "./nick.ts";
+import { registerPlugin } from "./register.ts";
+import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { throwOnErrorPlugin } from "./throw_on_error.ts";
 
 describe("plugins/invalid_names", (test) => {
   const plugins = [
-    nick,
-    register,
-    registerOnConnect,
-    throwOnError,
-    invalidNames,
+    nickPlugin,
+    registerPlugin,
+    registerOnConnectPlugin,
+    throwOnErrorPlugin,
+    invalidNamesPlugin,
   ];
 
   const options = { nick: "me" };

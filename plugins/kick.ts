@@ -1,18 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface KickParams {
-  commands: {
-    /** Kicks a `nick` from a `channel` with an optional `comment`. */
-    kick(channel: string, nick: string, comment?: string): void;
-  };
-
-  events: {
-    "kick": Kick;
-  };
-}
-
-export interface Kick {
+export interface KickEvent {
   /** User who sent the KICK. */
   origin: UserMask;
 
@@ -26,7 +15,17 @@ export interface Kick {
   comment?: string;
 }
 
-export const kick: Plugin<KickParams> = (client) => {
+export interface KickParams {
+  commands: {
+    /** Kicks a `nick` from a `channel` with an optional `comment`. */
+    kick(channel: string, nick: string, comment?: string): void;
+  };
+  events: {
+    "kick": KickEvent;
+  };
+}
+
+export const kickPlugin: Plugin<KickParams> = (client) => {
   const sendKick = (...params: string[]) => {
     client.send("KICK", ...params);
   };

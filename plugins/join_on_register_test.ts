@@ -1,12 +1,12 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { join } from "./join.ts";
-import { joinOnRegister } from "./join_on_register.ts";
-import { register } from "./register.ts";
+import { joinPlugin } from "./join.ts";
+import { joinOnRegisterPlugin } from "./join_on_register.ts";
+import { registerPlugin } from "./register.ts";
 
 describe("plugins/join_on_register", (test) => {
-  const plugins = [joinOnRegister, join, register];
+  const plugins = [joinOnRegisterPlugin, joinPlugin, registerPlugin];
 
   test("join on RPL_WELCOME", async () => {
     const { client, server } = await mock(

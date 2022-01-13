@@ -1,22 +1,8 @@
 import { Plugin } from "../core/client.ts";
 import { UserMask } from "../core/parsers.ts";
-import { Ctcp, CtcpParams } from "./ctcp.ts";
+import { CtcpEvent, CtcpParams } from "./ctcp.ts";
 
-export interface ActionParams {
-  commands: {
-    /** Sends an action message `text` to a `target`. */
-    action(target: string, text: string): void;
-
-    /** Sends an action message `text` to a `target`. */
-    me: ActionParams["commands"]["action"];
-  };
-
-  events: {
-    "ctcp_action": CtcpAction;
-  };
-}
-
-export interface CtcpAction {
+export interface CtcpActionEvent {
   /** User who sent the CTCP ACTION. */
   origin: UserMask;
 
@@ -27,12 +13,25 @@ export interface CtcpAction {
   text: string;
 }
 
-export const action: Plugin<CtcpParams & ActionParams> = (client) => {
+export interface ActionParams {
+  commands: {
+    /** Sends an action message `text` to a `target`. */
+    action(target: string, text: string): void;
+
+    /** Sends an action message `text` to a `target`. */
+    me: ActionParams["commands"]["action"];
+  };
+  events: {
+    "ctcp_action": CtcpActionEvent;
+  };
+}
+
+export const actionPlugin: Plugin<CtcpParams & ActionParams> = (client) => {
   const sendAction = (target: string, text: string) => {
     client.ctcp(target, "ACTION", text);
   };
 
-  const emitAction = (msg: Ctcp) => {
+  const emitAction = (msg: CtcpEvent) => {
     if (
       msg.command !== "ACTION" ||
       msg.param === undefined

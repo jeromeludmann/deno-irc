@@ -1,20 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface QuitParams {
-  commands: {
-    /** Leaves the server with an optional `comment`.
-     *
-     * Resolves after closing link. */
-    quit(comment?: string): Promise<void>;
-  };
-
-  events: {
-    "quit": Quit;
-  };
-}
-
-export interface Quit {
+export interface QuitEvent {
   /** User who sent the QUIT. */
   origin: UserMask;
 
@@ -22,7 +9,19 @@ export interface Quit {
   comment?: string;
 }
 
-export const quit: Plugin<QuitParams> = (client) => {
+export interface QuitParams {
+  commands: {
+    /** Leaves the server with an optional `comment`.
+     *
+     * Resolves after closing link. */
+    quit(comment?: string): Promise<void>;
+  };
+  events: {
+    "quit": QuitEvent;
+  };
+}
+
+export const quitPlugin: Plugin<QuitParams> = (client) => {
   const sendQuit = async (...params: string[]) => {
     await client.send("QUIT", ...params);
     client.disconnect();

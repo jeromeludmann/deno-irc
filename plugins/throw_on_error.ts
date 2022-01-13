@@ -1,7 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
-export const throwOnError: Plugin = (client) => {
+export const throwOnErrorPlugin: Plugin = (client) => {
   const emitError = (msg: Raw) => {
     if (msg.command !== "ERROR") {
       return;

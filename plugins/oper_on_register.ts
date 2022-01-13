@@ -15,7 +15,7 @@ export interface OperOnRegisterParams {
   };
 }
 
-export const operOnRegister: Plugin<
+export const operOnRegisterPlugin: Plugin<
   & RegisterParams
   & OperParams
   & OperOnRegisterParams

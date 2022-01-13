@@ -13,7 +13,7 @@ export interface InvalidNamesParams {
 
 const DEFAULT_RESOLVE_INVALID_NAMES = false;
 
-export const invalidNames: Plugin<
+export const invalidNamesPlugin: Plugin<
   & NickParams
   & RegisterParams
   & RegisterOnConnectParams

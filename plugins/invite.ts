@@ -1,18 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface InviteParams {
-  commands: {
-    /** Invites a `nick` to a `channel`. */
-    invite(nick: string, channel: string): void;
-  };
-
-  events: {
-    "invite": Invite;
-  };
-}
-
-export interface Invite {
+export interface InviteEvent {
   /** User who sent the INVITE. */
   origin: UserMask;
 
@@ -23,7 +12,17 @@ export interface Invite {
   channel: string;
 }
 
-export const invite: Plugin<InviteParams> = (client) => {
+export interface InviteParams {
+  commands: {
+    /** Invites a `nick` to a `channel`. */
+    invite(nick: string, channel: string): void;
+  };
+  events: {
+    "invite": InviteEvent;
+  };
+}
+
+export const invitePlugin: Plugin<InviteParams> = (client) => {
   const sendInvite = (...params: string[]) => {
     client.send("INVITE", ...params);
   };

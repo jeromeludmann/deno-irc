@@ -7,7 +7,7 @@ export interface OperParams {
   };
 }
 
-export const oper: Plugin<OperParams> = (client) => {
+export const operPlugin: Plugin<OperParams> = (client) => {
   const sendOper = (...params: string[]) => {
     client.send("OPER", ...params);
   };

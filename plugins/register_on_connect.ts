@@ -1,7 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
-import { Nick, NickParams } from "./nick.ts";
-import { Register, RegisterParams } from "./register.ts";
+import { NickEvent, NickParams } from "./nick.ts";
+import { RegisterEvent, RegisterParams } from "./register.ts";
 
 export interface RegisterOnConnectParams {
   options: {
@@ -17,7 +17,6 @@ export interface RegisterOnConnectParams {
     /** The password used to connect the client to the server. */
     password?: string;
   };
-
   state: {
     nick: string;
     username: string;
@@ -25,7 +24,7 @@ export interface RegisterOnConnectParams {
   };
 }
 
-export const registerOnConnect: Plugin<
+export const registerOnConnectPlugin: Plugin<
   & NickParams
   & RegisterParams
   & RegisterOnConnectParams
@@ -52,11 +51,11 @@ export const registerOnConnect: Plugin<
     }
   };
 
-  const setNickState = (msg: Register) => {
+  const setNickState = (msg: RegisterEvent) => {
     client.state.nick = msg.nick;
   };
 
-  const trackNickChange = (msg: Nick) => {
+  const trackNickChange = (msg: NickEvent) => {
     const { state } = client;
 
     if (msg.origin.nick === state.nick) {

@@ -1,34 +1,13 @@
 import { Plugin } from "../core/client.ts";
 import { Raw, UserMask } from "../core/parsers.ts";
-import { createCtcp, Ctcp, CtcpParams } from "./ctcp.ts";
+import { createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
 
-export interface PingParams {
-  options: {
-    ctcpReplies?: {
-      /** Replies to CTCP PING. */
-      ping?: boolean;
-    };
-  };
-
-  commands: {
-    /** Pings a `target`. */
-    ping(target?: string): void;
-  };
-
-  events: {
-    "ping": Ping;
-    "pong": Pong;
-    "ctcp_ping": CtcpPing;
-    "ctcp_ping_reply": CtcpPing;
-  };
-}
-
-export interface Ping {
+export interface PingEvent {
   /** Keys of the PING. */
   keys: string[];
 }
 
-export interface Pong {
+export interface PongEvent {
   /** Server that sent the PONG. */
   origin: string;
 
@@ -39,7 +18,7 @@ export interface Pong {
   key: string;
 }
 
-export interface CtcpPing {
+export interface CtcpPingEvent {
   /** User who sent the CTCP PING (query or reply). */
   origin: UserMask;
 
@@ -50,9 +29,31 @@ export interface CtcpPing {
   key: string;
 }
 
+export interface PingParams {
+  options: {
+    ctcpReplies?: {
+      /** Replies to CTCP PING. */
+      ping?: boolean;
+    };
+  };
+  commands: {
+    /** Pings a `target`. */
+    ping(target?: string): void;
+  };
+  events: {
+    "ping": PingEvent;
+    "pong": PongEvent;
+    "ctcp_ping": CtcpPingEvent;
+    "ctcp_ping_reply": CtcpPingEvent;
+  };
+}
+
 const DEFAULT_CTCP_PING_REPLY = true;
 
-export const ping: Plugin<CtcpParams & PingParams> = (client, options) => {
+export const pingPlugin: Plugin<CtcpParams & PingParams> = (
+  client,
+  options,
+) => {
   const ctcpReplyEnabled = options.ctcpReplies?.ping ?? DEFAULT_CTCP_PING_REPLY;
 
   const sendPing = (target?: string) => {
@@ -80,7 +81,7 @@ export const ping: Plugin<CtcpParams & PingParams> = (client, options) => {
     }
   };
 
-  const emitCtcpPing = (msg: Ctcp) => {
+  const emitCtcpPing = (msg: CtcpEvent) => {
     if (
       msg.command !== "PING" ||
       msg.param === undefined
@@ -101,11 +102,11 @@ export const ping: Plugin<CtcpParams & PingParams> = (client, options) => {
     }
   };
 
-  const replyToPing = (msg: Ping) => {
+  const replyToPing = (msg: PingEvent) => {
     client.send("PONG", ...msg.keys);
   };
 
-  const replyToCtcpPing = (msg: CtcpPing) => {
+  const replyToCtcpPing = (msg: CtcpPingEvent) => {
     const { origin: { nick }, key } = msg;
     const ctcp = createCtcp("PING", key);
     client.send("NOTICE", nick, ctcp);

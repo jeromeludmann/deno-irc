@@ -1,6 +1,19 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
+export interface JoinEvent {
+  /** User who sent the JOIN. */
+  origin: UserMask;
+
+  /** Channel joined by the user. */
+  channel: string;
+}
+
+export type ChannelsDescription = [
+  channel: string | [channel: string, key: string],
+  ...channels: (string | [channel: string, key: string])[],
+];
+
 export interface JoinParams {
   commands: {
     /** Joins `channels` with optional keys.
@@ -9,26 +22,12 @@ export interface JoinParams {
      *      client.join("#channel1", ["#channel2", "key"]); */
     join(...params: ChannelsDescription): void;
   };
-
   events: {
-    "join": Join;
+    "join": JoinEvent;
   };
 }
 
-export type ChannelsDescription = [
-  channel: string | [channel: string, key: string],
-  ...channels: (string | [channel: string, key: string])[],
-];
-
-export interface Join {
-  /** User who sent the JOIN. */
-  origin: UserMask;
-
-  /** Channel joined by the user. */
-  channel: string;
-}
-
-export const join: Plugin<JoinParams> = (client) => {
+export const joinPlugin: Plugin<JoinParams> = (client) => {
   const sendJoin = (...params: ChannelsDescription) => {
     const channels = [];
     const keys = [];

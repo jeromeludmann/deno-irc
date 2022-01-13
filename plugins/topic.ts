@@ -1,23 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface TopicParams {
-  commands: {
-    /** Gets the `topic` of a `channel`. */
-    topic(channel: string): void;
-
-    /** Changes the `topic` of a `channel`. */
-    topic(channel: string, topic: string): void;
-  };
-
-  events: {
-    "topic_change": TopicChange;
-    "topic_set": TopicSet;
-    "topic_set_by": TopicSetBy;
-  };
-}
-
-export interface TopicChange {
+export interface TopicChangeEvent {
   /** User who changed the topic. */
   origin: UserMask;
 
@@ -28,7 +12,7 @@ export interface TopicChange {
   topic: string;
 }
 
-export interface TopicSet {
+export interface TopicSetEvent {
   /** Channel where the topic is set. */
   channel: string;
 
@@ -36,7 +20,7 @@ export interface TopicSet {
   topic?: string;
 }
 
-export interface TopicSetBy {
+export interface TopicSetByEvent {
   /** Channel where the topic is set. */
   channel: string;
 
@@ -47,7 +31,22 @@ export interface TopicSetBy {
   time: Date;
 }
 
-export const topic: Plugin<TopicParams> = (client) => {
+export interface TopicParams {
+  commands: {
+    /** Gets the `topic` of a `channel`. */
+    topic(channel: string): void;
+
+    /** Changes the `topic` of a `channel`. */
+    topic(channel: string, topic: string): void;
+  };
+  events: {
+    "topic_change": TopicChangeEvent;
+    "topic_set": TopicSetEvent;
+    "topic_set_by": TopicSetByEvent;
+  };
+}
+
+export const topicPlugin: Plugin<TopicParams> = (client) => {
   const sendTopic = (...params: string[]) => {
     client.send("TOPIC", ...params);
   };

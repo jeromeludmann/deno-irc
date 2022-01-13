@@ -1,5 +1,5 @@
 import { Plugin } from "../core/client.ts";
-import { Invite, InviteParams } from "./invite.ts";
+import { InviteEvent, InviteParams } from "./invite.ts";
 import { JoinParams } from "./join.ts";
 import { RegisterOnConnectParams } from "./register_on_connect.ts";
 
@@ -12,7 +12,7 @@ export interface JoinOnInviteParams {
 
 const DEFAULT_JOIN_ON_INVITE = false;
 
-export const joinOnInvite: Plugin<
+export const joinOnInvitePlugin: Plugin<
   & JoinParams
   & InviteParams
   & RegisterOnConnectParams
@@ -24,7 +24,7 @@ export const joinOnInvite: Plugin<
     return;
   }
 
-  const joinChannel = (msg: Invite) => {
+  const joinChannel = (msg: InviteEvent) => {
     if (msg.nick === client.state.nick) {
       client.join(msg.channel);
     }

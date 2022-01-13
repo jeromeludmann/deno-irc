@@ -2,10 +2,10 @@ import { Plugin } from "../core/client.ts";
 import { assertEquals, assertRejects } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { reconnect } from "./reconnect.ts";
+import { reconnectPlugin } from "./reconnect.ts";
 
 describe("plugins/reconnect", (test) => {
-  const plugins = [reconnect];
+  const plugins = [reconnectPlugin];
   const noop = () => {};
 
   test("reconnect on connect error", async () => {

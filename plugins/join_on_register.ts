@@ -9,7 +9,7 @@ export interface JoinOnRegisterParams {
   };
 }
 
-export const joinOnRegister: Plugin<
+export const joinOnRegisterPlugin: Plugin<
   & RegisterParams
   & JoinParams
   & JoinOnRegisterParams

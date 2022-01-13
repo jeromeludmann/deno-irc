@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { join } from "./join.ts";
+import { joinPlugin } from "./join.ts";
 
 describe("plugins/join", (test) => {
-  const plugins = [join];
+  const plugins = [joinPlugin];
 
   test("send JOIN", async () => {
     const { client, server } = await mock(plugins, {});

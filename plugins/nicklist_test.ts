@@ -2,25 +2,25 @@ import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { isupportPlugin } from "./isupport.ts";
-import { join } from "./join.ts";
-import { kick } from "./kick.ts";
-import { kill } from "./kill.ts";
+import { joinPlugin } from "./join.ts";
+import { kickPlugin } from "./kick.ts";
+import { killPlugin } from "./kill.ts";
 import { modePlugin } from "./mode.ts";
 import { namesPlugin } from "./names.ts";
-import { part } from "./part.ts";
-import { quit } from "./quit.ts";
+import { partPlugin } from "./part.ts";
+import { quitPlugin } from "./quit.ts";
 import { type NicklistEvent, nicklistPlugin } from "./nicklist.ts";
 
 describe("plugins/nicklist", (test) => {
   const plugins = [
     isupportPlugin,
-    join,
-    kick,
-    kill,
+    joinPlugin,
+    kickPlugin,
+    killPlugin,
     modePlugin,
     namesPlugin,
-    part,
-    quit,
+    partPlugin,
+    quitPlugin,
     nicklistPlugin,
   ];
 

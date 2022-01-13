@@ -1,15 +1,15 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nick } from "./nick.ts";
-import { register } from "./register.ts";
-import { registerOnConnect } from "./register_on_connect.ts";
+import { nickPlugin } from "./nick.ts";
+import { registerPlugin } from "./register.ts";
+import { registerOnConnectPlugin } from "./register_on_connect.ts";
 
 describe("plugins/register_on_connect", (test) => {
   const plugins = [
-    nick,
-    register,
-    registerOnConnect,
+    nickPlugin,
+    registerPlugin,
+    registerOnConnectPlugin,
   ];
 
   const options = {

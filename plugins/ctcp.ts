@@ -1,17 +1,6 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface CtcpParams {
-  commands: {
-    /** Sends a CTCP message to a `target` with a `command` and a `param`. */
-    ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
-  };
-
-  events: {
-    "ctcp": Ctcp;
-  };
-}
-
 export type AnyCtcpCommand =
   | "ACTION"
   | "CLIENTINFO"
@@ -19,7 +8,7 @@ export type AnyCtcpCommand =
   | "TIME"
   | "VERSION";
 
-export interface Ctcp {
+export interface CtcpEvent {
   /** User who sent the CTCP. */
   origin: UserMask;
 
@@ -36,7 +25,17 @@ export interface Ctcp {
   param?: string;
 }
 
-export const ctcp: Plugin<CtcpParams> = (client) => {
+export interface CtcpParams {
+  commands: {
+    /** Sends a CTCP message to a `target` with a `command` and a `param`. */
+    ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
+  };
+  events: {
+    "ctcp": CtcpEvent;
+  };
+}
+
+export const ctcpPlugin: Plugin<CtcpParams> = (client) => {
   const sendCtcp = (target: string, command: string, param: string) => {
     const ctcp = createCtcp(command, param);
     client.send("PRIVMSG", target, ctcp);
@@ -84,14 +83,14 @@ export function createCtcp(command: string, param?: string): string {
   return `\x01${command}${ctcpParam}\x01`;
 }
 
-function parseCtcp(msg: Raw): Ctcp {
+function parseCtcp(msg: Raw): CtcpEvent {
   const { command, params: [target, rawCtcp] } = msg;
 
   const i = rawCtcp.indexOf(" ", 1);
   const ctcpCommand = rawCtcp.slice(1, i) as AnyCtcpCommand;
   const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
 
-  const ctcp: Ctcp = {
+  const ctcp: CtcpEvent = {
     origin: parseUserMask(msg.prefix),
     target,
     command: ctcpCommand,

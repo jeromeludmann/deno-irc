@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { oper } from "./oper.ts";
+import { operPlugin } from "./oper.ts";
 
 describe("plugins/oper", (test) => {
-  const plugins = [oper];
+  const plugins = [operPlugin];
 
   test("send OPER", async () => {
     const { client, server } = await mock(plugins, {});

@@ -1,18 +1,7 @@
 import { Plugin } from "../core/client.ts";
 import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
 
-export interface PartParams {
-  commands: {
-    /** Leaves the `channel` with an optional `comment`. */
-    part(channel: string, comment?: string): void;
-  };
-
-  events: {
-    "part": Part;
-  };
-}
-
-export interface Part {
+export interface PartEvent {
   /** User who sent the PART. */
   origin: UserMask;
 
@@ -23,7 +12,17 @@ export interface Part {
   comment?: string;
 }
 
-export const part: Plugin<PartParams> = (client) => {
+export interface PartParams {
+  commands: {
+    /** Leaves the `channel` with an optional `comment`. */
+    part(channel: string, comment?: string): void;
+  };
+  events: {
+    "part": PartEvent;
+  };
+}
+
+export const partPlugin: Plugin<PartParams> = (client) => {
   const sendPart = (...params: string[]) => {
     client.send("PART", ...params);
   };

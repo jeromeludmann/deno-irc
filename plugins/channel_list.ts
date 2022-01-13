@@ -1,24 +1,12 @@
 import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
-export interface ChannelListParams {
-  commands: {
-    /** Gets the list channels and their topics. */
-    list(channels?: string | string[], server?: string): void;
-  };
-
-  events: {
-    "channel_list_reply": ChannelListReply;
-    "channel_list_item_reply": ChannelListItemReply;
-  };
-}
-
-export interface ChannelListReply {
+export interface ChannelListReplyEvent {
   /** The entire channel list. */
-  channelList: ChannelListItemReply[];
+  channelList: ChannelListItemReplyEvent[];
 }
 
-export interface ChannelListItemReply {
+export interface ChannelListItemReplyEvent {
   /** Name of the channel. */
   channel: string;
 
@@ -29,8 +17,19 @@ export interface ChannelListItemReply {
   topic: string;
 }
 
-export const channelList: Plugin<ChannelListParams> = (client) => {
-  let currentChannelList: ChannelListItemReply[] = [];
+export interface ChannelListParams {
+  commands: {
+    /** Gets the list channels and their topics. */
+    list(channels?: string | string[], server?: string): void;
+  };
+  events: {
+    "channel_list_reply": ChannelListReplyEvent;
+    "channel_list_item_reply": ChannelListItemReplyEvent;
+  };
+}
+
+export const channelListPlugin: Plugin<ChannelListParams> = (client) => {
+  let currentChannelList: ChannelListItemReplyEvent[] = [];
 
   const sendChannelList = (channels?: string | string[], server?: string) => {
     const params: string[] = [];

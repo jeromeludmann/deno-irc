@@ -1,10 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { kick } from "./kick.ts";
+import { kickPlugin } from "./kick.ts";
 
 describe("plugins/kick", (test) => {
-  const plugins = [kick];
+  const plugins = [kickPlugin];
 
   test("send KICK", async () => {
     const { client, server } = await mock(plugins, {});

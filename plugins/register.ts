@@ -1,6 +1,14 @@
 import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 
+export interface RegisterEvent {
+  /** Nick who is registered. */
+  nick: string;
+
+  /** Text of the RPL_WELCOME. */
+  text: string;
+}
+
 export interface RegisterParams {
   commands: {
     /** Sets the username and the realname. Registration only. */
@@ -9,21 +17,12 @@ export interface RegisterParams {
     /** Sets the password of the server. Registration only. */
     pass(password: string): void;
   };
-
   events: {
-    "register": Register;
+    "register": RegisterEvent;
   };
 }
 
-export interface Register {
-  /** Nick who is registered. */
-  nick: string;
-
-  /** Text of the RPL_WELCOME. */
-  text: string;
-}
-
-export const register: Plugin<RegisterParams> = (client) => {
+export const registerPlugin: Plugin<RegisterParams> = (client) => {
   const sendUser = (username: string, realname: string) => {
     client.send("USER", username, "0", "*", realname);
   };
