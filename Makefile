@@ -1,4 +1,4 @@
-sources = core plugins .
+sources = core/*_test.ts plugins/*_test.ts *_test.ts
 
 all:
 	@make lint fmt test
