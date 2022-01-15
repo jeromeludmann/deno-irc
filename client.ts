@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-empty-interface
 import * as Core from "./core/client.ts";
 import * as Action from "./plugins/action.ts";
-import * as ChannelList from "./plugins/channel_list.ts";
 import * as Clientinfo from "./plugins/clientinfo.ts";
 import * as Ctcp from "./plugins/ctcp.ts";
 import * as ErrReply from "./plugins/err_reply.ts";
@@ -13,6 +12,7 @@ import * as JoinOnInvite from "./plugins/join_on_invite.ts";
 import * as JoinOnRegister from "./plugins/join_on_register.ts";
 import * as Kick from "./plugins/kick.ts";
 import * as Kill from "./plugins/kill.ts";
+import * as List from "./plugins/list.ts";
 import * as Mode from "./plugins/mode.ts";
 import * as Motd from "./plugins/motd.ts";
 import * as Myinfo from "./plugins/myinfo.ts";
@@ -39,7 +39,6 @@ import * as Whois from "./plugins/whois.ts";
 type ClientParams =
   & Core.CoreParams
   & Action.ActionParams
-  & ChannelList.ChannelListParams
   & Clientinfo.ClientinfoParams
   & Ctcp.CtcpParams
   & ErrReply.ErrReplyParams
@@ -51,6 +50,7 @@ type ClientParams =
   & JoinOnRegister.JoinOnRegisterParams
   & Kick.KickParams
   & Kill.KillParams
+  & List.ListParams
   & Mode.ModeParams
   & Motd.MotdParams
   & Myinfo.MyinfoParams
@@ -75,7 +75,6 @@ type ClientParams =
 
 const plugins = [
   Action.actionPlugin,
-  ChannelList.channelListPlugin,
   Clientinfo.clientinfoPlugin,
   Ctcp.ctcpPlugin,
   ErrReply.errReplyPlugin,
@@ -87,6 +86,7 @@ const plugins = [
   JoinOnRegister.joinOnRegisterPlugin,
   Kick.kickPlugin,
   Kill.killPlugin,
+  List.listPlugin,
   Motd.motdPlugin,
   Mode.modePlugin,
   Myinfo.myinfoPlugin,
