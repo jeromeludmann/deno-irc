@@ -1,4 +1,4 @@
-import { Client, ClientOptions } from "./client.ts";
+import { type ClientOptions } from "./client.ts";
 import { assertArrayIncludes, assertEquals, assertExists } from "./deps.ts";
 import { describe } from "./testing/helpers.ts";
 import { MockClient } from "./testing/client.ts";
@@ -28,59 +28,16 @@ describe("client", (test) => {
     reconnect: false,
   };
 
-  let client: MockClient;
-  let server: MockServer;
-  let raw: string[] = [];
+  test("should globally work with all loaded plugins", async () => {
+    // should have state initialized
 
-  test("can be instantiated", () => {
-    client = new MockClient(options);
-    server = new MockServer(client);
+    const client = new MockClient(options);
+    const server = new MockServer(client);
     mockConsole();
 
-    assertEquals(client instanceof Client, true);
-  });
+    let raw: string[] = [];
+    let msg = null;
 
-  test("have core commands", () => {
-    assertExists(client.connect);
-    assertExists(client.send);
-    assertExists(client.disconnect);
-    assertExists(client.emit);
-    assertExists(client.on);
-    assertExists(client.once);
-    assertExists(client.wait);
-    assertExists(client.off);
-    assertExists(client.count);
-  });
-
-  test("have plugin commands", () => {
-    assertExists(client.action);
-    assertExists(client.clientinfo);
-    assertExists(client.ctcp);
-    assertExists(client.invite);
-    assertExists(client.join);
-    assertExists(client.kick);
-    assertExists(client.kill);
-    assertExists(client.list);
-    assertExists(client.motd);
-    assertExists(client.privmsg);
-    assertExists(client.nick);
-    assertExists(client.notice);
-    assertExists(client.oper);
-    assertExists(client.part);
-    assertExists(client.ping);
-    assertExists(client.quit);
-    assertExists(client.time);
-    assertExists(client.topic);
-    assertExists(client.version);
-    assertExists(client.whois);
-  });
-
-  test("have plugin command aliases", () => {
-    assertEquals(client.action, client.me);
-    assertEquals(client.privmsg, client.msg);
-  });
-
-  test("have state initialized", () => {
     assertEquals(client.state, {
       remoteAddr: { hostname: "", port: 0, tls: false },
       nick: "me",
@@ -89,9 +46,9 @@ describe("client", (test) => {
       supported: getDefaults(),
       nicklists: {},
     });
-  });
 
-  test("connect to server", async () => {
+    // should connect to server
+
     const conn = await client.connect("host");
 
     assertExists(conn);
@@ -100,9 +57,9 @@ describe("client", (test) => {
       port: 6667,
       tls: false,
     });
-  });
 
-  test("register on connect", () => {
+    // should register on connect
+
     raw = server.receive();
 
     assertEquals(raw, [
@@ -110,67 +67,220 @@ describe("client", (test) => {
       "NICK me",
       "USER user 0 * :real name",
     ]);
-  });
 
-  test("reply to PING", async () => {
+    // should reply to PING
+
     server.send("PING :key");
     await client.once("ping");
     raw = server.receive();
 
     assertEquals(raw, ["PONG key"]);
-  });
 
-  test("be registered on RPL_WELCOME", async () => {
+    // should be registered on RPL_WELCOME
+
     server.send(":serverhost 001 me :Welcome to the server");
-    const msg = await client.once("register");
+    msg = await client.once("register");
 
     assertExists(msg);
 
-    raw = server.receive(); // for the two next tests
-  });
+    // should join channels and set as operator on RPL_WELCOME
 
-  test("join channels on RPL_WELCOME", () => {
+    raw = server.receive(); // for the two next assertions
+
     assertArrayIncludes(raw, ["JOIN #channel1,#channel2"]);
-  });
-
-  test("set as operator on RPL_WELCOME", () => {
     assertArrayIncludes(raw, ["OPER oper pass"]);
-  });
 
-  test("join a channel on INVITE", async () => {
-    server.send(":someone!user@host INVITE me :#new_channel");
+    // should set supported modes
+
+    server.send(
+      ":serverhost 004 me serverhost IRC-version ilosw Obklnoquv bkloveqjfI",
+    );
+    msg = await client.once("myinfo");
+
+    assertEquals(client.state.supported.modes.user, {
+      "i": { type: "d" },
+      "l": { type: "d" },
+      "o": { type: "d" },
+      "s": { type: "d" },
+      "w": { type: "d" },
+    });
+
+    assertEquals(client.state.supported.modes.channel, {
+      "O": { type: "b" },
+      "b": { type: "a" },
+      "k": { type: "b" },
+      "l": { type: "c" },
+      "n": { type: "d" },
+      "q": { type: "d" },
+      "u": { type: "d" },
+      "o": { type: "b", prefix: "@" },
+      "v": { type: "b", prefix: "+" },
+    });
+
+    // should override supported user modes
+
+    server.send(
+      ":serverhost 005 nick USERMODES=,,s,ilow :are supported by this server",
+    );
+    await client.once("raw");
+
+    assertEquals(client.state.supported.modes.user, {
+      "i": { type: "d" },
+      "l": { type: "d" },
+      "o": { type: "d" },
+      "s": { type: "c" },
+      "w": { type: "d" },
+    });
+
+    // should override supported channel modes
+
+    server.send(
+      ":serverhost 005 nick CHANMODES=b,k,l,Onu :are supported by this server",
+    );
+    await client.once("raw");
+
+    assertEquals(client.state.supported.modes.channel, {
+      "O": { type: "d" },
+      "b": { type: "a" },
+      "k": { type: "b" },
+      "l": { type: "c" },
+      "n": { type: "d" },
+      "q": { type: "d" },
+      "u": { type: "d" },
+      "o": { type: "b", prefix: "@" },
+      "v": { type: "b", prefix: "+" },
+    });
+
+    // should override supported channel modes
+
+    server.send(
+      ":serverhost 005 nick PREFIX=(qov)~@+ :are supported by this server",
+    );
+    await client.once("raw");
+
+    assertEquals(client.state.supported.modes.channel, {
+      "O": { type: "d" },
+      "b": { type: "a" },
+      "k": { type: "b" },
+      "l": { type: "c" },
+      "n": { type: "d" },
+      "u": { type: "d" },
+      "q": { type: "b", prefix: "~" },
+      "o": { type: "b", prefix: "@" },
+      "v": { type: "b", prefix: "+" },
+    });
+
+    // should join a channel on INVITE
+
+    server.send(":someone!user@host INVITE me :#channel");
     await client.once("invite");
     raw = server.receive();
 
-    assertEquals(raw, ["JOIN #new_channel"]);
-  });
+    assertEquals(raw, ["JOIN #channel"]);
 
-  test("send PRIVMSG to channel", () => {
+    // should set nicklist
+
+    server.send(":me!user@host JOIN #channel");
+    await client.once("nicklist");
+
+    assertEquals(client.state.nicklists["#channel"], [
+      { prefix: "", nick: "me" },
+    ]);
+
+    server.send([
+      ":serverhost 353 me = #channel :me +nick1 +nick2 nick4",
+      ":serverhost 353 me = #channel :~@+nick3 +nick5 @+nick6",
+      ":serverhost 366 me #channel :End of /NAMES list",
+    ]);
+    await client.once("nicklist");
+
+    assertEquals(client.state.nicklists["#channel"], [
+      { prefix: "~", nick: "nick3" },
+      { prefix: "@", nick: "nick6" },
+      { prefix: "+", nick: "nick1" },
+      { prefix: "+", nick: "nick2" },
+      { prefix: "+", nick: "nick5" },
+      { prefix: "", nick: "me" },
+      { prefix: "", nick: "nick4" },
+    ]);
+
+    // should update nicklist on user channel modes
+
+    server.send(":nick6!user@host MODE #channel +v me");
+    msg = await client.once("nicklist");
+
+    assertEquals(msg.nicklist, [
+      { prefix: "~", nick: "nick3" },
+      { prefix: "@", nick: "nick6" },
+      { prefix: "+", nick: "me" },
+      { prefix: "+", nick: "nick1" },
+      { prefix: "+", nick: "nick2" },
+      { prefix: "+", nick: "nick5" },
+      { prefix: "", nick: "nick4" },
+    ]);
+
+    server.send(":nick3!user@host MODE #channel +o me");
+    msg = await client.once("nicklist");
+
+    assertEquals(msg.nicklist, [
+      { prefix: "~", nick: "nick3" },
+      { prefix: "@", nick: "me" },
+      { prefix: "@", nick: "nick6" },
+      { prefix: "+", nick: "nick1" },
+      { prefix: "+", nick: "nick2" },
+      { prefix: "+", nick: "nick5" },
+      { prefix: "", nick: "nick4" },
+    ]);
+
+    server.send(":nick3!user@host MODE #channel -o me");
+    msg = await client.once("nicklist");
+
+    assertEquals(msg.nicklist, [
+      { prefix: "~", nick: "nick3" },
+      { prefix: "@", nick: "nick6" },
+      { prefix: "+", nick: "me" },
+      { prefix: "+", nick: "nick1" },
+      { prefix: "+", nick: "nick2" },
+      { prefix: "+", nick: "nick5" },
+      { prefix: "", nick: "nick4" },
+    ]);
+
+    // should send PRIVMSG to channel
+
     client.privmsg("#channel", "Hello world!");
     raw = server.receive();
 
     assertEquals(raw, ["PRIVMSG #channel :Hello world!"]);
-  });
 
-  test("leave a channel on KICK", async () => {
-    server.send(":someone!user@host KICK #channel me");
-    const msg = await client.once("kick");
+    // should update nicklist on KICK
 
-    assertEquals(msg, {
-      channel: "#channel",
-      comment: undefined,
-      nick: "me",
-      origin: {
-        nick: "someone",
-        userhost: "host",
-        username: "user",
-      },
-    });
-  });
+    server.send(":nick6!user@host KICK #channel nick2");
+    await client.once("kick");
+    server.send(":nick6!user@host KICK #channel nick5");
+    await client.once("kick");
+    server.send(":nick6!user@host KICK #channel nick2");
+    await client.once("kick");
 
-  test("be disconnected on connection close", async () => {
+    assertEquals(client.state.nicklists["#channel"], [
+      { prefix: "~", nick: "nick3" },
+      { prefix: "@", nick: "nick6" },
+      { prefix: "+", nick: "me" },
+      { prefix: "+", nick: "nick1" },
+      { prefix: "", nick: "nick4" },
+    ]);
+
+    // should be kicked
+
+    server.send(":nick3!user@host KICK #channel me");
+    msg = await client.once("nicklist");
+
+    assertEquals("#channel" in client.state.nicklists, false);
+    assertEquals(msg.nicklist, []);
+
+    // should be disconnected on connection close
+
     server.shutdown();
-    const msg = await client.once("disconnected");
+    msg = await client.once("disconnected");
 
     assertExists(msg);
   });
