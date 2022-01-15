@@ -5,7 +5,7 @@ export {
   red,
   reset,
   stripColor,
-} from "https://deno.land/std@0.120.0/fmt/colors.ts";
+} from "https://deno.land/std@0.121.0/fmt/colors.ts";
 export {
   assertArrayIncludes,
   assertEquals,
@@ -13,4 +13,4 @@ export {
   assertMatch,
   assertRejects,
   assertThrows,
-} from "https://deno.land/std@0.120.0/testing/asserts.ts";
+} from "https://deno.land/std@0.121.0/testing/asserts.ts";
