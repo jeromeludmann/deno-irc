@@ -30,14 +30,27 @@ describe("plugins/mode", (test) => {
     ]);
   });
 
-  test("emit 'mode' on MODE +i", async () => {
+  test("emit 'mode' on MODE +i (from server)", async () => {
+    const { client, server } = await mock(plugins, {});
+
+    server.send(":serverhost MODE nick +i");
+    const msg = await client.once("mode");
+
+    assertEquals(msg, {
+      origin: "serverhost",
+      target: "nick",
+      mode: "+i",
+    });
+  });
+
+  test("emit 'mode' on MODE +i (from user)", async () => {
     const { client, server } = await mock(plugins, {});
 
     server.send(":someone!user@host MODE nick +i");
     const msg = await client.once("mode");
 
     assertEquals(msg, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "nick",
       mode: "+i",
     });
@@ -52,11 +65,11 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "nick",
       mode: "-i",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "nick",
       mode: "-w",
     }]);
@@ -71,11 +84,11 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "nick",
       mode: "+i",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "nick",
       mode: "-w",
     }]);
@@ -88,7 +101,7 @@ describe("plugins/mode", (test) => {
     const msg = await client.once("mode");
 
     assertEquals(msg, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+m",
     });
@@ -103,11 +116,11 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-m",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-v",
       arg: "nick",
@@ -123,12 +136,12 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+v",
       arg: "nick",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-m",
     }]);
@@ -143,12 +156,12 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+o",
       arg: "nick1",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-v",
       arg: "nick2",
@@ -166,26 +179,26 @@ describe("plugins/mode", (test) => {
     await client.once("mode");
 
     assertEquals(messages, [{
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+o",
       arg: "nick1",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+h",
       arg: "nick2",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "+k",
       arg: "secret",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-m",
     }, {
-      prefix: "someone!user@host",
+      origin: { nick: "someone", username: "user", userhost: "host" },
       target: "#channel",
       mode: "-v",
       arg: "nick3",
@@ -199,6 +212,7 @@ describe("plugins/mode", (test) => {
     const msg = await client.once("mode:user");
 
     assertEquals(msg, {
+      origin: { nick: "someone", username: "user", userhost: "host" },
       nick: "nick",
       mode: "+i",
     });

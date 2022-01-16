@@ -1,6 +1,6 @@
 import { type Plugin } from "../core/client.ts";
 import { parseUserMask, type Raw, type UserMask } from "../core/parsers.ts";
-import { isChannel, isNick } from "../core/strings.ts";
+import { isChannel, isNick, isUserMask } from "../core/strings.ts";
 import { type IsupportParams, type Modes } from "./isupport.ts";
 
 export interface Mode {
@@ -12,21 +12,24 @@ export interface Mode {
 }
 
 export interface ModeEvent extends Mode {
-  /** Raw prefix of the MODE. */
-  prefix: string;
+  /** Origin of the MODE. */
+  origin: UserMask | string;
 
   /** Target of the MODE. */
   target: string;
 }
 
 export interface UserModeEvent extends Mode {
+  /** Origin of the MODE. */
+  origin: UserMask | string;
+
   /** Nick related to this mode. */
   nick: string;
 }
 
 export interface ChannelModeEvent extends Mode {
-  /** User who sent the MODE. */
-  origin: UserMask;
+  /** Origin of the MODE. */
+  origin: UserMask | string;
 
   /** Channel related to this mode. */
   channel: string;
@@ -137,6 +140,9 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
       case "MODE": {
         const { prefix, params: [target, modeLetters, ...params] } = msg;
 
+        // TODO Provide public utilities to make inference easier
+        const origin = isUserMask(prefix) ? parseUserMask(prefix) : prefix;
+
         const supportedModes = isChannel(target)
           ? supported.modes.channel
           : supported.modes.user;
@@ -145,7 +151,7 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
 
         for (const { mode, arg } of modes) {
           client.emit("mode", {
-            prefix,
+            origin,
             target,
             mode,
             ...(arg !== undefined ? { arg } : {}),
@@ -176,9 +182,10 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
       return;
     }
 
-    const { target: nick, mode, arg } = msg;
+    const { origin, target: nick, mode, arg } = msg;
 
     client.emit("mode:user", {
+      origin,
       nick,
       mode,
       ...(arg !== undefined ? { arg } : {}),
@@ -190,8 +197,7 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
       return;
     }
 
-    const { prefix, target: channel, mode, arg } = msg;
-    const origin = parseUserMask(prefix);
+    const { origin, target: channel, mode, arg } = msg;
 
     client.emit("mode:channel", {
       origin,
