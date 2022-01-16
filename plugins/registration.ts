@@ -24,16 +24,41 @@ export interface RegistrationParams {
     password?: string;
   };
   state: {
+    capabilities: string[];
     user: User;
   };
 }
+
+type AnyCapabilityCommand =
+  | "LS"
+  | "LIST"
+  | "REQ"
+  | "ACK"
+  | "NAK"
+  | "NEW"
+  | "DEL"
+  | "END";
 
 export const registrationPlugin: Plugin<
   & NickParams
   & RegisterParams
   & RegistrationParams
 > = (client, options) => {
+  const requestCapability = (
+    command: AnyCapabilityCommand,
+    ...params: string[]
+  ) => client.send("CAP", command, ...params);
+
   const register = () => {
+    const { capabilities } = client.state;
+
+    if (capabilities.length > 0) {
+      for (const capability of capabilities) {
+        requestCapability("REQ", capability);
+      }
+      requestCapability("END");
+    }
+
     if (password !== undefined) {
       client.pass(password);
     }
@@ -61,6 +86,7 @@ export const registrationPlugin: Plugin<
   };
 
   const { nick, username = nick, realname = nick, password } = options;
+  client.state.capabilities ??= []; // TODO depends of plugins loading order
   client.state.user = { nick, username, realname };
 
   client.on("connected", register);

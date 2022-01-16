@@ -1,5 +1,6 @@
 export type AnyCommand =
   | "ADMIN"
+  | "CAP"
   | "CONNECT"
   | "ERROR"
   | "INFO"

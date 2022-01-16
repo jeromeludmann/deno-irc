@@ -1,4 +1,4 @@
-import { assertEquals } from "../deps.ts";
+import { assertArrayIncludes, assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { nickPlugin } from "./nick.ts";
@@ -48,6 +48,29 @@ describe("plugins/registration", (test) => {
       "PASS pass",
       "NICK me",
       "USER user 0 * :real name",
+    ]);
+  });
+
+  test("request capabilities on connect", async () => {
+    const { client, server } = await mock(
+      plugins,
+      options,
+      { withConnection: false },
+    );
+    const { capabilities } = client.state;
+
+    capabilities.push("cap1");
+    capabilities.push("cap2");
+    capabilities.push("cap3");
+
+    await client.connect("");
+    const raw = server.receive();
+
+    assertArrayIncludes(raw, [
+      "CAP REQ cap1",
+      "CAP REQ cap2",
+      "CAP REQ cap3",
+      "CAP END",
     ]);
   });
 
