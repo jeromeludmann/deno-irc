@@ -1,6 +1,7 @@
 import { type Plugin } from "../core/client.ts";
 import { type Raw } from "../core/parsers.ts";
 import { type IsupportParams } from "./isupport.ts";
+import { type RegistrationParams } from "./registration.ts";
 
 export type Names = Record<string, string[]>;
 
@@ -22,7 +23,11 @@ export interface NamesParams {
   };
 }
 
-export const namesPlugin: Plugin<IsupportParams & NamesParams> = (client) => {
+export const namesPlugin: Plugin<
+  & RegistrationParams
+  & IsupportParams
+  & NamesParams
+> = (client) => {
   const sendNamesCommand = (channels: string[]): void => {
     if (!Array.isArray(channels)) channels = [channels];
     client.send("NAMES", channels.join(","));
@@ -78,6 +83,9 @@ export const namesPlugin: Plugin<IsupportParams & NamesParams> = (client) => {
   };
 
   const buffers: Record<string, Names> = {};
+
+  client.state.capabilities ??= []; // TODO depends of plugins loading order
+  client.state.capabilities.push("multi-prefix");
 
   client.names = sendNamesCommand;
   client.on("raw", emitNamesReplyEvent);

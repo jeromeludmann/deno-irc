@@ -43,6 +43,7 @@ describe("client", (test) => {
       user: { nick: "me", username: "user", realname: "real name" },
       supported: getDefaults(),
       nicklists: {},
+      capabilities: ["multi-prefix"],
     });
 
     // should connect to server
@@ -61,6 +62,8 @@ describe("client", (test) => {
     raw = server.receive();
 
     assertEquals(raw, [
+      "CAP REQ multi-prefix",
+      "CAP END",
       "PASS password",
       "NICK me",
       "USER user 0 * :real name",
