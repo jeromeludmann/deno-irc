@@ -19,7 +19,7 @@ export const joinOnInvitePlugin: Plugin<
   & JoinOnInviteParams
 > = (client, options) => {
   const joinChannel = (msg: InviteEvent) => {
-    if (msg.nick === client.state.nick) {
+    if (msg.nick === client.state.user.nick) {
       client.join(msg.channel);
     }
   };

@@ -75,7 +75,7 @@ export const nicklistPlugin: Plugin<
   const addNick = (msg: JoinEvent) => {
     const { origin: { nick }, channel } = msg;
 
-    if (nick === client.state.nick) {
+    if (nick === client.state.user.nick) {
       namesMap[channel] ??= {};
     }
 
@@ -130,7 +130,7 @@ export const nicklistPlugin: Plugin<
 
       let nicklist: Nicklist;
 
-      if (nick === client.state.nick) {
+      if (nick === client.state.user.nick) {
         delete namesMap[channel];
         delete client.state.nicklists[channel];
         nicklist = [];

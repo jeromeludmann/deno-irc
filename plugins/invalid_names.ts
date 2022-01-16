@@ -33,9 +33,9 @@ export const invalidNamesPlugin: Plugin<
         break;
       }
       case "ERR_INVALIDUSERNAME": {
-        client.state.username = randomize();
-        const { state: { username, realname } } = client;
-        client.user(username, realname);
+        const { user } = client.state;
+        user.username = randomize();
+        client.user(user.username, user.realname);
         break;
       }
     }

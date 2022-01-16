@@ -53,38 +53,42 @@ describe("plugins/registration", (test) => {
 
   test("initialize user state", async () => {
     const { client } = await mock(plugins, options);
+    const { user } = client.state;
 
-    const { nick, username, realname } = client.state;
-
-    assertEquals(nick, "me");
-    assertEquals(username, "user");
-    assertEquals(realname, "real name");
+    assertEquals(user, {
+      nick: "me",
+      username: "user",
+      realname: "real name",
+    });
   });
 
   test("update nick on RPL_WELCOME", async () => {
     const { client, server } = await mock(plugins, options);
+    const { user } = client.state;
 
     server.send(":serverhost 001 new_nick :Welcome to the server");
     await client.once("register");
 
-    assertEquals(client.state.nick, "new_nick");
+    assertEquals(user.nick, "new_nick");
   });
 
   test("track nick changes on NICK", async () => {
     const { client, server } = await mock(plugins, options);
+    const { user } = client.state;
 
     server.send(":me!user@host NICK new_nick");
     await client.once("nick");
 
-    assertEquals(client.state.nick, "new_nick");
+    assertEquals(user.nick, "new_nick");
   });
 
   test("not track nick changes on NICK", async () => {
     const { client, server } = await mock(plugins, options);
+    const { user } = client.state;
 
     server.send(":someone!user@host NICK new_nick");
     await client.once("nick");
 
-    assertEquals(client.state.nick, "me");
+    assertEquals(user.nick, "me");
   });
 });

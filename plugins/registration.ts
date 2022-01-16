@@ -24,9 +24,7 @@ export interface RegistrationParams {
     password?: string;
   };
   state: {
-    nick: string;
-    username: string;
-    realname: string;
+    user: User;
   };
 }
 
@@ -51,23 +49,19 @@ export const registrationPlugin: Plugin<
   };
 
   const setNickState = (msg: RegisterEvent) => {
-    client.state.nick = msg.nick;
+    client.state.user.nick = msg.nick;
   };
 
   const trackNickChange = (msg: NickEvent) => {
-    const { state } = client;
+    const { user } = client.state;
 
-    if (msg.origin.nick === state.nick) {
-      state.nick = msg.nick;
+    if (msg.origin.nick === user.nick) {
+      user.nick = msg.nick;
     }
   };
 
   const { nick, username = nick, realname = nick, password } = options;
-
-  const { state } = client;
-  state.nick = nick;
-  state.username = username;
-  state.realname = realname;
+  client.state.user = { nick, username, realname };
 
   client.on("connected", register);
   client.on("raw", resolveNotRegistered);

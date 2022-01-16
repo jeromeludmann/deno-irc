@@ -40,9 +40,7 @@ describe("client", (test) => {
 
     assertEquals(client.state, {
       remoteAddr: { hostname: "", port: 0, tls: false },
-      nick: "me",
-      username: "user",
-      realname: "real name",
+      user: { nick: "me", username: "user", realname: "real name" },
       supported: getDefaults(),
       nicklists: {},
     });
