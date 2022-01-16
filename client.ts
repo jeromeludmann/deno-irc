@@ -28,7 +28,7 @@ import * as Privmsg from "./plugins/privmsg.ts";
 import * as Quit from "./plugins/quit.ts";
 import * as Reconnect from "./plugins/reconnect.ts";
 import * as Register from "./plugins/register.ts";
-import * as RegisterOnConnect from "./plugins/register_on_connect.ts";
+import * as Registration from "./plugins/registration.ts";
 import * as ThrowOnError from "./plugins/throw_on_error.ts";
 import * as Time from "./plugins/time.ts";
 import * as Topic from "./plugins/topic.ts";
@@ -66,7 +66,7 @@ type ClientParams =
   & Quit.QuitParams
   & Reconnect.ReconnectParams
   & Register.RegisterParams
-  & RegisterOnConnect.RegisterOnConnectParams
+  & Registration.RegistrationParams
   & Time.TimeParams
   & Topic.TopicParams
   & Verbose.VerboseParams
@@ -102,7 +102,7 @@ const plugins = [
   Quit.quitPlugin,
   Reconnect.reconnectPlugin,
   Register.registerPlugin,
-  RegisterOnConnect.registerOnConnectPlugin,
+  Registration.registrationPlugin,
   ThrowOnError.throwOnErrorPlugin,
   Time.timePlugin,
   Topic.topicPlugin,

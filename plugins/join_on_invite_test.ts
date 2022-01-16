@@ -6,7 +6,7 @@ import { joinPlugin } from "./join.ts";
 import { joinOnInvitePlugin } from "./join_on_invite.ts";
 import { nickPlugin } from "./nick.ts";
 import { registerPlugin } from "./register.ts";
-import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { registrationPlugin } from "./registration.ts";
 
 describe("plugins/join_on_invite", (test) => {
   const plugins = [
@@ -14,7 +14,7 @@ describe("plugins/join_on_invite", (test) => {
     invitePlugin,
     nickPlugin,
     registerPlugin,
-    registerOnConnectPlugin,
+    registrationPlugin,
     joinOnInvitePlugin,
   ];
 

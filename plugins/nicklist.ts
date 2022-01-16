@@ -7,7 +7,8 @@ import { type ChannelModeEvent, type ModeParams } from "./mode.ts";
 import { type Names, type NamesParams, type NamesReplyEvent } from "./names.ts";
 import { type PartEvent, type PartParams } from "./part.ts";
 import { type QuitEvent, type QuitParams } from "./quit.ts";
-import { type RegisterOnConnectParams } from "./register_on_connect.ts";
+import { type RegisterParams } from "./register.ts";
+import { type RegistrationParams } from "./registration.ts";
 
 export type Nicklist = { prefix: string; nick: string }[];
 
@@ -37,7 +38,8 @@ export const nicklistPlugin: Plugin<
   & KillParams
   & QuitParams
   & ModeParams
-  & RegisterOnConnectParams
+  & RegisterParams
+  & RegistrationParams
   & NicklistParams
 > = (client) => {
   const createNicklist = (names: Names): Nicklist => {

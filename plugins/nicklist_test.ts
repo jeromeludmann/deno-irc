@@ -9,6 +9,9 @@ import { modePlugin } from "./mode.ts";
 import { namesPlugin } from "./names.ts";
 import { partPlugin } from "./part.ts";
 import { quitPlugin } from "./quit.ts";
+import { nickPlugin } from "./nick.ts";
+import { registerPlugin } from "./register.ts";
+import { registrationPlugin } from "./registration.ts";
 import { type NicklistEvent, nicklistPlugin } from "./nicklist.ts";
 
 describe("plugins/nicklist", (test) => {
@@ -21,6 +24,9 @@ describe("plugins/nicklist", (test) => {
     namesPlugin,
     partPlugin,
     quitPlugin,
+    nickPlugin,
+    registerPlugin,
+    registrationPlugin,
     nicklistPlugin,
   ];
 

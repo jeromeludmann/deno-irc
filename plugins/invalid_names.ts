@@ -2,7 +2,7 @@ import { Plugin } from "../core/client.ts";
 import { Raw } from "../core/parsers.ts";
 import { NickParams } from "./nick.ts";
 import { RegisterParams } from "./register.ts";
-import { RegisterOnConnectParams } from "./register_on_connect.ts";
+import { RegistrationParams } from "./registration.ts";
 
 export interface InvalidNamesParams {
   options: {
@@ -16,14 +16,10 @@ const DEFAULT_RESOLVE_INVALID_NAMES = false;
 export const invalidNamesPlugin: Plugin<
   & NickParams
   & RegisterParams
-  & RegisterOnConnectParams
+  & RegistrationParams
   & InvalidNamesParams
 > = (client, options) => {
-  const enabled = options.resolveInvalidNames ?? DEFAULT_RESOLVE_INVALID_NAMES;
-
-  if (!enabled) {
-    return;
-  }
+  const randomize = () => `_${Math.random().toString(36).slice(2, 9)}`;
 
   const resolveInvalidNames = (msg: Raw) => {
     switch (msg.command) {
@@ -45,9 +41,8 @@ export const invalidNamesPlugin: Plugin<
     }
   };
 
+  const enabled = options.resolveInvalidNames ?? DEFAULT_RESOLVE_INVALID_NAMES;
+  if (!enabled) return;
+
   client.on("raw", resolveInvalidNames);
 };
-
-function randomize() {
-  return `_${Math.random().toString(36).slice(2, 9)}`;
-}

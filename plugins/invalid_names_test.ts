@@ -4,14 +4,14 @@ import { mock } from "../testing/mock.ts";
 import { invalidNamesPlugin } from "./invalid_names.ts";
 import { nickPlugin } from "./nick.ts";
 import { registerPlugin } from "./register.ts";
-import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { registrationPlugin } from "./registration.ts";
 import { throwOnErrorPlugin } from "./throw_on_error.ts";
 
 describe("plugins/invalid_names", (test) => {
   const plugins = [
     nickPlugin,
     registerPlugin,
-    registerOnConnectPlugin,
+    registrationPlugin,
     throwOnErrorPlugin,
     invalidNamesPlugin,
   ];

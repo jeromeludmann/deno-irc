@@ -3,7 +3,7 @@ import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { nickPlugin } from "./nick.ts";
 import { registerPlugin } from "./register.ts";
-import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { registrationPlugin } from "./registration.ts";
 import { throwOnErrorPlugin } from "./throw_on_error.ts";
 import { verbosePlugin } from "./verbose.ts";
 
@@ -75,7 +75,7 @@ describe("plugins/verbose", (test) => {
 
   test("print state changes", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nickPlugin, registerPlugin, registerOnConnectPlugin],
+      [...plugins, nickPlugin, registerPlugin, registrationPlugin],
       { ...options, nick: "current_nick" },
     );
 
@@ -90,7 +90,7 @@ describe("plugins/verbose", (test) => {
 
   test("print nothing if disabled", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nickPlugin, registerPlugin, registerOnConnectPlugin],
+      [...plugins, nickPlugin, registerPlugin, registrationPlugin],
       { verbose: false, nick: "me" },
       { withConnection: false },
     );

@@ -3,13 +3,13 @@ import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 import { nickPlugin } from "./nick.ts";
 import { registerPlugin } from "./register.ts";
-import { registerOnConnectPlugin } from "./register_on_connect.ts";
+import { registrationPlugin } from "./registration.ts";
 
-describe("plugins/register_on_connect", (test) => {
+describe("plugins/registration", (test) => {
   const plugins = [
     nickPlugin,
     registerPlugin,
-    registerOnConnectPlugin,
+    registrationPlugin,
   ];
 
   const options = {
