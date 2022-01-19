@@ -1,27 +1,28 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
-import { NickParams } from "./nick.ts";
-import { RegisterParams } from "./register.ts";
-import { RegistrationParams } from "./registration.ts";
+import { createPlugin } from "../core/plugins.ts";
+import nick from "./nick.ts";
+import register from "./register.ts";
+import registration from "./registration.ts";
 
-export interface InvalidNamesParams {
+interface InvalidNamesFeatures {
   options: {
     /** Auto resolve invalid names (for nick and username). */
     resolveInvalidNames?: boolean;
   };
 }
 
-const DEFAULT_RESOLVE_INVALID_NAMES = false;
+const RESOLVE_INVALID_NAMES_ENABLED = false;
 
-export const invalidNamesPlugin: Plugin<
-  & NickParams
-  & RegisterParams
-  & RegistrationParams
-  & InvalidNamesParams
-> = (client, options) => {
+export default createPlugin(
+  "invalid_names",
+  [nick, register, registration],
+)<InvalidNamesFeatures>((client, options) => {
+  const enabled = options.resolveInvalidNames ?? RESOLVE_INVALID_NAMES_ENABLED;
+  if (!enabled) return;
+
   const randomize = () => `_${Math.random().toString(36).slice(2, 9)}`;
 
-  const resolveInvalidNames = (msg: Raw) => {
+  // Handles error replies related to names conflicts and resolves them.
+  client.on("raw", (msg) => {
     switch (msg.command) {
       case "ERR_NICKNAMEINUSE": {
         const [, nick] = msg.params;
@@ -39,10 +40,5 @@ export const invalidNamesPlugin: Plugin<
         break;
       }
     }
-  };
-
-  const enabled = options.resolveInvalidNames ?? DEFAULT_RESOLVE_INVALID_NAMES;
-  if (!enabled) return;
-
-  client.on("raw", resolveInvalidNames);
-};
+  });
+});

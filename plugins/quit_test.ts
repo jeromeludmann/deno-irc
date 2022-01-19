@@ -1,18 +1,10 @@
-import { assertEquals } from "../deps.ts";
+import { assertArrayIncludes, assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { quitPlugin } from "./quit.ts";
-import { throwOnErrorPlugin } from "./throw_on_error.ts";
 
 describe("plugins/quit", (test) => {
-  const plugins = [quitPlugin, throwOnErrorPlugin];
-
   test("send QUIT", async () => {
-    const { client, server } = await mock(
-      plugins,
-      {},
-      { withConnection: false },
-    );
+    const { client, server } = await mock({}, { withConnection: false });
 
     const raw = [];
     const connections = [];
@@ -35,7 +27,7 @@ describe("plugins/quit", (test) => {
     );
     connections.push(client.conn);
 
-    assertEquals(raw, [
+    assertArrayIncludes(raw, [
       "QUIT",
       "QUIT Goodbye!",
     ]);
@@ -46,7 +38,7 @@ describe("plugins/quit", (test) => {
   });
 
   test("emit 'quit' on QUIT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const messages = [];
 
     server.send(":someone!user@host QUIT");
@@ -57,12 +49,12 @@ describe("plugins/quit", (test) => {
 
     assertEquals(messages, [
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        comment: undefined,
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { comment: undefined },
       },
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        comment: "Goodbye!",
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { comment: "Goodbye!" },
       },
     ]);
   });

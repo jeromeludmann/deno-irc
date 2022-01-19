@@ -1,37 +1,17 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { isupportPlugin } from "./isupport.ts";
-import { joinPlugin } from "./join.ts";
-import { kickPlugin } from "./kick.ts";
-import { killPlugin } from "./kill.ts";
-import { modePlugin } from "./mode.ts";
-import { namesPlugin } from "./names.ts";
-import { partPlugin } from "./part.ts";
-import { quitPlugin } from "./quit.ts";
-import { nickPlugin } from "./nick.ts";
-import { registerPlugin } from "./register.ts";
-import { registrationPlugin } from "./registration.ts";
-import { type NicklistEvent, nicklistPlugin } from "./nicklist.ts";
+import { type NicklistEvent } from "./nicklist.ts";
 
 describe("plugins/nicklist", (test) => {
-  const plugins = [
-    isupportPlugin,
-    joinPlugin,
-    kickPlugin,
-    killPlugin,
-    modePlugin,
-    namesPlugin,
-    partPlugin,
-    quitPlugin,
-    nickPlugin,
-    registerPlugin,
-    registrationPlugin,
-    nicklistPlugin,
-  ];
+  test("initialize nicklists state", async () => {
+    const { client } = await mock();
 
-  test("update nicklist state on RPL_ENDOFNAMES", async () => {
-    const { client, server } = await mock(plugins, { nick: "me" });
+    assertEquals(client.state.nicklists, {});
+  });
+
+  test("update nicklists state on RPL_ENDOFNAMES", async () => {
+    const { client, server } = await mock();
 
     server.send([
       ":serverhost 353 me @ #channel1 :nick1 +nick2 %+nick3",
@@ -64,106 +44,226 @@ describe("plugins/nicklist", (test) => {
     });
   });
 
-  test("emit 'nicklist' on various messages", async () => {
-    const { client, server } = await mock(plugins, { nick: "me" });
+  test("emit 'nicklist' on RPL_NAMREPLY + RPL_ENDOFNAMES", async () => {
+    const { client, server } = await mock();
 
     server.send([
       ":serverhost 353 me = #channel :@%+nick1 +nick2 nick3",
       ":serverhost 366 me #channel :End of /NAMES list",
     ]);
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "+", nick: "nick2" },
-        { prefix: "", nick: "nick3" },
-      ],
+    const msg = await client.once("nicklist");
+
+    assertEquals(msg, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick2" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
     });
+  });
+
+  test("emit 'nicklist' on JOIN", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 353 me = #channel :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
 
     server.send(":nick4!user@host JOIN #channel");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "+", nick: "nick2" },
-        { prefix: "", nick: "nick3" },
-        { prefix: "", nick: "nick4" },
-      ],
-    });
+    const msg = await client.once("nicklist");
 
+    assertEquals(msg, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick2" },
+          { prefix: "", nick: "nick3" },
+          { prefix: "", nick: "nick4" },
+        ],
+      },
+    });
+  });
+
+  test("emit 'nicklist' on MODE", async () => {
+    const { client, server } = await mock();
     const messages: NicklistEvent[] = [];
+
+    server.send([
+      ":serverhost 353 me = #channel :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
     client.on("nicklist", (msg) => messages.push(msg));
+
     server.send(":nick1!user@host MODE #channel +ov nick2 nick3");
     await client.once("nicklist");
-    assertEquals(messages, [{
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "@", nick: "nick2" },
-        { prefix: "", nick: "nick3" },
-        { prefix: "", nick: "nick4" },
-      ],
-    }, {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "@", nick: "nick2" },
-        { prefix: "+", nick: "nick3" },
-        { prefix: "", nick: "nick4" },
-      ],
-    }]);
-
-    server.send(":nick1!user@host KICK #channel nick3");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "@", nick: "nick2" },
-        { prefix: "", nick: "nick4" },
-      ],
-    });
 
     server.send(":nick1!user@host MODE #channel +h nick2");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "@", nick: "nick2" },
-        { prefix: "", nick: "nick4" },
-      ],
-    });
+    await client.once("nicklist");
 
     server.send(":nick1!user@host MODE #channel -o nick2");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "%", nick: "nick2" },
-        { prefix: "", nick: "nick4" },
-      ],
+    await client.once("nicklist");
+
+    assertEquals(messages, [{
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "@", nick: "nick2" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "@", nick: "nick2" },
+          { prefix: "+", nick: "nick3" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "@", nick: "nick2" },
+          { prefix: "+", nick: "nick3" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "%", nick: "nick2" },
+          { prefix: "+", nick: "nick3" },
+        ],
+      },
+    }]);
+  });
+
+  test("emit 'nicklist' on KICK", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 353 me = #channel :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    server.send(":nick1!user@host KICK #channel nick3");
+    const msg = await client.once("nicklist");
+
+    assertEquals(msg, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick2" },
+        ],
+      },
     });
+  });
+
+  test("emit 'nicklist' on PART", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 353 me = #channel :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
 
     server.send(":nick2!user@host PART #channel");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-        { prefix: "", nick: "nick4" },
-      ],
-    });
+    const msg = await client.once("nicklist");
 
-    server.send(":nick4!user@host QUIT");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [
-        { prefix: "@", nick: "nick1" },
-      ],
+    assertEquals(msg, {
+      params: {
+        channel: "#channel",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
     });
+  });
+
+  test("emit 'nicklist' on QUIT", async () => {
+    const { client, server } = await mock();
+    const messages: NicklistEvent[] = [];
+
+    server.send([
+      ":serverhost 353 me = #channel1 :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel1 :End of /NAMES list",
+      ":serverhost 353 me = #channel2 :%nick1 nick2 +nick3",
+      ":serverhost 366 me #channel2 :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    client.on("nicklist", (msg) => messages.push(msg));
+
+    server.send(":nick3!user@host QUIT");
+    await client.once("nicklist");
+
+    assertEquals(messages, [{
+      params: {
+        channel: "#channel1",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick2" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel2",
+        nicklist: [
+          { prefix: "%", nick: "nick1" },
+          { prefix: "", nick: "nick2" },
+        ],
+      },
+    }]);
+  });
+
+  test("emit 'nicklist' on KILL", async () => {
+    const { client, server } = await mock();
+    const messages: NicklistEvent[] = [];
+
+    server.send([
+      ":serverhost 353 me = #channel1 :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel1 :End of /NAMES list",
+      ":serverhost 353 me = #channel2 :+nick1 nick2",
+      ":serverhost 366 me #channel2 :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    client.on("nicklist", (msg) => messages.push(msg));
 
     server.send(":oper!user@host KILL nick1 Boom!");
-    assertEquals(await client.once("nicklist"), {
-      channel: "#channel",
-      nicklist: [],
-    });
+    await client.once("nicklist");
+
+    assertEquals(messages, [{
+      params: {
+        channel: "#channel1",
+        nicklist: [
+          { prefix: "+", nick: "nick2" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel2",
+        nicklist: [
+          { prefix: "", nick: "nick2" },
+        ],
+      },
+    }]);
   });
 });

@@ -1,27 +1,22 @@
-import { Plugin } from "../core/client.ts";
-import { UserMask } from "../core/parsers.ts";
-import { createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import ctcp, { createCtcp } from "./ctcp.ts";
 
-export interface CtcpVersionEvent {
-  /** User who sent the CTCP VERSION query. */
-  origin: UserMask;
-
-  /** Target who received the CTCP VERSION query. */
+export interface CtcpVersionEventParams {
+  /** Target of the CTCP VERSION query. */
   target: string;
 }
 
-export interface CtcpVersionReplyEvent {
-  /** User who sent the CTCP VERSION reply. */
-  origin: UserMask;
+export type CtcpVersionEvent = Message<CtcpVersionEventParams>;
 
-  /** Target who received the CTCP VERSION reply. */
-  target: string;
-
+export interface CtcpVersionReplyEventParams {
   /** Client version of the user. */
   version: string;
 }
 
-export interface VersionParams {
+export type CtcpVersionReplyEvent = Message<CtcpVersionReplyEventParams>;
+
+interface VersionFeatures {
   options: {
     ctcpReplies?: {
       /**
@@ -44,13 +39,14 @@ export interface VersionParams {
 
 const DEFAULT_VERSION = "deno-irc";
 
-export const versionPlugin: Plugin<
-  & CtcpParams
-  & VersionParams
-> = (client, options) => {
+export default createPlugin(
+  "version",
+  [ctcp],
+)<VersionFeatures>((client, options) => {
   const version = options.ctcpReplies?.version ?? DEFAULT_VERSION;
 
-  const sendVersion = (target?: string) => {
+  // Sends VERSION command.
+  client.version = (target) => {
     if (target === undefined) {
       client.send("VERSION");
     } else {
@@ -58,36 +54,30 @@ export const versionPlugin: Plugin<
     }
   };
 
-  const emitCtcpVersion = (msg: CtcpEvent) => {
-    if (msg.command !== "VERSION") {
-      return;
+  // Emits 'ctcp_version' event.
+  client.on("ctcp", (msg) => {
+    if (msg.command === "VERSION") {
+      const { source, params: { type, target, param: version } } = msg;
+      switch (type) {
+        case "query":
+          client.emit("ctcp_version", { source, params: { target } });
+          break;
+        case "reply":
+          if (version !== undefined) {
+            client.emit("ctcp_version_reply", { source, params: { version } });
+          }
+          break;
+      }
     }
+  });
 
-    const { origin, target, param: version } = msg;
-
-    switch (msg.type) {
-      case "query":
-        client.emit("ctcp_version", { origin, target });
-        break;
-
-      case "reply":
-        if (version === undefined) break;
-        client.emit("ctcp_version_reply", { origin, target, version });
-        break;
+  // Replies to CTCP VERSION.
+  if (version === false) return;
+  client.on("ctcp_version", (msg) => {
+    const { source } = msg;
+    if (source) {
+      const ctcp = createCtcp("VERSION", version);
+      client.send("NOTICE", source.name, ctcp);
     }
-  };
-
-  client.version = sendVersion;
-  client.on("ctcp", emitCtcpVersion);
-
-  if (version === false) {
-    return;
-  }
-
-  const replyToCtcpVersion = (msg: CtcpVersionEvent) => {
-    const ctcp = createCtcp("VERSION", version);
-    client.send("NOTICE", msg.origin.nick, ctcp);
-  };
-
-  client.on("ctcp_version", replyToCtcpVersion);
-};
+  });
+});

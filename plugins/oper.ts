@@ -1,16 +1,15 @@
-import { Plugin } from "../core/client.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface OperParams {
+interface OperFeatures {
   commands: {
     /** Sets the client as operator with a `user` and a `password`.  */
     oper(user: string, password: string): void;
   };
 }
 
-export const operPlugin: Plugin<OperParams> = (client) => {
-  const sendOper = (...params: string[]) => {
-    client.send("OPER", ...params);
+export default createPlugin("oper")<OperFeatures>((client) => {
+  // Sends OPER command.
+  client.oper = (user, pass) => {
+    client.send("OPER", user, pass);
   };
-
-  client.oper = sendOper;
-};
+});

@@ -1,13 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { motdPlugin } from "./motd.ts";
 
 describe("plugins/motd", (test) => {
-  const plugins = [motdPlugin];
-
   test("send MOTD", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.motd();
     const raw = server.receive();
@@ -16,7 +13,7 @@ describe("plugins/motd", (test) => {
   });
 
   test("emit 'motd' on RPL_ENDOFMOTD", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     const receiveMotd = () =>
       server.send([
@@ -33,21 +30,25 @@ describe("plugins/motd", (test) => {
     const msg = await client.once("motd");
 
     assertEquals(msg, {
-      motd: [
-        "- Welcome to the",
-        "- fake server!",
-      ],
+      source: { name: "serverhost" },
+      params: {
+        motd: [
+          "- Welcome to the",
+          "- fake server!",
+        ],
+      },
     });
   });
 
   test("emit 'motd' on ERR_NOMOTD", async () => {
-    const { client, server } = await mock([motdPlugin], {});
+    const { client, server } = await mock();
 
     server.send(":serverhost 422 nick :MOTD File is missing");
     const msg = await client.once("motd");
 
     assertEquals(msg, {
-      motd: undefined,
+      source: { name: "serverhost" },
+      params: { motd: undefined },
     });
   });
 });

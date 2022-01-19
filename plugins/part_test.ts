@@ -1,13 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { partPlugin } from "./part.ts";
 
 describe("plugins/part", (test) => {
-  const plugins = [partPlugin];
-
   test("send PART", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.part("#channel");
     client.part("#channel", "Goodbye!");
@@ -20,7 +17,7 @@ describe("plugins/part", (test) => {
   });
 
   test("emit 'part' on PART", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const messages = [];
 
     server.send(":someone!user@host PART #channel");
@@ -31,14 +28,12 @@ describe("plugins/part", (test) => {
 
     assertEquals(messages, [
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        channel: "#channel",
-        comment: undefined,
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { channel: "#channel", comment: undefined },
       },
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        channel: "#channel",
-        comment: "Goodbye!",
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { channel: "#channel", comment: "Goodbye!" },
       },
     ]);
   });

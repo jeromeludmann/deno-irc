@@ -1,15 +1,14 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface QuitEvent {
-  /** User who sent the QUIT. */
-  origin: UserMask;
-
+export interface QuitEventParams {
   /** Optional comment of the QUIT. */
   comment?: string;
 }
 
-export interface QuitParams {
+export type QuitEvent = Message<QuitEventParams>;
+
+interface QuitFeatures {
   commands: {
     /** Leaves the server with an optional `comment`.
      *
@@ -21,23 +20,18 @@ export interface QuitParams {
   };
 }
 
-export const quitPlugin: Plugin<QuitParams> = (client) => {
-  const sendQuit = async (...params: string[]) => {
+export default createPlugin("quit")<QuitFeatures>((client) => {
+  // Sends QUIT command.
+  client.quit = async (...params: string[]) => {
     await client.send("QUIT", ...params);
     client.disconnect();
   };
 
-  const emitQuit = (msg: Raw) => {
-    if (msg.command !== "QUIT") {
-      return;
+  // Emits 'quit' event.
+  client.on("raw", (msg) => {
+    if (msg.command == "QUIT") {
+      const { source, params: [comment] } = msg;
+      client.emit("quit", { source, params: { comment } });
     }
-
-    const { prefix, params: [comment] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("quit", { origin, comment });
-  };
-
-  client.quit = sendQuit;
-  client.on("raw", emitQuit);
-};
+  });
+});

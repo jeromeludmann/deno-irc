@@ -1,12 +1,14 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface MotdEvent {
+export interface MotdEventParams {
   /** Message of the day (MOTD). */
   motd?: string[];
 }
 
-export interface MotdParams {
+export type MotdEvent = Message<MotdEventParams>;
+
+interface MotdFeatures {
   commands: {
     /** Gets the message of the day (MOTD) of the server. */
     motd(): void;
@@ -16,14 +18,16 @@ export interface MotdParams {
   };
 }
 
-export const motdPlugin: Plugin<MotdParams> = (client) => {
+export default createPlugin("motd")<MotdFeatures>((client) => {
   const motd: string[] = [];
 
-  const sendMotd = (...params: string[]) => {
-    client.send("MOTD", ...params);
+  // Sends MOTD command.
+  client.motd = () => {
+    client.send("MOTD");
   };
 
-  const emitMotd = (msg: Raw) => {
+  // Emits 'motd' event once MOTD is fully received.
+  client.on("raw", (msg) => {
     switch (msg.command) {
       case "RPL_MOTDSTART": {
         motd.length = 0;
@@ -35,17 +39,16 @@ export const motdPlugin: Plugin<MotdParams> = (client) => {
         break;
       }
       case "RPL_ENDOFMOTD": {
-        client.emit("motd", { motd });
+        const { source } = msg;
+        client.emit("motd", { source, params: { motd } });
         break;
       }
       case "ERR_NOMOTD": {
+        const { source } = msg;
         const motd = undefined;
-        client.emit("motd", { motd });
+        client.emit("motd", { source, params: { motd } });
         break;
       }
     }
-  };
-
-  client.motd = sendMotd;
-  client.on("raw", emitMotd);
-};
+  });
+});

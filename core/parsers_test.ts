@@ -1,6 +1,6 @@
-import { assertEquals, assertThrows } from "../deps.ts";
+import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
-import { Parser, parseUserMask } from "./parsers.ts";
+import { Parser } from "./parsers.ts";
 
 describe("core/parsers", (test) => {
   test("parse chunks of raw messages", () => {
@@ -16,7 +16,7 @@ describe("core/parsers", (test) => {
     ));
     assertEquals(raw2, [
       {
-        prefix: "serverhost",
+        source: { name: "serverhost" },
         command: "NOTICE",
         params: ["Auth", "*** Looking up your hostname..."],
       },
@@ -27,12 +27,12 @@ describe("core/parsers", (test) => {
     ));
     assertEquals(raw3, [
       {
-        prefix: "serverhost",
+        source: { name: "serverhost" },
         command: "RPL_WELCOME",
         params: ["nick", "Welcome to the server"],
       },
       {
-        prefix: "nick!user@host",
+        source: { name: "nick", mask: { user: "user", host: "host" } },
         command: "JOIN",
         params: ["#channel"],
       },
@@ -43,32 +43,14 @@ describe("core/parsers", (test) => {
     ));
     assertEquals(raw4, [
       {
-        prefix: "",
         command: "PING",
         params: ["serverhost"],
       },
       {
-        prefix: "nick!user@host",
+        source: { name: "nick", mask: { user: "user", host: "host" } },
         command: "PRIVMSG",
         params: ["#channel", ":!@ ;"],
       },
     ]);
-  });
-
-  test("parse user mask", () => {
-    assertEquals(
-      parseUserMask("nick!user@host"),
-      {
-        nick: "nick",
-        username: "user",
-        userhost: "host",
-      },
-    );
-
-    assertThrows(
-      () => parseUserMask("serverhost"),
-      Error,
-      "Not a user mask: serverhost",
-    );
   });
 });

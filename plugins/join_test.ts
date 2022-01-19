@@ -1,13 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { joinPlugin } from "./join.ts";
 
 describe("plugins/join", (test) => {
-  const plugins = [joinPlugin];
-
   test("send JOIN", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.join("#channel");
     client.join(["#channel", "key"]);
@@ -30,14 +27,14 @@ describe("plugins/join", (test) => {
   });
 
   test("emit 'join' on JOIN", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     server.send(":someone!user@host JOIN #channel");
     const msg = await client.once("join");
 
     assertEquals(msg, {
-      origin: { nick: "someone", username: "user", userhost: "host" },
-      channel: "#channel",
+      source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { channel: "#channel" },
     });
   });
 });

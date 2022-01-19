@@ -2,10 +2,10 @@ import { MockClient, MockCoreClient } from "./client.ts";
 import { MockConn } from "./conn.ts";
 
 export class MockServer {
-  private client;
+  private client: { conn: MockConn | null };
 
-  constructor(client: MockCoreClient | MockClient) {
-    this.client = client as unknown as { conn: MockConn | null };
+  constructor(client: MockClient | MockCoreClient) {
+    this.client = client;
   }
 
   private get conn(): MockConn {

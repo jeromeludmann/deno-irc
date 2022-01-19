@@ -1,16 +1,15 @@
-import { Plugin } from "../core/client.ts";
-import { Raw, UserMask } from "../core/parsers.ts";
-import { createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import ctcp, { createCtcp } from "./ctcp.ts";
 
-export interface PingEvent {
+export interface PingEventParams {
   /** Keys of the PING. */
   keys: string[];
 }
 
-export interface PongEvent {
-  /** Server that sent the PONG. */
-  origin: string;
+export type PingEvent = Message<PingEventParams>;
 
+export interface PongEventParams {
   /** Daemon of the PONG. */
   daemon: string;
 
@@ -18,18 +17,28 @@ export interface PongEvent {
   key: string;
 }
 
-export interface CtcpPingEvent {
-  /** User who sent the CTCP PING (query or reply). */
-  origin: UserMask;
+export type PongEvent = Message<PongEventParams>;
 
-  /** Target who received the CTCP PING (query or reply). */
+export interface CtcpPingEventParams {
+  /** Target of the CTCP PING query.
+   *
+   * Can be either a channel or a nick. */
   target: string;
 
-  /** Key of the CTCP PING (query or reply). */
+  /** Key of the CTCP PING query. */
   key: string;
 }
 
-export interface PingParams {
+export type CtcpPingEvent = Message<CtcpPingEventParams>;
+
+export interface CtcpPingReplyEventParams {
+  /** Key of the CTCP PING reply. */
+  key: string;
+}
+
+export type CtcpPingReplyEvent = Message<CtcpPingReplyEventParams>;
+
+interface PingFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP PING. */
@@ -44,19 +53,17 @@ export interface PingParams {
     "ping": PingEvent;
     "pong": PongEvent;
     "ctcp_ping": CtcpPingEvent;
-    "ctcp_ping_reply": CtcpPingEvent;
+    "ctcp_ping_reply": CtcpPingReplyEvent;
   };
 }
 
-const DEFAULT_CTCP_PING_REPLY = true;
+const CTCP_REPLY_ENABLED = true;
 
-export const pingPlugin: Plugin<CtcpParams & PingParams> = (
-  client,
-  options,
-) => {
-  const ctcpReplyEnabled = options.ctcpReplies?.ping ?? DEFAULT_CTCP_PING_REPLY;
+export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
+  const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
 
-  const sendPing = (target?: string) => {
+  // Sends PING command.
+  client.ping = (target) => {
     const key = Date.now().toString();
 
     if (target === undefined) {
@@ -66,58 +73,53 @@ export const pingPlugin: Plugin<CtcpParams & PingParams> = (
     }
   };
 
-  const emitPing = (msg: Raw) => {
+  // Emits 'ping' and 'pong' events.
+  client.on("raw", (msg) => {
     switch (msg.command) {
       case "PING": {
-        const { params: keys } = msg;
-        client.emit("ping", { keys });
+        const { source, params: keys } = msg;
+        client.emit("ping", { source, params: { keys } });
         break;
       }
       case "PONG": {
-        const { prefix: origin, params: [daemon, key] } = msg;
-        client.emit("pong", { origin, daemon, key });
+        const { source, params: [daemon, key] } = msg;
+        client.emit("pong", { source, params: { daemon, key } });
         break;
       }
     }
-  };
+  });
 
-  const emitCtcpPing = (msg: CtcpEvent) => {
+  // Emits 'ctcp_ping' event.
+  client.on("ctcp", (msg) => {
     if (
-      msg.command !== "PING" ||
-      msg.param === undefined
+      msg.command === "PING" &&
+      msg.params.param !== undefined
     ) {
-      return;
+      const { source, params: { type, target, param: key } } = msg;
+
+      switch (type) {
+        case "query":
+          client.emit("ctcp_ping", { source, params: { target, key } });
+          break;
+        case "reply":
+          client.emit("ctcp_ping_reply", { source, params: { key } });
+          break;
+      }
     }
+  });
 
-    const { origin, target, param: key } = msg;
+  // Replies to PING.
+  client.on("ping", (msg) => {
+    client.send("PONG", ...msg.params.keys);
+  });
 
-    switch (msg.type) {
-      case "query":
-        client.emit("ctcp_ping", { origin, target, key });
-        break;
-
-      case "reply":
-        client.emit("ctcp_ping_reply", { origin, target, key });
-        break;
+  // Replies to CTCP PING.
+  if (!ctcpReplyEnabled) return;
+  client.on("ctcp_ping", (msg) => {
+    const { source, params: { key } } = msg;
+    if (source) {
+      const ctcp = createCtcp("PING", key);
+      client.send("NOTICE", source.name, ctcp);
     }
-  };
-
-  const replyToPing = (msg: PingEvent) => {
-    client.send("PONG", ...msg.keys);
-  };
-
-  const replyToCtcpPing = (msg: CtcpPingEvent) => {
-    const { origin: { nick }, key } = msg;
-    const ctcp = createCtcp("PING", key);
-    client.send("NOTICE", nick, ctcp);
-  };
-
-  client.ping = sendPing;
-  client.on("raw", emitPing);
-  client.on("ctcp", emitCtcpPing);
-  client.on("ping", replyToPing);
-
-  if (ctcpReplyEnabled) {
-    client.on("ctcp_ping", replyToCtcpPing);
-  }
-};
+  });
+});

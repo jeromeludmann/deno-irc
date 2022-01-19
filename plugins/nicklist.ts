@@ -1,18 +1,19 @@
-import { type Plugin } from "../core/client.ts";
-import { type IsupportParams } from "./isupport.ts";
-import { type JoinEvent, type JoinParams } from "./join.ts";
-import { type KickEvent, type KickParams } from "./kick.ts";
-import { type KillEvent, type KillParams } from "./kill.ts";
-import { type ChannelModeEvent, type ModeParams } from "./mode.ts";
-import { type Names, type NamesParams, type NamesReplyEvent } from "./names.ts";
-import { type PartEvent, type PartParams } from "./part.ts";
-import { type QuitEvent, type QuitParams } from "./quit.ts";
-import { type RegisterParams } from "./register.ts";
-import { type RegistrationParams } from "./registration.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import { isChannel } from "../core/strings.ts";
+import isupport from "./isupport.ts";
+import names, { type Names } from "./names.ts";
+import join from "./join.ts";
+import mode from "./mode.ts";
+import kick, { type KickEvent } from "./kick.ts";
+import kill, { type KillEvent } from "./kill.ts";
+import part, { type PartEvent } from "./part.ts";
+import quit, { type QuitEvent } from "./quit.ts";
+import registration from "./registration.ts";
 
 export type Nicklist = { prefix: string; nick: string }[];
 
-export interface NicklistEvent {
+export interface NicklistEventParams {
   /** Name of the channel. */
   channel: string;
 
@@ -20,7 +21,9 @@ export interface NicklistEvent {
   nicklist: Nicklist;
 }
 
-export interface NicklistParams {
+export type NicklistEvent = Message<NicklistEventParams>;
+
+interface NicklistFeatures {
   events: {
     "nicklist": NicklistEvent;
   };
@@ -29,19 +32,13 @@ export interface NicklistParams {
   };
 }
 
-export const nicklistPlugin: Plugin<
-  & IsupportParams
-  & NamesParams
-  & JoinParams
-  & PartParams
-  & KickParams
-  & KillParams
-  & QuitParams
-  & ModeParams
-  & RegisterParams
-  & RegistrationParams
-  & NicklistParams
-> = (client) => {
+export default createPlugin(
+  "nicklist",
+  [isupport, join, kick, kill, mode, names, part, quit, registration],
+)<NicklistFeatures>((client) => {
+  const namesMap: Record<string, Names> = {};
+  client.state.nicklists = {};
+
   const createNicklist = (names: Names): Nicklist => {
     const { supported } = client.state;
     const nicks: Record<string, string[]> = {};
@@ -72,36 +69,42 @@ export const nicklistPlugin: Plugin<
     return groups.flat();
   };
 
-  const addNick = (msg: JoinEvent) => {
-    const { origin: { nick }, channel } = msg;
-
-    if (nick === client.state.user.nick) {
-      namesMap[channel] ??= {};
-    }
-
-    namesMap[channel][nick] = [];
-
-    const nicklist = createNicklist(namesMap[channel]);
-
-    client.state.nicklists[channel] = nicklist;
-    client.emit("nicklist", { channel, nicklist });
-  };
-
-  const setNicks = (msg: NamesReplyEvent) => {
-    const { channel, names } = msg;
+  // Initializes nicklist.
+  client.on("names_reply", (msg) => {
+    const { params: { channel, names } } = msg;
 
     namesMap[channel] = names;
 
     const nicklist = createNicklist(namesMap[channel]);
 
     client.state.nicklists[channel] = nicklist;
-    client.emit("nicklist", { channel, nicklist });
-  };
+    client.emit("nicklist", { params: { channel, nicklist } });
+  });
 
-  const updatePrefix = (msg: ChannelModeEvent) => {
-    const { channel, mode, arg } = msg;
+  // Adds nick to nicklist.
+  client.on("join", (msg) => {
+    const { source, params: { channel } } = msg;
 
-    if (arg === undefined || mode.length !== 2) {
+    if (!source) return;
+
+    namesMap[channel] ??= {};
+    namesMap[channel][source.name] = [];
+
+    const nicklist = createNicklist(namesMap[channel]);
+
+    client.state.nicklists[channel] = nicklist;
+    client.emit("nicklist", { params: { channel, nicklist } });
+  });
+
+  // Updates nick prefixes.
+  client.on("mode:channel", (msg) => {
+    const { params: { target: channel, mode, arg } } = msg;
+
+    if (
+      arg === undefined ||
+      mode.length !== 2 ||
+      !isChannel(channel)
+    ) {
       return;
     }
 
@@ -111,14 +114,18 @@ export const nicklistPlugin: Plugin<
     }
 
     const index = client.state.supported.prefixes[prefix].priority;
+
+    namesMap[channel] ??= {};
+    namesMap[channel][arg] ??= [];
     namesMap[channel][arg][index] = mode.charAt(0) === "+" ? prefix : "";
 
     const nicklist = createNicklist(namesMap[channel]);
 
     client.state.nicklists[channel] = nicklist;
-    client.emit("nicklist", { channel, nicklist });
-  };
+    client.emit("nicklist", { params: { channel, nicklist } });
+  });
 
+  // Removes nick from nicklist.
   const removeNick = (msg: PartEvent | QuitEvent | KickEvent | KillEvent) => {
     const remove = (nick: string, channel?: string) => {
       if (channel === undefined) {
@@ -135,28 +142,27 @@ export const nicklistPlugin: Plugin<
         delete client.state.nicklists[channel];
         nicklist = [];
       } else {
-        delete namesMap[channel][nick];
+        if (channel in namesMap) {
+          delete namesMap[channel][nick];
+        }
         nicklist = createNicklist(namesMap[channel]);
         client.state.nicklists[channel] = nicklist;
       }
 
-      client.emit("nicklist", { channel, nicklist });
+      client.emit("nicklist", { params: { channel, nicklist } });
     };
 
-    const nick = "nick" in msg ? msg.nick : msg.origin.nick;
-    const channel = "channel" in msg ? msg.channel : undefined;
+    const { source, params } = msg;
 
-    remove(nick, channel);
+    const nick = "nick" in params ? params.nick : source?.name;
+    const channel = "channel" in params ? params.channel : undefined;
+
+    if (nick !== undefined) {
+      remove(nick, channel);
+    }
   };
-
-  const namesMap: Record<string, Names> = {};
-  client.state.nicklists = {};
-
-  client.on("join", addNick);
-  client.on("names_reply", setNicks);
-  client.on("mode:channel", updatePrefix);
   client.on("part", removeNick);
   client.on("kick", removeNick);
   client.on("quit", removeNick);
   client.on("kill", removeNick);
-};
+});

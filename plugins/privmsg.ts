@@ -1,93 +1,57 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
-import { isChannel, isNick } from "../core/strings.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import { isChannel } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
 
-export interface PrivmsgEvent {
-  /** User who sent the PRIVMSG. */
-  origin: UserMask;
-
-  /** Target who received the PRIVMSG. */
+export interface PrivmsgEventParams {
+  /** Target of the PRIVMSG.
+   *
+   * Can be either a channel or a nick. */
   target: string;
 
   /** Text of the PRIVMSG. */
   text: string;
 }
 
-export interface ChannelPrivmsgEvent {
-  /** User who sent the PRIVMSG. */
-  origin: UserMask;
+export type PrivmsgEvent = Message<PrivmsgEventParams>;
 
-  /** Channel where the PRIVMSG is sent. */
-  channel: string;
-
-  /** Text of the PRIVMSG. */
-  text: string;
-}
-
-export interface PrivatePrivmsgEvent {
-  /** User who sent the PRIVMSG. */
-  origin: UserMask;
-
-  /** Text of the PRIVMSG. */
-  text: string;
-}
-
-export interface PrivmsgParams {
+interface PrivmsgFeatures {
   commands: {
     /** Sends a message `text` to a `target`. */
     privmsg(target: string, text: string): void;
 
     /** Sends a message `text` to a `target`. */
-    msg: PrivmsgParams["commands"]["privmsg"];
+    msg: PrivmsgFeatures["commands"]["privmsg"];
   };
   events: {
     "privmsg": PrivmsgEvent;
-    "privmsg:channel": ChannelPrivmsgEvent;
-    "privmsg:private": PrivatePrivmsgEvent;
+    "privmsg:channel": PrivmsgEvent;
+    "privmsg:private": PrivmsgEvent;
   };
 }
 
-export const privmsgPlugin: Plugin<PrivmsgParams> = (client) => {
-  const sendPrivmsg = (...params: string[]) => {
-    client.send("PRIVMSG", ...params);
+export default createPlugin("privmsg")<PrivmsgFeatures>((client) => {
+  // Sends PRIVMSG command.
+  client.privmsg = client.msg = (target, text) => {
+    client.send("PRIVMSG", target, text);
   };
 
-  const emitPrivmsg = (msg: Raw) => {
+  // Emits 'privmsg' event.
+  client.on("raw", (msg) => {
     if (
-      msg.command !== "PRIVMSG" ||
-      isCtcp(msg)
+      msg.command === "PRIVMSG" &&
+      !isCtcp(msg)
     ) {
-      return;
+      const { source, params: [target, text] } = msg;
+      const payload: PrivmsgEvent = { source, params: { target, text } };
+
+      client.emit("privmsg", payload);
+
+      const event = `privmsg:${
+        isChannel(target) ? "channel" : "private"
+      }` as const;
+
+      client.emit(event, payload);
     }
-
-    const { prefix, params: [target, text] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("privmsg", { origin, target, text });
-  };
-
-  const emitChannelPrivmsg = (msg: PrivmsgEvent) => {
-    if (!isChannel(msg.target)) {
-      return;
-    }
-
-    const { origin, target: channel, text } = msg;
-    client.emit("privmsg:channel", { origin, channel, text });
-  };
-
-  const emitPrivatePrivmsg = (msg: PrivmsgEvent) => {
-    if (!isNick(msg.target)) {
-      return;
-    }
-
-    const { origin, text } = msg;
-    client.emit("privmsg:private", { origin, text });
-  };
-
-  client.privmsg = sendPrivmsg;
-  client.msg = sendPrivmsg;
-  client.on("raw", emitPrivmsg);
-  client.on("privmsg", emitChannelPrivmsg);
-  client.on("privmsg", emitPrivatePrivmsg);
-};
+  });
+});

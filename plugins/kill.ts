@@ -1,10 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface KillEvent {
-  /** User who sent the KILL. */
-  origin: UserMask;
-
+export interface KillEventParams {
   /** Nick who is killed. */
   nick: string;
 
@@ -12,7 +9,9 @@ export interface KillEvent {
   comment: string;
 }
 
-export interface KillParams {
+export type KillEvent = Message<KillEventParams>;
+
+interface KillFeatures {
   commands: {
     /** Kills a `nick` from the server with a `comment`. */
     kill(nick: string, comment: string): void;
@@ -22,22 +21,17 @@ export interface KillParams {
   };
 }
 
-export const killPlugin: Plugin<KillParams> = (client) => {
-  const sendKill = (...params: string[]) => {
-    client.send("KILL", ...params);
+export default createPlugin("kill")<KillFeatures>((client) => {
+  // Sends KILL command.
+  client.kill = (nick, comment) => {
+    client.send("KILL", nick, comment);
   };
 
-  const emitKill = (msg: Raw) => {
-    if (msg.command !== "KILL") {
-      return;
+  // Emits 'kill' event.
+  client.on("raw", (msg) => {
+    if (msg.command === "KILL") {
+      const { source, params: [nick, comment] } = msg;
+      client.emit("kill", { source, params: { nick, comment } });
     }
-
-    const { prefix, params: [nick, comment] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("kill", { origin, nick, comment });
-  };
-
-  client.kill = sendKill;
-  client.on("raw", emitKill);
-};
+  });
+});

@@ -1,17 +1,15 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Raw } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export const throwOnErrorPlugin: Plugin = (client) => {
+export default createPlugin("throw_on_error")((client) => {
+  // Wraps server ERROR message into an `Error` object.
+  // It will throw error if there are no error listeners bound to it.
   const emitError = (msg: Raw) => {
-    if (msg.command !== "ERROR") {
-      return;
+    if (msg.command === "ERROR") {
+      const { command, params } = msg;
+      const message = command + ": " + params.join(": ");
+      client.emitError("read", message, emitError);
     }
-
-    const { command, params } = msg;
-    const message = command + ": " + params.join(": ");
-
-    client.emitError("read", message, emitError);
   };
-
   client.on("raw", emitError);
-};
+});

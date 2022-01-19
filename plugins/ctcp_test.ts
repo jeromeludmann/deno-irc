@@ -1,14 +1,12 @@
-import { Raw } from "../core/parsers.ts";
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { ctcpPlugin, isCtcp } from "./ctcp.ts";
+import { type Raw } from "../core/parsers.ts";
+import { isCtcp } from "./ctcp.ts";
 
 describe("plugins/ctcp", (test) => {
-  const plugins = [ctcpPlugin];
-
   test("send CTCP", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.ctcp("#channel", "TIME");
     client.ctcp("#channel", "ACTION", "param");
@@ -24,7 +22,7 @@ describe("plugins/ctcp", (test) => {
   });
 
   test("emit 'ctcp' on CTCP", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const messages = [];
 
     server.send(
@@ -39,17 +37,27 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(messages, [
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        target: "#channel",
+        source: {
+          name: "someone",
+          mask: { user: "user", host: "host" },
+        },
         command: "CTCP_COMMAND",
-        type: "query",
+        params: {
+          target: "#channel",
+          type: "query",
+        },
       },
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        target: "#channel",
+        source: {
+          name: "someone",
+          mask: { user: "user", host: "host" },
+        },
         command: "CTCP_COMMAND",
-        type: "reply",
-        param: "param",
+        params: {
+          target: "#channel",
+          type: "reply",
+          param: "param",
+        },
       },
     ]);
   });

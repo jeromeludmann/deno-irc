@@ -1,44 +1,44 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface JoinEvent {
-  /** User who sent the JOIN. */
-  origin: UserMask;
-
+export interface JoinEventParams {
   /** Channel joined by the user. */
   channel: string;
 }
 
-export type ChannelsDescription = [
+export type JoinEvent = Message<JoinEventParams>;
+
+export type ChannelDescriptions = [
   channel: string | [channel: string, key: string],
   ...channels: (string | [channel: string, key: string])[],
 ];
 
-export interface JoinParams {
+interface JoinFeatures {
   commands: {
     /** Joins `channels` with optional keys.
      *
      *      client.join("#channel");
      *      client.join("#channel1", ["#channel2", "key"]); */
-    join(...params: ChannelsDescription): void;
+    join(...params: ChannelDescriptions): void;
   };
   events: {
     "join": JoinEvent;
   };
 }
 
-export const joinPlugin: Plugin<JoinParams> = (client) => {
-  const sendJoin = (...params: ChannelsDescription) => {
+export default createPlugin("join")<JoinFeatures>((client) => {
+  // Sends JOIN command.
+  client.join = (...channelDescriptions) => {
     const channels = [];
     const keys = [];
 
-    for (const param of params) {
-      if (typeof param === "string") {
-        channels.push(param);
+    for (const desc of channelDescriptions) {
+      if (typeof desc === "string") {
+        channels.push(desc);
         keys.push("");
       } else {
-        channels.push(param[0]);
-        keys.push(param[1]);
+        channels.push(desc[0]);
+        keys.push(desc[1]);
       }
     }
 
@@ -51,17 +51,11 @@ export const joinPlugin: Plugin<JoinParams> = (client) => {
     client.send("JOIN", ...commandParams);
   };
 
-  const emitJoin = (msg: Raw) => {
-    if (msg.command !== "JOIN") {
-      return;
+  // Emits 'join' events.
+  client.on("raw", (msg) => {
+    if (msg.command === "JOIN") {
+      const { source, params: [channel] } = msg;
+      client.emit("join", { source, params: { channel } });
     }
-
-    const { prefix, params: [channel] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("join", { origin, channel });
-  };
-
-  client.join = sendJoin;
-  client.on("raw", emitJoin);
-};
+  });
+});

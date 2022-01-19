@@ -1,4 +1,5 @@
-sources = core/*_test.ts plugins/*_test.ts *_test.ts
+sources = **/*.ts
+test_sources = core/*_test.ts plugins/*_test.ts
 
 all:
 	@make lint fmt test
@@ -10,4 +11,4 @@ fmt:
 	deno fmt --check $(sources)
 
 test:
-	deno test --failfast $(sources)
+	deno test --failfast $(test_sources)

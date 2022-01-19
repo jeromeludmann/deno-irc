@@ -1,9 +1,9 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
 export interface Channel {
   /** Name of the channel. */
-  channel: string;
+  name: string;
 
   /** Client count. */
   count: number;
@@ -12,12 +12,14 @@ export interface Channel {
   topic: string;
 }
 
-export interface ListReplyEvent {
+export interface ListReplyEventParams {
   /** The entire channel list. */
   channels: Channel[];
 }
 
-export interface ListParams {
+export type ListReplyEvent = Message<ListReplyEventParams>;
+
+interface ListFeatures {
   commands: {
     /** Gets the list channels and their topics.
      *
@@ -29,8 +31,11 @@ export interface ListParams {
   };
 }
 
-export const listPlugin: Plugin<ListParams> = (client) => {
-  const sendList = (channels?: string | string[], server?: string) => {
+export default createPlugin("list")<ListFeatures>((client) => {
+  let buffer: Channel[] = [];
+
+  // Sends LIST command.
+  client.list = (channels, server) => {
     const params: string[] = [];
 
     if (channels !== undefined) {
@@ -45,27 +50,26 @@ export const listPlugin: Plugin<ListParams> = (client) => {
     client.send("LIST", ...params);
   };
 
-  const emitList = (msg: Raw) => {
+  // Emits 'list_reply' event.
+  // Accumulates channel list parts into buffer
+  // and emits a `list_reply` event once ended.
+  client.on("raw", (msg) => {
     switch (msg.command) {
       case "RPL_LISTSTART": {
         buffer = [];
         break;
       }
       case "RPL_LIST": {
-        const [, channel, count, topic = ""] = msg.params;
-        buffer.push({ channel, count: parseInt(count, 10), topic });
+        const [, name, count, topic = ""] = msg.params;
+        buffer.push({ name, count: parseInt(count, 10), topic });
         break;
       }
       case "RPL_LISTEND": {
-        client.emit("list_reply", { channels: buffer });
+        const { source } = msg;
+        client.emit("list_reply", { source, params: { channels: buffer } });
         buffer = []; // useful because sometimes RPL_LISTSTART could not be sent
         break;
       }
     }
-  };
-
-  let buffer: Channel[] = [];
-
-  client.list = sendList;
-  client.on("raw", emitList);
-};
+  });
+});

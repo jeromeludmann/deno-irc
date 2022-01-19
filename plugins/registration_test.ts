@@ -1,27 +1,16 @@
-import { assertArrayIncludes, assertEquals } from "../deps.ts";
+import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nickPlugin } from "./nick.ts";
-import { registerPlugin } from "./register.ts";
-import { registrationPlugin } from "./registration.ts";
 
 describe("plugins/registration", (test) => {
-  const plugins = [
-    nickPlugin,
-    registerPlugin,
-    registrationPlugin,
-  ];
-
   const options = {
-    nick: "me",
     username: "user",
     realname: "real name",
-    password: "pass",
+    password: "password",
   };
 
-  test("register on connect", async () => {
+  test("send capabilities and register on connect", async () => {
     const { client, server } = await mock(
-      plugins,
       options,
       { withConnection: false },
     );
@@ -30,14 +19,16 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "PASS pass",
+      "CAP REQ multi-prefix",
+      "CAP END",
+      "PASS password",
       "NICK me",
       "USER user 0 * :real name",
     ]);
   });
 
   test("register on ERR_NOTREGISTERED", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock(options);
     server.receive();
 
     server.send(":serverhost 451 me :You have not registered");
@@ -45,37 +36,23 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "PASS pass",
+      "PASS password",
       "NICK me",
       "USER user 0 * :real name",
     ]);
   });
 
-  test("request capabilities on connect", async () => {
-    const { client, server } = await mock(
-      plugins,
-      options,
-      { withConnection: false },
-    );
+  test("initialize capabilities state", async () => {
+    const { client } = await mock(options);
     const { capabilities } = client.state;
 
-    capabilities.push("cap1");
-    capabilities.push("cap2");
-    capabilities.push("cap3");
-
-    await client.connect("");
-    const raw = server.receive();
-
-    assertArrayIncludes(raw, [
-      "CAP REQ cap1",
-      "CAP REQ cap2",
-      "CAP REQ cap3",
-      "CAP END",
+    assertEquals(capabilities, [
+      "multi-prefix",
     ]);
   });
 
   test("initialize user state", async () => {
-    const { client } = await mock(plugins, options);
+    const { client } = await mock(options);
     const { user } = client.state;
 
     assertEquals(user, {
@@ -86,7 +63,7 @@ describe("plugins/registration", (test) => {
   });
 
   test("update nick on RPL_WELCOME", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
     const { user } = client.state;
 
     server.send(":serverhost 001 new_nick :Welcome to the server");
@@ -96,7 +73,7 @@ describe("plugins/registration", (test) => {
   });
 
   test("track nick changes on NICK", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
     const { user } = client.state;
 
     server.send(":me!user@host NICK new_nick");
@@ -106,7 +83,7 @@ describe("plugins/registration", (test) => {
   });
 
   test("not track nick changes on NICK", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
     const { user } = client.state;
 
     server.send(":someone!user@host NICK new_nick");

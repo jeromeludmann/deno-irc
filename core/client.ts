@@ -1,17 +1,17 @@
-import { ClientError, ErrorArgs, toClientError } from "./errors.ts";
-import { EventEmitter, EventEmitterOptions } from "./events.ts";
+import { type ClientError, type ErrorArgs, toClientError } from "./errors.ts";
+import { EventEmitter, type EventEmitterOptions } from "./events.ts";
 import { Hooks } from "./hooks.ts";
-import { Parser, Raw } from "./parsers.ts";
-import { AnyCommand } from "./protocol.ts";
+import { Parser, type Raw } from "./parsers.ts";
+import { loadPlugins, type Plugin } from "./plugins.ts";
+import { type AnyCommand } from "./protocol.ts";
 
-export interface CoreParams {
+export interface CoreFeatures {
   options: EventEmitterOptions & {
     /** Size of the buffer that receives data from server.
      *
      * Default to `4096` bytes. */
     bufferSize?: number;
   };
-
   events: {
     "connecting": RemoteAddr;
     "connected": RemoteAddr;
@@ -19,7 +19,6 @@ export interface CoreParams {
     "raw": Raw;
     "error": ClientError;
   };
-
   state: {
     remoteAddr: RemoteAddr;
   };
@@ -34,25 +33,6 @@ export interface RemoteAddr {
   tls?: boolean;
 }
 
-export type PluginParams = {
-  [K in "options" | "commands" | "events" | "state"]?: Record<string, unknown>;
-};
-
-export type ExtendedClient<T extends PluginParams> =
-  & CoreClient<CoreParams["events"] & T["events"]>
-  & { readonly hooks: Hooks<ExtendedClient<T> & { read: CoreClient["read"] }> }
-  & { readonly state: T["state"] }
-  & T["commands"];
-
-export type ExtendedOptions<T extends PluginParams> =
-  & CoreParams["options"]
-  & T["options"];
-
-export type Plugin<T extends PluginParams = Record<string, void>> = (
-  client: ExtendedClient<T>,
-  options: Readonly<ExtendedOptions<T>>,
-) => void;
-
 /** How to connect to a server */
 interface ConnectImpl {
   noTls(opts: Deno.ConnectOptions): Promise<Deno.Conn>;
@@ -60,11 +40,11 @@ interface ConnectImpl {
 }
 
 export class CoreClient<
-  TEvents extends CoreParams["events"] = CoreParams["events"],
+  TEvents extends CoreFeatures["events"] = CoreFeatures["events"],
 > extends EventEmitter<
-  CoreParams["events"] & TEvents
+  CoreFeatures["events"] & TEvents
 > {
-  readonly state: CoreParams["state"];
+  readonly state: CoreFeatures["state"];
 
   protected connectImpl: ConnectImpl = {
     noTls: Deno.connect,
@@ -80,15 +60,19 @@ export class CoreClient<
 
   constructor(
     // deno-lint-ignore no-explicit-any
-    plugins: Plugin<any>[],
-    options: Readonly<CoreParams["options"]>,
+    plugins: Plugin<any, any>[],
+    options: Readonly<CoreFeatures["options"]>,
   ) {
     super(options);
 
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
     this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
 
-    new Set(plugins).forEach((plugin) => plugin(this, options));
+    // When `loadPlugins` is called, plugins can add their own error listeners.
+    // In order to keep the default error throwing behavior (at least one error
+    // listener is required to handle errors), `resetErrorThrowingBehavior`
+    // should always be called after to ignore already added error listeners.
+    loadPlugins(this, options, plugins);
     this.resetErrorThrowingBehavior();
   }
 
@@ -178,21 +162,31 @@ export class CoreClient<
    *
    * Resolves with the raw message sent to the server,
    * or `null` if nothing has been sent. */
-  async send(command: AnyCommand, ...params: string[]): Promise<string | null> {
+  async send(
+    command: AnyCommand,
+    ...params: (string | undefined)[]
+  ): Promise<string | null> {
     if (this.conn === null) {
       this.emitError("write", "Unable to send message", this.send);
       return null;
     }
 
+    // Removes undefined trailing parameters.
+    for (let i = params.length - 1; i >= 0; --i) {
+      params[i] === undefined ? params.pop() : i = 0;
+    }
+
+    // Prefixes trailing parameter with ':'.
     const last = params.length - 1;
     if (
       params.length > 0 &&
-      (params[last][0] === ":" || params[last].includes(" ", 1))
+      (params[last]?.[0] === ":" || params[last]?.includes(" ", 1))
     ) {
       params[last] = ":" + params[last];
     }
 
-    const raw = (command + " " + params.join(" ")).trimRight() + "\r\n";
+    // Prepares and encodes raw message.
+    const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
     const bytes = this.encoder.encode(raw);
 
     try {

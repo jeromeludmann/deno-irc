@@ -1,7 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface WhoisReplyEvent {
+export interface WhoisReplyEventParams {
   /** Nick. */
   nick: string;
 
@@ -33,7 +33,9 @@ export interface WhoisReplyEvent {
   away?: string;
 }
 
-export interface WhoisParams {
+export type WhoisReplyEvent = Message<WhoisReplyEventParams>;
+
+interface WhoisFeatures {
   commands: {
     /** Gets the WHOIS informations of a `nick`. */
     whois(nick: string): void;
@@ -46,14 +48,18 @@ export interface WhoisParams {
   };
 }
 
-export const whoisPlugin: Plugin<WhoisParams> = (client) => {
-  const buffers: Record<string, Partial<WhoisReplyEvent>> = {};
+export default createPlugin("whois")<WhoisFeatures>((client) => {
+  const buffers: Record<string, Partial<WhoisReplyEventParams>> = {};
 
-  const sendWhois = (...params: string[]) => {
+  // Sends WHOIS command.
+  client.whois = (...params: string[]) => {
     client.send("WHOIS", ...params);
   };
 
-  const emitWhois = (msg: Raw) => {
+  // Emits 'whois_reply' event.
+  // Accumulates whois reply parts into buffer
+  // and emits a `whois_reply` event once ended.
+  client.on("raw", (msg) => {
     switch (msg.command) {
       case "RPL_WHOISUSER": {
         const [, nick, username, host, , realname] = msg.params;
@@ -96,15 +102,15 @@ export const whoisPlugin: Plugin<WhoisParams> = (client) => {
         break;
       }
       case "RPL_ENDOFWHOIS": {
-        const [, nick] = msg.params;
+        const { source, params: [, nick] } = msg;
         if (!(nick in buffers)) break;
-        client.emit("whois_reply", buffers[nick] as WhoisReplyEvent);
+        client.emit("whois_reply", {
+          source,
+          params: buffers[nick] as WhoisReplyEventParams,
+        });
         delete buffers[nick];
         break;
       }
     }
-  };
-
-  client.whois = sendWhois;
-  client.on("raw", emitWhois);
-};
+  });
+});

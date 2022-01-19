@@ -166,7 +166,7 @@ export const IRC_REPLIES = {
   "396": "RPL_HOSTHIDDEN",
 } as const;
 
-export const IRC_ERRORS = {
+export const IRC_ERROR_REPLIES = {
   "400": "ERR_UNKNOWNERROR",
   "401": "ERR_NOSUCHNICK",
   "402": "ERR_NOSUCHSERVER",
@@ -262,10 +262,9 @@ export const IRC_ERRORS = {
   "552": "ERR_USINGSLINE",
 } as const;
 
-export const IRC_NUMERICS = { ...IRC_REPLIES, ...IRC_ERRORS };
+export const IRC_NUMERICS = { ...IRC_REPLIES, ...IRC_ERROR_REPLIES };
 
 export type AnyReply = typeof IRC_REPLIES[keyof typeof IRC_REPLIES];
 
-export type AnyError = typeof IRC_ERRORS[keyof typeof IRC_ERRORS];
-
-export type AnyNumeric = AnyReply | AnyError;
+export type AnyErrorReply =
+  typeof IRC_ERROR_REPLIES[keyof typeof IRC_ERROR_REPLIES];

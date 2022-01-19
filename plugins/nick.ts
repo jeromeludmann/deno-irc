@@ -1,15 +1,14 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface NickEvent {
-  /** User who sent the NICK. */
-  origin: UserMask;
-
+export interface NickEventParams {
   /** New nick used by the user. */
   nick: string;
 }
 
-export interface NickParams {
+export type NickEvent = Message<NickEventParams>;
+
+interface NickFeatures {
   commands: {
     /** Sets the `nick` of the client (once connected). */
     nick(nick: string): void;
@@ -19,22 +18,17 @@ export interface NickParams {
   };
 }
 
-export const nickPlugin: Plugin<NickParams> = (client) => {
-  const sendNick = (...params: string[]) => {
-    client.send("NICK", ...params);
+export default createPlugin("nick")<NickFeatures>((client) => {
+  // Sends 'nick' command.
+  client.nick = (nick) => {
+    client.send("NICK", nick);
   };
 
-  const emitNick = (msg: Raw) => {
-    if (msg.command !== "NICK") {
-      return;
+  // Emits 'nick' event.
+  client.on("raw", (msg) => {
+    if (msg.command === "NICK") {
+      const { source, params: [nick] } = msg;
+      client.emit("nick", { source, params: { nick } });
     }
-
-    const { prefix, params: [nick] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("nick", { origin, nick });
-  };
-
-  client.nick = sendNick;
-  client.on("raw", emitNick);
-};
+  });
+});

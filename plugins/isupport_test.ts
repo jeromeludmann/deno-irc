@@ -1,32 +1,29 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { myinfoPlugin } from "./myinfo.ts";
-import { getDefaults, isupportPlugin } from "./isupport.ts";
+import { getDefaults } from "./isupport.ts";
 
 describe("plugins/isupport", (test) => {
-  const plugins = [myinfoPlugin, isupportPlugin];
-
   test("set default user modes state", async () => {
-    const { client } = await mock(plugins, {});
+    const { client } = await mock();
     const { supported } = client.state;
     assertEquals(supported.modes.user, getDefaults().modes.user);
   });
 
   test("set default channel modes state", async () => {
-    const { client } = await mock(plugins, {});
+    const { client } = await mock();
     const { supported } = client.state;
     assertEquals(supported.modes.channel, getDefaults().modes.channel);
   });
 
   test("set default nick prefixes state", async () => {
-    const { client } = await mock(plugins, {});
+    const { client } = await mock();
     const { supported } = client.state;
     assertEquals(supported.prefixes, getDefaults().prefixes);
   });
 
   test("update modes state on RPL_MYINFO", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const { supported } = client.state;
 
     server.send(
@@ -50,7 +47,7 @@ describe("plugins/isupport", (test) => {
   });
 
   test("override user modes state on RPL_ISUPPORT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const { supported } = client.state;
 
     server.send(
@@ -68,7 +65,7 @@ describe("plugins/isupport", (test) => {
   });
 
   test("override channel modes state on RPL_ISUPPORT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const { supported } = client.state;
 
     server.send(
@@ -86,7 +83,7 @@ describe("plugins/isupport", (test) => {
   });
 
   test("override channel modes state with PREFIX on RPL_ISUPPORT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const { supported } = client.state;
 
     server.send(
@@ -105,7 +102,7 @@ describe("plugins/isupport", (test) => {
   });
 
   test("replace nick prefixes state on RPL_ISUPPORT", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const { supported } = client.state;
 
     server.send(

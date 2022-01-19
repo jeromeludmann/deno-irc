@@ -39,7 +39,7 @@ const client = new Client({
 });
 
 client.on("join", (msg) => {
-  if (msg.channel === "#my_channel") {
+  if (msg.params.channel === "#my_channel") {
     client.privmsg("#my_channel", "Hello world!");
   }
 });
@@ -63,8 +63,9 @@ Events are simple messages which are emitted from the client instance.
 They can be received by listening to their event names:
 
 ```ts
-client.on("join" (msg) => {
-  console.log(`${msg.origin.nick} has joined ${msg.channel}`);
+client.on("join", (msg) => {
+  const { source, params } = msg;
+  console.log(`${source?.name} has joined ${params.channel}`);
 });
 ```
 
@@ -72,27 +73,24 @@ Thanks to TypeScript, type of `msg` is always inferred from the event name so
 you do not have to worry about what is in the object or about the IRC protocol.
 
 ```ts
-client.on("nick" (msg) => {
-  console.log(`${msg.origin.nick} is now known as ${msg.nick}`);
+client.on("nick", ({ source, params }) => {
+  console.log(`${source?.name} is now known as ${params.nick}`);
 });
 
-client.on("privmsg", (msg) => {
-  const { origin, target, text } = msg;
-  console.log(`${origin.nick} on ${target} says ${text}`);
+client.on("privmsg", ({ source, params }) => {
+  console.log(`${source?.name} on ${params.target} says ${params.text}`);
 });
 ```
 
 Some events, like `"privmsg"` and `"notice"`, can be filtered like this:
 
 ```ts
-client.on("privmsg:channel", (msg) => {
-  const { origin, channel, text } = msg;
-  console.log(`${origin.nick} on ${channel} says ${text}`);
+client.on("privmsg:channel", ({ source, params }) => {
+  console.log(`${source?.name} on ${params.target} says ${params.text}`);
 });
 
-client.on("privmsg:private", (msg) => {
-  const { origin, text } = msg;
-  console.log(`${origin.nick} says to you ${text}`);
+client.on("notice:private", ({ source, params }) => {
+  console.log(`${source?.name} notices to you: ${params.text}`);
 });
 ```
 

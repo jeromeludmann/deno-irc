@@ -1,4 +1,104 @@
-import { AnyCommand, AnyNumeric, IRC_NUMERICS } from "./protocol.ts";
+import {
+  type AnyCommand,
+  type AnyErrorReply,
+  type AnyReply,
+  IRC_NUMERICS,
+} from "./protocol.ts";
+
+export interface Mask {
+  /** Username of the user. */
+  user: string;
+
+  /** Hostname of the user. */
+  host: string;
+}
+
+export interface Source {
+  /** Server name or user nick. */
+  name: string;
+
+  /** User mask containing user and host names.
+   *
+   * Optional for users, always undefined for server. */
+  mask?: Mask;
+}
+
+/** Helper used to create message shapes. */
+export interface Message<TParams> {
+  /** Source of the message.
+   *
+   * Optional. If undefined, always related to a server. */
+  source?: Source;
+
+  /** Parameters of the message. */
+  params: TParams;
+}
+
+export type Raw = Message<string[]> & {
+  /** Command of the message. */
+  command: AnyCommand | AnyReply | AnyErrorReply;
+};
+
+export const parseSource = (prefix: string): Source => {
+  const source = {} as Source;
+  const [name, user, host] = prefix.split(/[@!]+/);
+
+  source.name = name;
+  if (user !== undefined && host !== undefined) {
+    source.mask = { user, host };
+  }
+
+  return source;
+};
+
+// The following is called on each received raw message
+// and must favor performance over readability.
+const parseMessage = (raw: string): Raw => {
+  const msg = {} as Raw;
+
+  // Indexes used to move through the raw string
+  let start = 0;
+  let end: number;
+
+  // Tags are ignored for now
+  if (raw[start] === "@") {
+    end = raw.indexOf(" ", ++start);
+    start = end + 1;
+  }
+
+  // Prefix parsing
+  if (raw[start] === ":") {
+    end = raw.indexOf(" ", ++start);
+    const prefix = raw.slice(start, end);
+    msg.source = parseSource(prefix);
+    start = end + 1;
+  }
+
+  // Command parsing
+  end = raw.indexOf(" ", start);
+  if (end === -1) end = raw.length;
+  const command = raw.slice(start, end);
+  msg.command = command in IRC_NUMERICS
+    ? (IRC_NUMERICS as Record<string, AnyReply | AnyErrorReply>)[command]
+    : command as AnyCommand;
+  start = end + 1;
+
+  // Params parsing
+  msg.params = [];
+  while (start < raw.length && raw[start] !== ":") {
+    end = raw.indexOf(" ", start);
+    if (end === -1) end = raw.length;
+    const middle = raw.slice(start, end);
+    msg.params.push(middle);
+    start = end + 1;
+  }
+  if (start < raw.length) {
+    const trailing = raw.slice(++start).trimEnd();
+    msg.params.push(trailing);
+  }
+
+  return msg;
+};
 
 export class Parser {
   private chunk = "";
@@ -20,83 +120,4 @@ export class Parser {
       yield parseMessage(raw);
     }
   }
-}
-
-export interface Raw {
-  /** Prefix of the message. */
-  prefix: string;
-
-  /** Command of the message. */
-  command: AnyCommand | AnyNumeric;
-
-  /** Parameters of the message. */
-  params: string[];
-}
-
-// The following is called on each received raw message
-// and must favor performance over readability.
-function parseMessage(raw: string): Raw {
-  const msg = {} as Raw;
-
-  // Indexes used to move through the raw string
-  let start = 0;
-  let end: number;
-
-  // Tags are ignored for now
-  if (raw[start] === "@") {
-    end = raw.indexOf(" ", ++start);
-    start = end + 1;
-  }
-
-  // Prefix parsing
-  if (raw[start] === ":") {
-    end = raw.indexOf(" ", ++start);
-    msg.prefix = raw.slice(start, end);
-    start = end + 1;
-  } else {
-    msg.prefix = "";
-  }
-
-  // Command parsing
-  end = raw.indexOf(" ", start);
-  if (end === -1) end = raw.length;
-  const command = raw.slice(start, end);
-  msg.command = command in IRC_NUMERICS
-    ? (IRC_NUMERICS as Record<string, AnyNumeric>)[command]
-    : command as AnyCommand;
-  start = end + 1;
-
-  // Params parsing
-  msg.params = [];
-  while (start < raw.length && raw[start] !== ":") {
-    end = raw.indexOf(" ", start);
-    if (end === -1) end = raw.length;
-    const middle = raw.slice(start, end);
-    msg.params.push(middle);
-    start = end + 1;
-  }
-  if (start < raw.length) {
-    const trailing = raw.slice(++start).trimRight();
-    msg.params.push(trailing);
-  }
-
-  return msg;
-}
-
-export interface UserMask {
-  nick: string;
-  username: string;
-  userhost: string;
-}
-
-/** Gets a user mask from a raw prefix. */
-export function parseUserMask(prefix: string): UserMask {
-  const usermask = prefix.match(/^(.+)!(.+)@(.+)$/);
-
-  if (usermask === null) {
-    throw new Error(`Not a user mask: ${prefix}`);
-  }
-
-  const [, nick, username, userhost] = usermask;
-  return { nick, username, userhost };
 }

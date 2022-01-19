@@ -1,13 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { kickPlugin } from "./kick.ts";
 
 describe("plugins/kick", (test) => {
-  const plugins = [kickPlugin];
-
   test("send KICK", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.kick("#channel", "someone");
     client.kick("#channel", "someone", "Boom!");
@@ -20,7 +17,7 @@ describe("plugins/kick", (test) => {
   });
 
   test("emit 'kick' on KILL", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
     const messages = [];
 
     server.send(":someone!user@host KICK #channel me");
@@ -31,16 +28,12 @@ describe("plugins/kick", (test) => {
 
     assertEquals(messages, [
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        channel: "#channel",
-        nick: "me",
-        comment: undefined,
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { channel: "#channel", nick: "me", comment: undefined },
       },
       {
-        origin: { nick: "someone", username: "user", userhost: "host" },
-        channel: "#channel",
-        nick: "me",
-        comment: "Boom!",
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        params: { channel: "#channel", nick: "me", comment: "Boom!" },
       },
     ]);
   });

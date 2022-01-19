@@ -1,8 +1,7 @@
-import { Plugin, RemoteAddr } from "../core/client.ts";
-import { ClientError } from "../core/errors.ts";
-import { Raw } from "../core/parsers.ts";
+import { RemoteAddr } from "../core/client.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface ReconnectParams {
+interface ReconnectFeatures {
   options: {
     /** Enables auto reconnect.
      *
@@ -30,12 +29,11 @@ const DEFAULT_RECONNECT = false;
 const DEFAULT_ATTEMPTS = 10;
 const DEFAULT_DELAY = 5;
 
-export const reconnectPlugin: Plugin<ReconnectParams> = (client, options) => {
+export default createPlugin(
+  "reconnect",
+)<ReconnectFeatures>((client, options) => {
   let config = options.reconnect ?? DEFAULT_RECONNECT;
-
-  if (!config) {
-    return;
-  }
+  if (!config) return;
 
   if (typeof config === "boolean") {
     config = {};
@@ -51,10 +49,7 @@ export const reconnectPlugin: Plugin<ReconnectParams> = (client, options) => {
 
   const delayReconnect = () => {
     clearTimeout(timeout);
-
-    if (currentAttempts === attempts) {
-      return;
-    }
+    if (currentAttempts === attempts) return;
 
     const { remoteAddr } = client.state;
     client.emit("reconnecting", remoteAddr);
@@ -66,40 +61,37 @@ export const reconnectPlugin: Plugin<ReconnectParams> = (client, options) => {
     );
   };
 
-  const reconnectOnConnectError = (error: ClientError) => {
+  // Reconnects on connect error.
+  client.on("error", (error) => {
     if (error.type === "connect") {
       delayReconnect();
     }
-  };
+  });
 
-  const reconnectOnServerError = (msg: Raw) => {
+  // Reconnects on server error.
+  client.on("raw", (msg) => {
     if (msg.command === "ERROR") {
       delayReconnect();
     }
-  };
+  });
 
-  const incrementAttempt = () => {
+  // Increments attempts.
+  client.on("connecting", () => {
     currentAttempts++;
-  };
+  });
 
-  const resetAttempts = (msg: Raw) => {
+  // Resets attempts
+  client.on("raw", (msg) => {
     if (msg.command === "RPL_WELCOME") {
       currentAttempts = 0;
     }
-  };
+  });
 
+  // Make error listener required.
   const requireErrorListener = () => {
-    if (client.count("error") > 0) {
-      return;
-    }
-
+    if (client.count("error") > 0) return;
     const error = "plugins/reconnect requires an error listener";
     client.emitError("connect", error, requireErrorListener);
   };
-
-  client.on("error", reconnectOnConnectError);
-  client.on("raw", reconnectOnServerError);
-  client.on("connecting", incrementAttempt);
-  client.on("raw", resetAttempts);
   client.hooks.beforeCall("connect", requireErrorListener);
-};
+});

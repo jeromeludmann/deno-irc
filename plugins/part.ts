@@ -1,10 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface PartEvent {
-  /** User who sent the PART. */
-  origin: UserMask;
-
+export interface PartEventParams {
   /** Channel left by the user. */
   channel: string;
 
@@ -12,7 +9,9 @@ export interface PartEvent {
   comment?: string;
 }
 
-export interface PartParams {
+export type PartEvent = Message<PartEventParams>;
+
+interface PartFeatures {
   commands: {
     /** Leaves the `channel` with an optional `comment`. */
     part(channel: string, comment?: string): void;
@@ -22,22 +21,17 @@ export interface PartParams {
   };
 }
 
-export const partPlugin: Plugin<PartParams> = (client) => {
-  const sendPart = (...params: string[]) => {
-    client.send("PART", ...params);
+export default createPlugin("part")<PartFeatures>((client) => {
+  // Sends PART command.
+  client.part = (channel, comment) => {
+    client.send("PART", channel, comment);
   };
 
-  const emitPart = (msg: Raw) => {
-    if (msg.command !== "PART") {
-      return;
+  // Emits 'part' events.
+  client.on("raw", (msg) => {
+    if (msg.command === "PART") {
+      const { source, params: [channel, comment] } = msg;
+      client.emit("part", { source, params: { channel, comment } });
     }
-
-    const { prefix, params: [channel, comment] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("part", { origin, channel, comment });
-  };
-
-  client.part = sendPart;
-  client.on("raw", emitPart);
-};
+  });
+});

@@ -1,10 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface InviteEvent {
-  /** User who sent the INVITE. */
-  origin: UserMask;
-
+export interface InviteEventParams {
   /** Nick who was invited. */
   nick: string;
 
@@ -12,7 +9,9 @@ export interface InviteEvent {
   channel: string;
 }
 
-export interface InviteParams {
+export type InviteEvent = Message<InviteEventParams>;
+
+interface InviteFeatures {
   commands: {
     /** Invites a `nick` to a `channel`. */
     invite(nick: string, channel: string): void;
@@ -22,22 +21,17 @@ export interface InviteParams {
   };
 }
 
-export const invitePlugin: Plugin<InviteParams> = (client) => {
-  const sendInvite = (...params: string[]) => {
-    client.send("INVITE", ...params);
+export default createPlugin("invite")<InviteFeatures>((client) => {
+  // Sends INVITE command.
+  client.invite = (nick, channel) => {
+    client.send("INVITE", nick, channel);
   };
 
-  const emitInvite = (msg: Raw) => {
-    if (msg.command !== "INVITE") {
-      return;
+  // Emits 'invite' event.
+  client.on("raw", (msg) => {
+    if (msg.command === "INVITE") {
+      const { source, params: [nick, channel] } = msg;
+      client.emit("invite", { source, params: { nick, channel } });
     }
-
-    const { prefix, params: [nick, channel] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("invite", { origin, nick, channel });
-  };
-
-  client.invite = sendInvite;
-  client.on("raw", emitInvite);
-};
+  });
+});

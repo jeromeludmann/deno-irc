@@ -1,27 +1,22 @@
-import { Plugin } from "../core/client.ts";
-import { UserMask } from "../core/parsers.ts";
-import { createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import ctcp, { createCtcp } from "./ctcp.ts";
 
-export interface CtcpTimeEvent {
-  /** User who sent the CTCP TIME query. */
-  origin: UserMask;
-
-  /** Target who received the CTCP TIME query. */
+export interface CtcpTimeEventParams {
+  /** Target of the CTCP TIME query. */
   target: string;
 }
 
-export interface CtcpTimeReplyEvent {
-  /** User who sent the CTCP TIME reply. */
-  origin: UserMask;
+export type CtcpTimeEvent = Message<CtcpTimeEventParams>;
 
-  /** Target who received the CTCP TIME reply. */
-  target: string;
-
+export interface CtcpTimeReplyEventParams {
   /** Date time of the user. */
   time: string;
 }
 
-export interface TimeParams {
+export type CtcpTimeReplyEvent = Message<CtcpTimeReplyEventParams>;
+
+interface TimeFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP TIME. */
@@ -40,13 +35,11 @@ export interface TimeParams {
 
 const DEFAULT_TIME_REPLY = true;
 
-export const timePlugin: Plugin<CtcpParams & TimeParams> = (
-  client,
-  options,
-) => {
+export default createPlugin("time", [ctcp])<TimeFeatures>((client, options) => {
   const replyEnabled = options.ctcpReplies?.time ?? DEFAULT_TIME_REPLY;
 
-  const sendTime = (target?: string) => {
+  // Sends TIME or CTCP TIME command.
+  client.time = (target) => {
     if (target === undefined) {
       client.send("TIME");
     } else {
@@ -54,37 +47,32 @@ export const timePlugin: Plugin<CtcpParams & TimeParams> = (
     }
   };
 
-  const emitCtcpTime = (msg: CtcpEvent) => {
-    if (msg.command !== "TIME") {
-      return;
+  // Emits 'ctcp_time' and 'ctcp_time_reply' events.
+  client.on("ctcp", (msg) => {
+    if (msg.command === "TIME") {
+      const { source, params: { type, target, param: time } } = msg;
+
+      switch (type) {
+        case "query":
+          client.emit("ctcp_time", { source, params: { target } });
+          break;
+        case "reply":
+          if (time !== undefined) {
+            client.emit("ctcp_time_reply", { source, params: { time } });
+          }
+          break;
+      }
     }
+  });
 
-    const { origin, target, param: time } = msg;
-
-    switch (msg.type) {
-      case "query":
-        client.emit("ctcp_time", { origin, target });
-        break;
-
-      case "reply":
-        if (time === undefined) break;
-        client.emit("ctcp_time_reply", { origin, target, time });
-        break;
+  // Replies to CTCP TIME.
+  if (!replyEnabled) return;
+  client.on("ctcp_time", (msg) => {
+    const { source } = msg;
+    if (source) {
+      const time = new Date().toLocaleString();
+      const ctcp = createCtcp("TIME", time);
+      client.send("NOTICE", source.name, ctcp);
     }
-  };
-
-  client.time = sendTime;
-  client.on("ctcp", emitCtcpTime);
-
-  if (!replyEnabled) {
-    return;
-  }
-
-  const replyToCtcpTime = (msg: CtcpTimeEvent) => {
-    const time = new Date().toLocaleString();
-    const ctcp = createCtcp("TIME", time);
-    client.send("NOTICE", msg.origin.nick, ctcp);
-  };
-
-  client.on("ctcp_time", replyToCtcpTime);
-};
+  });
+});

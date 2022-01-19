@@ -1,9 +1,8 @@
-import { Plugin } from "../core/client.ts";
-import { ClientError } from "../core/errors.ts";
-import { AnyCommand } from "../core/protocol.ts";
+import { type ClientError } from "../core/errors.ts";
+import { createPlugin } from "../core/plugins.ts";
 import { bold, dim, green, red } from "../deps.ts";
 
-export interface VerboseParams {
+interface VerboseFeatures {
   options: {
     /** Prints informations to output. */
     verbose?: boolean;
@@ -12,34 +11,42 @@ export interface VerboseParams {
 
 const DEFAULT_VERBOSE = false;
 
-export const verbosePlugin: Plugin<VerboseParams> = (client, options) => {
+export default createPlugin(
+  "verbose",
+)<VerboseFeatures>((client, options) => {
   const enabled = options.verbose ?? DEFAULT_VERBOSE;
+  if (!enabled) return;
 
-  if (!enabled) {
-    return;
-  }
+  // Prints received messages.
+  client.hooks.afterCall("read", (chunks) => {
+    if (chunks !== null) {
+      console.info(
+        dim("read"),
+        dim(bold("chunks")),
+        dim(JSON.stringify(chunks)),
+      );
+    }
+  });
 
-  const logReceivedMessages = (chunks: string | null) => {
-    if (chunks === null) return;
-    console.info(dim("read"), dim(bold("chunks")), dim(JSON.stringify(chunks)));
-  };
-
-  const logSentMessages = (raw: string | null) => {
+  // Prints sent messages.
+  client.hooks.afterCall("send", (raw) => {
     if (raw === null) return;
     console.info(dim("send"), dim(bold("raw")), dim(JSON.stringify(raw)));
-  };
+  });
 
-  const logCommands = (command: AnyCommand, ...params: string[]) => {
+  // Prints sent commands.
+  client.hooks.beforeCall("send", (command, ...params) => {
     console.info("send", bold(command), params);
-  };
+  });
 
-  const logEvents = (event: string, payload: unknown) => {
+  // Prints emitted events.
+  client.hooks.beforeCall("emit", (event, payload) => {
     switch (event) {
       case "raw": {
         break;
       }
       case "error": {
-        const { type, name, message } = (payload as ClientError);
+        const { type, name, message } = payload as ClientError;
         console.info("emit", bold(event), { type, name, message });
         break;
       }
@@ -47,9 +54,10 @@ export const verbosePlugin: Plugin<VerboseParams> = (client, options) => {
         console.info("emit", bold(event), payload);
       }
     }
-  };
+  });
 
-  const logStateChanges = <T>(state: T, key: keyof T, value: unknown) => {
+  // Prints state changes.
+  client.hooks.beforeMutate("state", (state, key, value) => {
     const prev = JSON.stringify(state[key]);
     const next = JSON.stringify(value);
     const label = bold(key.toString());
@@ -58,11 +66,5 @@ export const verbosePlugin: Plugin<VerboseParams> = (client, options) => {
       console.info("diff", label, red(`- ${prev}`));
       console.info("diff", label, green(`+ ${next}`));
     }
-  };
-
-  client.hooks.afterCall("read", logReceivedMessages);
-  client.hooks.afterCall("send", logSentMessages);
-  client.hooks.beforeCall("send", logCommands);
-  client.hooks.beforeCall("emit", logEvents);
-  client.hooks.beforeMutate("state", logStateChanges);
-};
+  });
+});

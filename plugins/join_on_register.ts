@@ -1,28 +1,23 @@
-import { Plugin } from "../core/client.ts";
-import { ChannelsDescription, JoinParams } from "./join.ts";
-import { RegisterParams } from "./register.ts";
+import { createPlugin } from "../core/plugins.ts";
+import join, { type ChannelDescriptions } from "./join.ts";
+import register from "./register.ts";
 
-export interface JoinOnRegisterParams {
+interface JoinOnRegisterFeatures {
   options: {
     /** Channels to join on connect. */
-    channels?: ChannelsDescription;
+    channels?: ChannelDescriptions;
   };
 }
 
-export const joinOnRegisterPlugin: Plugin<
-  & RegisterParams
-  & JoinParams
-  & JoinOnRegisterParams
-> = (client, options) => {
+export default createPlugin(
+  "join_on_register",
+  [join, register],
+)<JoinOnRegisterFeatures>((client, options) => {
   const channels = options.channels;
+  if (!channels) return;
 
-  if (channels === undefined) {
-    return;
-  }
-
-  const joinChannels = () => {
+  // Joins provided channel once registered.
+  client.on("register", () => {
     client.join(...channels);
-  };
-
-  client.on("register", joinChannels);
-};
+  });
+});

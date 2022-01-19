@@ -1,11 +1,11 @@
-import { type Plugin } from "../core/client.ts";
-import { type Raw } from "../core/parsers.ts";
-import { type IsupportParams } from "./isupport.ts";
-import { type RegistrationParams } from "./registration.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import isupport from "./isupport.ts";
+import registration from "./registration.ts";
 
 export type Names = Record<string, string[]>;
 
-export interface NamesReplyEvent {
+export interface NamesReplyEventParams {
   /** Name of the channel. */
   channel: string;
 
@@ -13,7 +13,9 @@ export interface NamesReplyEvent {
   names: Names;
 }
 
-export interface NamesParams {
+export type NamesReplyEvent = Message<NamesReplyEventParams>;
+
+interface NamesFeatures {
   commands: {
     /** Gets the nicknames joined to a channel and their prefixes. */
     names(channels: string | string[]): void;
@@ -23,17 +25,21 @@ export interface NamesParams {
   };
 }
 
-export const namesPlugin: Plugin<
-  & RegistrationParams
-  & IsupportParams
-  & NamesParams
-> = (client) => {
-  const sendNamesCommand = (channels: string[]): void => {
+export default createPlugin(
+  "names",
+  [isupport, registration],
+)<NamesFeatures>((client) => {
+  const buffers: Record<string, Names> = {};
+  client.state.capabilities.push("multi-prefix");
+
+  // Sends NAMES command.
+  client.names = (channels): void => {
     if (!Array.isArray(channels)) channels = [channels];
     client.send("NAMES", channels.join(","));
   };
 
-  const emitNamesReplyEvent = (msg: Raw) => {
+  // Emits 'names_reply' event.
+  client.on("raw", (msg) => {
     const { supported } = client.state;
 
     switch (msg.command) {
@@ -66,12 +72,12 @@ export const namesPlugin: Plugin<
       }
 
       case "RPL_ENDOFNAMES": {
-        const [, channel] = msg.params;
+        const { source, params: [, channel] } = msg;
 
         if (channel in buffers) {
           client.emit("names_reply", {
-            channel,
-            names: buffers[channel],
+            source,
+            params: { channel, names: buffers[channel] },
           });
 
           delete buffers[channel];
@@ -80,13 +86,5 @@ export const namesPlugin: Plugin<
         break;
       }
     }
-  };
-
-  const buffers: Record<string, Names> = {};
-
-  client.state.capabilities ??= []; // TODO depends of plugins loading order
-  client.state.capabilities.push("multi-prefix");
-
-  client.names = sendNamesCommand;
-  client.on("raw", emitNamesReplyEvent);
-};
+  });
+});

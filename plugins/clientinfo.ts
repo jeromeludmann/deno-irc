@@ -1,27 +1,22 @@
-import { Plugin } from "../core/client.ts";
-import { UserMask } from "../core/parsers.ts";
-import { AnyCtcpCommand, createCtcp, CtcpEvent, CtcpParams } from "./ctcp.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import ctcp, { type AnyCtcpCommand, createCtcp } from "./ctcp.ts";
 
-export interface CtcpClientinfoEvent {
-  /** Origin of the CTCP CLIENTINFO query. */
-  origin: UserMask;
-
+export interface CtcpClientinfoEventParams {
   /** Target of the CTCP CLIENTINFO query. */
   target: string;
 }
 
-export interface CtcpClientinfoReplyEvent {
-  /** User who sent the CTCP CLIENTINFO reply. */
-  origin: UserMask;
+export type CtcpClientinfoEvent = Message<CtcpClientinfoEventParams>;
 
-  /** Target who received the CTCP CLIENTINFO reply. */
-  target: string;
-
+export interface CtcpClientinfoReplyEventParams {
   /** Array of supported commands by the user. */
   supported: AnyCtcpCommand[];
 }
 
-export interface ClientinfoParams {
+export type CtcpClientinfoReplyEvent = Message<CtcpClientinfoReplyEventParams>;
+
+interface ClientinfoFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP CLIENTINFO. */
@@ -38,53 +33,48 @@ export interface ClientinfoParams {
   };
 }
 
-const DEFAULT_CLIENTINFO_REPLY = true;
+const REPLY_ENABLED = true;
 
-const supported = ["PING", "TIME", "VERSION"];
+const SUPPORTED_COMMANDS = ["PING", "TIME", "VERSION"];
 
-export const clientinfoPlugin: Plugin<
-  & CtcpParams
-  & ClientinfoParams
-> = (client, options) => {
-  const replyEnabled = options.ctcpReplies?.clientinfo ??
-    DEFAULT_CLIENTINFO_REPLY;
-
-  const sendClientinfo = (target: string) => {
+export default createPlugin(
+  "clientinfo",
+  [ctcp],
+)<ClientinfoFeatures>((client, options) => {
+  // Sends CTCP CLIENTINFO command.
+  client.clientinfo = (target) => {
     client.ctcp(target, "CLIENTINFO");
   };
 
-  const emitClientinfo = (msg: CtcpEvent) => {
-    if (msg.command !== "CLIENTINFO") {
-      return;
-    }
+  // Emits 'ctcp_clientinfo' and 'ctcp_clientinfo_reply' events.
+  client.on("ctcp", (msg) => {
+    if (msg.command !== "CLIENTINFO") return;
+    const { source, params: { type, target, param } } = msg;
 
-    const { origin, target, param } = msg;
-
-    switch (msg.type) {
+    switch (type) {
       case "query": {
-        client.emit("ctcp_clientinfo", { origin, target });
+        client.emit("ctcp_clientinfo", { source, params: { target } });
         break;
       }
       case "reply": {
         const supported = (param?.split(" ") ?? []) as AnyCtcpCommand[];
-        client.emit("ctcp_clientinfo_reply", { origin, target, supported });
+        client.emit("ctcp_clientinfo_reply", { source, params: { supported } });
         break;
       }
     }
-  };
+  });
 
-  client.clientinfo = sendClientinfo;
-  client.on("ctcp", emitClientinfo);
+  const replyEnabled = options.ctcpReplies?.clientinfo ?? REPLY_ENABLED;
+  if (!replyEnabled) return;
 
-  if (!replyEnabled) {
-    return;
-  }
+  // Replies to CTCP CLIENTINFO.
+  client.on("ctcp_clientinfo", (msg) => {
+    const { source } = msg;
 
-  const replyToClientinfo = (msg: CtcpClientinfoEvent) => {
-    const param = supported.join(" ");
-    const ctcp = createCtcp("CLIENTINFO", param);
-    client.send("NOTICE", msg.origin.nick, ctcp);
-  };
-
-  client.on("ctcp_clientinfo", replyToClientinfo);
-};
+    if (source) {
+      const param = SUPPORTED_COMMANDS.join(" ");
+      const ctcp = createCtcp("CLIENTINFO", param);
+      client.send("NOTICE", source.name, ctcp);
+    }
+  });
+});

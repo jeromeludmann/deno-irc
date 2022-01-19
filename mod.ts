@@ -1,2 +1,1 @@
-export { Client } from "./client.ts";
-export type { ClientOptions, ClientState } from "./client.ts";
+export { Client, type ClientOptions, type ClientState } from "./client.ts";

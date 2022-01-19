@@ -1,25 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nickPlugin } from "./nick.ts";
-import { registerPlugin } from "./register.ts";
-import { registrationPlugin } from "./registration.ts";
-import { isupportPlugin } from "./isupport.ts";
-import { namesPlugin } from "./names.ts";
 
 describe("plugins/names", (test) => {
-  const plugins = [
-    nickPlugin,
-    registerPlugin,
-    registrationPlugin,
-    isupportPlugin,
-    namesPlugin,
-  ];
-
-  const options = { nick: "me" };
-
   test("send NAMES", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
 
     client.names("#channel");
     client.names(["#channel1", "#channel2"]);
@@ -32,7 +17,7 @@ describe("plugins/names", (test) => {
   });
 
   test("emit 'names_reply' on RPL_ENDOFNAMES", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
 
     server.send([
       ":serverhost 353 me = #channel :%nick1 @+nick2 +nick3",
@@ -42,20 +27,23 @@ describe("plugins/names", (test) => {
     const msg = await client.once("names_reply");
 
     assertEquals(msg, {
-      channel: "#channel",
-      names: {
-        "nick1": [, "%"],
-        "nick2": ["@", , "+"],
-        "nick4": [, , "+"],
-        "nick3": [, , "+"],
-        "nick5": ["@", "%", "+"],
-        "nick6": [],
+      source: { name: "serverhost" },
+      params: {
+        channel: "#channel",
+        names: {
+          "nick1": [, "%"],
+          "nick2": ["@", , "+"],
+          "nick4": [, , "+"],
+          "nick3": [, , "+"],
+          "nick5": ["@", "%", "+"],
+          "nick6": [],
+        },
       },
     });
   });
 
   test("emit 'names_reply' on RPL_ISUPPORT + RPL_ENDOFNAMES", async () => {
-    const { client, server } = await mock(plugins, options);
+    const { client, server } = await mock();
 
     server.send(
       ":serverhost 005 nick PREFIX=(qaohv)~&@%+ :are supported by this server",
@@ -69,10 +57,13 @@ describe("plugins/names", (test) => {
     const msg = await client.once("names_reply");
 
     assertEquals(msg, {
-      channel: "#channel",
-      names: {
-        "nick1": ["~", , "@", , "+"],
-        "nick2": [, "&", , "%"],
+      source: { name: "serverhost" },
+      params: {
+        channel: "#channel",
+        names: {
+          "nick1": ["~", , "@", , "+"],
+          "nick2": [, "&", , "%"],
+        },
       },
     });
   });

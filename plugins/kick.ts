@@ -1,10 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { parseUserMask, Raw, UserMask } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface KickEvent {
-  /** User who sent the KICK. */
-  origin: UserMask;
-
+export interface KickEventParams {
   /** Channel where the nick is kicked. */
   channel: string;
 
@@ -15,7 +12,9 @@ export interface KickEvent {
   comment?: string;
 }
 
-export interface KickParams {
+export type KickEvent = Message<KickEventParams>;
+
+interface KickFeatures {
   commands: {
     /** Kicks a `nick` from a `channel` with an optional `comment`. */
     kick(channel: string, nick: string, comment?: string): void;
@@ -25,22 +24,17 @@ export interface KickParams {
   };
 }
 
-export const kickPlugin: Plugin<KickParams> = (client) => {
-  const sendKick = (...params: string[]) => {
-    client.send("KICK", ...params);
+export default createPlugin("kick")<KickFeatures>((client) => {
+  // Sends KICK command.
+  client.kick = (channel, nick, comment) => {
+    client.send("KICK", channel, nick, comment);
   };
 
-  const emitKick = (msg: Raw) => {
-    if (msg.command !== "KICK") {
-      return;
+  // Emits 'kick' event.
+  client.on("raw", (msg) => {
+    if (msg.command === "KICK") {
+      const { source, params: [channel, nick, comment] } = msg;
+      client.emit("kick", { source, params: { channel, nick, comment } });
     }
-
-    const { prefix, params: [channel, nick, comment] } = msg;
-    const origin = parseUserMask(prefix);
-
-    client.emit("kick", { origin, channel, nick, comment });
-  };
-
-  client.kick = sendKick;
-  client.on("raw", emitKick);
-};
+  });
+});

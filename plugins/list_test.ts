@@ -1,13 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { listPlugin } from "./list.ts";
 
 describe("plugins/list", (test) => {
-  const plugins = [listPlugin];
-
   test("send LIST", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.list();
     client.list("#chan");
@@ -26,7 +23,7 @@ describe("plugins/list", (test) => {
   });
 
   test("emit 'list_reply' on RPL_LISTEND", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     server.send([
       ":serverhost 322 me #chan1 12 :Welcome to #channel",
@@ -37,11 +34,14 @@ describe("plugins/list", (test) => {
     const msg = await client.once("list_reply");
 
     assertEquals(msg, {
-      channels: [
-        { channel: "#chan1", count: 12, topic: "Welcome to #channel" },
-        { channel: "#chan2", count: 23, topic: "" },
-        { channel: "#chan3", count: 34, topic: "" },
-      ],
+      source: { name: "serverhost" },
+      params: {
+        channels: [
+          { name: "#chan1", count: 12, topic: "Welcome to #channel" },
+          { name: "#chan2", count: 23, topic: "" },
+          { name: "#chan3", count: 34, topic: "" },
+        ],
+      },
     });
   });
 });

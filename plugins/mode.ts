@@ -1,9 +1,9 @@
-import { type Plugin } from "../core/client.ts";
-import { parseUserMask, type Raw, type UserMask } from "../core/parsers.ts";
-import { isChannel, isNick, isUserMask } from "../core/strings.ts";
-import { type IsupportParams, type Modes } from "./isupport.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
+import { isChannel } from "../core/strings.ts";
+import isupport, { type Modes } from "./isupport.ts";
 
-export interface Mode {
+interface Mode {
   /** Mode letter. */
   mode: string;
 
@@ -11,47 +11,28 @@ export interface Mode {
   arg?: string;
 }
 
-export interface ModeEvent extends Mode {
-  /** Origin of the MODE. */
-  origin: UserMask | string;
-
-  /** Target of the MODE. */
+export type ModeEventParams = Mode & {
+  /** Target of the MODE.
+   *
+   * Can be either a channel or a nick. */
   target: string;
-}
+};
 
-export interface UserModeEvent extends Mode {
-  /** Origin of the MODE. */
-  origin: UserMask | string;
+export type ModeEvent = Message<ModeEventParams>;
 
-  /** Nick related to this mode. */
-  nick: string;
-}
-
-export interface ChannelModeEvent extends Mode {
-  /** Origin of the MODE. */
-  origin: UserMask | string;
-
-  /** Channel related to this mode. */
-  channel: string;
-}
-
-export interface UserModeReplyEvent {
-  /** Nick related to this mode. */
-  nick: string;
+export interface ModeReplyEventParams {
+  /** Target of the MODE reply.
+   *
+   * Can be either a channel or a nick. */
+  target: string;
 
   /** All the modes currently set. */
   modes: Mode[];
 }
 
-export interface ChannelModeReplyEvent {
-  /** Channel related to this mode. */
-  channel: string;
+export type ModeReplyEvent = Message<ModeReplyEventParams>;
 
-  /** All the modes currently set. */
-  modes: Mode[];
-}
-
-export interface ModeParams {
+interface ModeFeatures {
   commands: {
     /** Manages modes.
      *
@@ -69,18 +50,15 @@ export interface ModeParams {
   };
   events: {
     "mode": ModeEvent;
-    "mode:user": UserModeEvent;
-    "mode:channel": ChannelModeEvent;
-    "mode_reply:user": UserModeReplyEvent;
-    "mode_reply:channel": ChannelModeReplyEvent;
+    "mode:user": ModeEvent;
+    "mode:channel": ModeEvent;
+    "mode_reply": ModeReplyEvent;
+    "mode_reply:user": ModeReplyEvent;
+    "mode_reply:channel": ModeReplyEvent;
   };
 }
 
-export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
-  const sendModeCommand = (...params: string[]) => {
-    client.send("MODE", ...params);
-  };
-
+export default createPlugin("mode", [isupport])<ModeFeatures>((client) => {
   const parseModes = (
     rawModes: string,
     args: string[],
@@ -110,7 +88,6 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
           modes.push({ mode, arg });
           break;
         }
-
         case "c": { // MUST have a parameter only when being set
           if (set === "+") {
             const arg = args.shift();
@@ -121,7 +98,6 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
           }
           break;
         }
-
         case "d":
         default: { // MUST NOT have a parameter
           modes.push({ mode });
@@ -133,15 +109,18 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
     return modes;
   };
 
-  const emitModeEvent = (msg: Raw) => {
+  // Sends MODE command.
+  client.mode = (target, modes, ...args) => {
+    client.send("MODE", target, modes, ...args);
+  };
+
+  // Emits 'mode' and 'mode_reply' events.
+  client.on("raw", (msg) => {
     const { supported } = client.state;
 
     switch (msg.command) {
       case "MODE": {
-        const { prefix, params: [target, modeLetters, ...params] } = msg;
-
-        // TODO Provide public utilities to make inference easier
-        const origin = isUserMask(prefix) ? parseUserMask(prefix) : prefix;
+        const { source, params: [target, modeLetters, ...params] } = msg;
 
         const supportedModes = isChannel(target)
           ? supported.modes.channel
@@ -150,65 +129,44 @@ export const modePlugin: Plugin<IsupportParams & ModeParams> = (client) => {
         const modes = parseModes(modeLetters, params, supportedModes);
 
         for (const { mode, arg } of modes) {
-          client.emit("mode", {
-            origin,
-            target,
-            mode,
-            ...(arg !== undefined ? { arg } : {}),
-          });
+          const payload: ModeEvent = { source, params: { target, mode } };
+          if (arg !== undefined) payload.params.arg = arg;
+
+          client.emit("mode", payload);
+
+          const event = `mode:${
+            isChannel(target) ? "channel" : "user"
+          }` as const;
+
+          client.emit(event, payload);
         }
 
         break;
       }
 
       case "RPL_UMODEIS": {
-        const [nick, rawModes] = msg.params;
+        const { source, params: [target, rawModes] } = msg;
         const modes = parseModes(rawModes, [], supported.modes.user);
-        client.emit("mode_reply:user", { nick, modes });
+
+        const payload: ModeReplyEvent = { source, params: { target, modes } };
+
+        client.emit("mode_reply", payload);
+        client.emit("mode_reply:user", payload);
+
         break;
       }
 
       case "RPL_CHANNELMODEIS": {
-        const [channel, rawModes, ...args] = msg.params;
+        const { source, params: [target, rawModes, ...args] } = msg;
         const modes = parseModes(rawModes, args, supported.modes.channel);
-        client.emit("mode_reply:channel", { channel, modes });
+
+        const payload: ModeReplyEvent = { source, params: { target, modes } };
+
+        client.emit("mode_reply", payload);
+        client.emit("mode_reply:channel", payload);
+
         break;
       }
     }
-  };
-
-  const emitUserModeEvent = (msg: ModeEvent) => {
-    if (!isNick(msg.target)) {
-      return;
-    }
-
-    const { origin, target: nick, mode, arg } = msg;
-
-    client.emit("mode:user", {
-      origin,
-      nick,
-      mode,
-      ...(arg !== undefined ? { arg } : {}),
-    });
-  };
-
-  const emitChannelModeEvent = (msg: ModeEvent) => {
-    if (!isChannel(msg.target)) {
-      return;
-    }
-
-    const { origin, target: channel, mode, arg } = msg;
-
-    client.emit("mode:channel", {
-      origin,
-      channel,
-      mode,
-      ...(arg !== undefined ? { arg } : {}),
-    });
-  };
-
-  client.mode = sendModeCommand;
-  client.on("raw", emitModeEvent);
-  client.on("mode", emitUserModeEvent);
-  client.on("mode", emitChannelModeEvent);
-};
+  });
+});

@@ -1,16 +1,12 @@
-import { Plugin } from "../core/client.ts";
 import { assertEquals, assertRejects } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { reconnectPlugin } from "./reconnect.ts";
 
 describe("plugins/reconnect", (test) => {
-  const plugins = [reconnectPlugin];
   const noop = () => {};
 
   test("reconnect on connect error", async () => {
     const { client } = await mock(
-      plugins,
       { reconnect: { attempts: 2, delay: 0 } },
       { withConnection: false },
     );
@@ -27,7 +23,6 @@ describe("plugins/reconnect", (test) => {
 
   test("reconnect on server error", async () => {
     const { client, server } = await mock(
-      plugins,
       { reconnect: { attempts: 2, delay: 0 } },
       { withConnection: false },
     );
@@ -45,7 +40,6 @@ describe("plugins/reconnect", (test) => {
 
   test("not reconnect if disabled", async () => {
     const { client } = await mock(
-      plugins,
       { reconnect: false },
       { withConnection: false },
     );
@@ -60,10 +54,7 @@ describe("plugins/reconnect", (test) => {
   });
 
   test("throw if missing error listener", async () => {
-    const catchError: Plugin = async (client) => await client.once("error");
-
     const { client } = await mock(
-      [...plugins, catchError],
       { reconnect: true },
       { withConnection: false },
     );

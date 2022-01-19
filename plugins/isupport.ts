@@ -1,6 +1,5 @@
-import { type Plugin } from "../core/client.ts";
-import { type Raw } from "../core/parsers.ts";
-import { type MyinfoEvent, type MyinfoParams } from "./myinfo.ts";
+import { createPlugin } from "../core/plugins.ts";
+import myinfo from "./myinfo.ts";
 
 export interface Modes {
   [mode: string]: {
@@ -23,7 +22,7 @@ export interface Isupport {
   prefixes: Prefixes;
 }
 
-export interface IsupportParams {
+interface IsupportFeatures {
   state: { supported: Isupport };
 }
 
@@ -66,24 +65,26 @@ export const getDefaults = (): Isupport => ({
   },
 });
 
-export const isupportPlugin: Plugin<
-  & MyinfoParams
-  & IsupportParams
-> = (client) => {
+export default createPlugin(
+  "isupport",
+  [myinfo],
+)<IsupportFeatures>((client) => {
+  client.state.supported = getDefaults();
+
   // Removes useless and adds missing supported modes.
   // These supported modes can be overridden later with their type information
   // while receiving USERMODES and CHANMODES parameters from RPL_ISUPPORT.
-  const updateSupportedModesState = (msg: MyinfoEvent) => {
+  client.on("myinfo", (msg) => {
+    const { params } = msg;
     const { supported } = client.state;
 
     const updateSupportedModes = (key: keyof Isupport["modes"]) => {
       for (const mode in supported.modes[key]) {
-        if (!(msg.modes[key].includes(mode))) {
+        if (!(params.modes[key].includes(mode))) {
           delete supported.modes[key][mode];
         }
       }
-
-      for (const mode of msg.modes[key]) {
+      for (const mode of params.modes[key]) {
         if (!(mode in supported.modes[key])) {
           supported.modes[key][mode] = { type: "d" };
         }
@@ -92,9 +93,10 @@ export const isupportPlugin: Plugin<
 
     updateSupportedModes("user");
     updateSupportedModes("channel");
-  };
+  });
 
-  const updateSupportedState = (msg: Raw) => {
+  // Updates supported state.
+  client.on("raw", (msg) => {
     if (msg.command !== "RPL_ISUPPORT") {
       return;
     }
@@ -153,10 +155,5 @@ export const isupportPlugin: Plugin<
         }
       }
     }
-  };
-
-  client.state.supported = getDefaults();
-
-  client.on("myinfo", updateSupportedModesState);
-  client.on("raw", updateSupportedState);
-};
+  });
+});

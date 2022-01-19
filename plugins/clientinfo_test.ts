@@ -1,14 +1,10 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { clientinfoPlugin } from "./clientinfo.ts";
-import { ctcpPlugin } from "./ctcp.ts";
 
 describe("plugins/clientinfo", (test) => {
-  const plugins = [ctcpPlugin, clientinfoPlugin];
-
   test("send CTCP CLIENTINFO", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     client.clientinfo("#channel");
     const raw = server.receive();
@@ -17,19 +13,19 @@ describe("plugins/clientinfo", (test) => {
   });
 
   test("emit 'ctcp_clientinfo' on CTCP CLIENTINFO query", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     server.send(":someone!user@host PRIVMSG #channel :\x01CLIENTINFO\x01");
     const msg = await client.once("ctcp_clientinfo");
 
     assertEquals(msg, {
-      origin: { nick: "someone", username: "user", userhost: "host" },
-      target: "#channel",
+      source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { target: "#channel" },
     });
   });
 
   test("emit 'ctcp_clientinfo_reply' on CTCP CLIENTINFO reply", async () => {
-    const { client, server } = await mock(plugins, {});
+    const { client, server } = await mock();
 
     server.send(
       ":someone!user@host NOTICE me :\x01CLIENTINFO PING TIME VERSION\x01",
@@ -37,17 +33,15 @@ describe("plugins/clientinfo", (test) => {
     const msg = await client.once("ctcp_clientinfo_reply");
 
     assertEquals(msg, {
-      origin: { nick: "someone", username: "user", userhost: "host" },
-      target: "me",
-      supported: ["PING", "TIME", "VERSION"],
+      source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { supported: ["PING", "TIME", "VERSION"] },
     });
   });
 
   test("reply to CTCP CLIENTINFO query", async () => {
-    const { client, server } = await mock(
-      plugins,
-      { ctcpReplies: { clientinfo: true } },
-    );
+    const { client, server } = await mock({
+      ctcpReplies: { clientinfo: true },
+    });
 
     server.send(":someone!user@host PRIVMSG me :\x01CLIENTINFO\x01");
     await client.once("ctcp_clientinfo");
@@ -60,10 +54,9 @@ describe("plugins/clientinfo", (test) => {
   });
 
   test("not reply to CTCP CLIENTINFO query if disabled", async () => {
-    const { client, server } = await mock(
-      plugins,
-      { ctcpReplies: { clientinfo: false } },
-    );
+    const { client, server } = await mock({
+      ctcpReplies: { clientinfo: false },
+    });
 
     server.send(":someone!user@host PRIVMSG me :\x01CLIENTINFO\x01");
     await client.once("ctcp_clientinfo");

@@ -1,31 +1,28 @@
-import { type Plugin } from "../core/client.ts";
-import { type InviteEvent, type InviteParams } from "./invite.ts";
-import { type JoinParams } from "./join.ts";
-import { type RegistrationParams } from "./registration.ts";
+import { createPlugin } from "../core/plugins.ts";
+import invite from "./invite.ts";
+import join from "./join.ts";
+import registration from "./registration.ts";
 
-export interface JoinOnInviteParams {
+interface JoinOnInviteFeatures {
   options: {
     /** Enables auto join on invite. */
     joinOnInvite?: boolean;
   };
 }
 
-const DEFAULT_JOIN_ON_INVITE = false;
+const JOIN_ON_INVITE_ENABLED = false;
 
-export const joinOnInvitePlugin: Plugin<
-  & JoinParams
-  & InviteParams
-  & RegistrationParams
-  & JoinOnInviteParams
-> = (client, options) => {
-  const joinChannel = (msg: InviteEvent) => {
-    if (msg.nick === client.state.user.nick) {
-      client.join(msg.channel);
-    }
-  };
-
-  const enabled = options.joinOnInvite ?? DEFAULT_JOIN_ON_INVITE;
+export default createPlugin(
+  "join_on_invite",
+  [join, registration, invite],
+)<JoinOnInviteFeatures>((client, options) => {
+  const enabled = options.joinOnInvite ?? JOIN_ON_INVITE_ENABLED;
   if (!enabled) return;
 
-  client.on("invite", joinChannel);
-};
+  // Joins the channel when receiving INVITE message.
+  client.on("invite", (msg) => {
+    if (msg.params.nick === client.state.user.nick) {
+      client.join(msg.params.channel);
+    }
+  });
+});

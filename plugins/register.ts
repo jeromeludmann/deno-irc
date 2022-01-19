@@ -1,7 +1,7 @@
-import { Plugin } from "../core/client.ts";
-import { Raw } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
+import { createPlugin } from "../core/plugins.ts";
 
-export interface RegisterEvent {
+export interface RegisterEventParams {
   /** Nick who is registered. */
   nick: string;
 
@@ -9,7 +9,9 @@ export interface RegisterEvent {
   text: string;
 }
 
-export interface RegisterParams {
+export type RegisterEvent = Message<RegisterEventParams>;
+
+interface RegisterFeatures {
   commands: {
     /** Sets the username and the realname. Registration only. */
     user(username: string, realname: string): void;
@@ -22,25 +24,22 @@ export interface RegisterParams {
   };
 }
 
-export const registerPlugin: Plugin<RegisterParams> = (client) => {
-  const sendUser = (username: string, realname: string) => {
+export default createPlugin("register")<RegisterFeatures>((client) => {
+  // Sends USER command.
+  client.user = (username, realname) => {
     client.send("USER", username, "0", "*", realname);
   };
 
-  const sendPass = (...params: string[]) => {
-    client.send("PASS", ...params);
+  // Sends PASS command.
+  client.pass = (password) => {
+    client.send("PASS", password);
   };
 
-  const emitRegister = (msg: Raw) => {
-    if (msg.command !== "RPL_WELCOME") {
-      return;
+  // Emits 'register' event.
+  client.on("raw", (msg) => {
+    if (msg.command === "RPL_WELCOME") {
+      const { source, params: [nick, text] } = msg;
+      client.emit("register", { source, params: { nick, text } });
     }
-
-    const { params: [nick, text] } = msg;
-    client.emit("register", { nick, text });
-  };
-
-  client.user = sendUser;
-  client.pass = sendPass;
-  client.on("raw", emitRegister);
-};
+  });
+});

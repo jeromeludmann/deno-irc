@@ -1,18 +1,12 @@
 import { assertArrayIncludes, assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { nickPlugin } from "./nick.ts";
-import { registerPlugin } from "./register.ts";
-import { registrationPlugin } from "./registration.ts";
-import { throwOnErrorPlugin } from "./throw_on_error.ts";
-import { verbosePlugin } from "./verbose.ts";
 
 describe("plugins/verbose", (test) => {
-  const plugins = [verbosePlugin];
   const options = { verbose: true };
 
   test("print received raw messages", async () => {
-    const { client, server, console } = await mock(plugins, options);
+    const { client, server, console } = await mock(options);
 
     server.send(":someone!user@host JOIN #channel");
     await client.once("raw");
@@ -23,7 +17,7 @@ describe("plugins/verbose", (test) => {
   });
 
   test("print sent raw messages", async () => {
-    const { client, console } = await mock(plugins, options);
+    const { client, console } = await mock(options);
 
     await client.send("JOIN", "#channel");
 
@@ -33,7 +27,7 @@ describe("plugins/verbose", (test) => {
   });
 
   test("print invoked commands", async () => {
-    const { client, console } = await mock(plugins, options);
+    const { client, console } = await mock(options);
 
     await client.send("JOIN", "#channel");
 
@@ -44,7 +38,6 @@ describe("plugins/verbose", (test) => {
 
   test("print emitted events", async () => {
     const { client, server, console } = await mock(
-      [...plugins, throwOnErrorPlugin],
       options,
       { withConnection: false },
     );
@@ -75,7 +68,6 @@ describe("plugins/verbose", (test) => {
 
   test("print state changes", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nickPlugin, registerPlugin, registrationPlugin],
       { ...options, nick: "current_nick" },
     );
 
@@ -90,7 +82,6 @@ describe("plugins/verbose", (test) => {
 
   test("print nothing if disabled", async () => {
     const { client, server, console } = await mock(
-      [...plugins, nickPlugin, registerPlugin, registrationPlugin],
       { verbose: false, nick: "me" },
       { withConnection: false },
     );

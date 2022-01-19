@@ -1,8 +1,8 @@
-import { Plugin } from "../core/client.ts";
-import { OperParams } from "./oper.ts";
-import { RegisterParams } from "./register.ts";
+import { createPlugin } from "../core/plugins.ts";
+import oper from "./oper.ts";
+import register from "./register.ts";
 
-export interface OperOnRegisterParams {
+interface OperOnRegisterFeatures {
   options: {
     /** Sets as operator on connect. */
     oper?: {
@@ -15,20 +15,15 @@ export interface OperOnRegisterParams {
   };
 }
 
-export const operOnRegisterPlugin: Plugin<
-  & RegisterParams
-  & OperParams
-  & OperOnRegisterParams
-> = (client, options) => {
+export default createPlugin(
+  "oper_on_register",
+  [oper, register],
+)<OperOnRegisterFeatures>((client, options) => {
   const { user, pass } = options.oper ?? {};
+  if (!user || !pass) return;
 
-  if (!user || !pass) {
-    return;
-  }
-
-  const setAsOperator = () => {
+  // Sets as operator once registered.
+  client.on("register", () => {
     client.oper(user, pass);
-  };
-
-  client.on("register", setAsOperator);
-};
+  });
+});

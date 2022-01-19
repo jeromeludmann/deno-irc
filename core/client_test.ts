@@ -1,11 +1,36 @@
 import { assertEquals, assertRejects, assertThrows } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
-import { mock } from "../testing/mock.ts";
-import { Plugin } from "./client.ts";
+import { mockConsole } from "../testing/console.ts";
+import { MockServer } from "../testing/server.ts";
+import { MockCoreClient } from "../testing/client.ts";
+import { type CoreFeatures } from "./client.ts";
+import { createPlugin, type Plugin } from "./plugins.ts";
 
 describe("core/client", (test) => {
+  const mock = (
+    options: CoreFeatures["options"] = {},
+    plugins: Plugin[] = [],
+  ) => {
+    const client = new MockCoreClient(plugins, options);
+    const server = new MockServer(client);
+    const console = mockConsole();
+    return { client, server, console };
+  };
+
+  test("initialize core state", () => {
+    const { client } = mock();
+
+    assertEquals(client.state, {
+      remoteAddr: {
+        hostname: "",
+        port: 0,
+        tls: false,
+      },
+    });
+  });
+
   test("connect to server", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+    const { client } = mock();
 
     client.connect("host", 6668);
     const addr = await client.once("connected");
@@ -18,7 +43,7 @@ describe("core/client", (test) => {
   });
 
   test("fail to connect", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+    const { client } = mock();
 
     client.connect("bad_remote_host");
     const error = await client.once("error");
@@ -27,8 +52,8 @@ describe("core/client", (test) => {
     assertEquals(error.type, "connect");
   });
 
-  test("throw on connect", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+  test("throw on connect", () => {
+    const { client } = mock();
 
     assertRejects(
       () => client.connect("bad_remote_host"),
@@ -38,16 +63,22 @@ describe("core/client", (test) => {
   });
 
   test("send raw message to server", async () => {
-    const { client, server } = await mock([], {});
+    const { client, server } = mock();
+
+    await client.connect("host");
 
     client.send("PING", "key");
+    client.send("JOIN", "#channel", undefined);
     const raw = server.receive();
 
-    assertEquals(raw, ["PING key"]);
+    assertEquals(raw, [
+      "PING key",
+      "JOIN #channel",
+    ]);
   });
 
   test("fail to send raw message if not connected", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+    const { client } = mock();
 
     const [error] = await Promise.all([
       client.once("error"),
@@ -58,8 +89,8 @@ describe("core/client", (test) => {
     assertEquals(error.type, "write");
   });
 
-  test("throw on send", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+  test("throw on send", () => {
+    const { client } = mock();
 
     assertRejects(
       () => client.send("PING", "key"),
@@ -69,8 +100,10 @@ describe("core/client", (test) => {
   });
 
   test("receive raw messages from server", async () => {
-    const { client, server } = await mock([], {});
+    const { client, server } = mock();
     const messages = [];
+
+    await client.connect("host");
 
     server.send("PING key");
     messages.push(await client.once("raw"));
@@ -82,18 +115,17 @@ describe("core/client", (test) => {
       {
         command: "PING",
         params: ["key"],
-        prefix: "",
       },
       {
+        source: { name: "serverhost" },
         command: "RPL_WELCOME",
         params: ["me", "Welcome to the server"],
-        prefix: "serverhost",
       },
     ]);
   });
 
   test("disconnect from server", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+    const { client } = mock();
 
     await client.connect("host");
     const [addr] = await Promise.all([
@@ -109,7 +141,7 @@ describe("core/client", (test) => {
   });
 
   test("be disconnected by server", async () => {
-    const { client, server } = await mock([], {}, { withConnection: false });
+    const { client, server } = mock();
 
     await client.connect("host");
     server.shutdown();
@@ -123,7 +155,7 @@ describe("core/client", (test) => {
   });
 
   test("not disconnect if not connected", async () => {
-    const { client } = await mock([], {}, { withConnection: false });
+    const { client } = mock();
 
     client.disconnect();
     const addr = await client.wait("disconnected", 1);
@@ -131,20 +163,19 @@ describe("core/client", (test) => {
     assertEquals(addr, null);
   });
 
-  const throwOnConnect: Plugin = (client) => {
-    client.on("connected", () => {
-      throw new Error("Boom!");
-    });
-  };
+  const plugins = [
+    createPlugin("test_error")((client) => {
+      client.on("connected", () => {
+        throw new Error("Boom!");
+      });
+    }),
+    createPlugin("test_catch")((client) => {
+      client.on("error", () => {});
+    }),
+  ];
 
-  const catchErrors: Plugin = (client) => {
-    client.on("error", () => {});
-  };
-
-  const plugins = [throwOnConnect, catchErrors];
-
-  test("throw if no listeners bound to 'error'", async () => {
-    const { client } = await mock(plugins, {}, { withConnection: false });
+  test("throw if no listeners bound to 'error'", () => {
+    const { client } = mock({}, plugins);
 
     assertRejects(
       () => client.connect(""),
@@ -154,7 +185,7 @@ describe("core/client", (test) => {
   });
 
   test("not throw if listeners bound to 'error'", async () => {
-    const { client } = await mock(plugins, {}, { withConnection: false });
+    const { client } = mock({}, plugins);
 
     client.connect("");
     const error = await client.once("error");
@@ -163,8 +194,8 @@ describe("core/client", (test) => {
     assertEquals(error.type, "connect");
   });
 
-  test("throw if too many registered listeners", async () => {
-    const { client } = await mock([], {});
+  test("throw if too many registered listeners", () => {
+    const { client } = mock();
     const noop = () => {};
 
     const subscribeForever = () => {
