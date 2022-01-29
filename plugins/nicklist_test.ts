@@ -90,6 +90,44 @@ describe("plugins/nicklist", (test) => {
     });
   });
 
+  test("emit 'nicklist' on NICK", async () => {
+    const { client, server } = await mock();
+    const messages: NicklistEvent[] = [];
+
+    server.send([
+      ":serverhost 353 me = #channel1 :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel1 :End of /NAMES list",
+      ":serverhost 353 me = #channel2 :@nick1 nick2 nick3",
+      ":serverhost 366 me #channel2 :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    client.on("nicklist", (msg) => messages.push(msg));
+
+    server.send(":nick2!user@host NICK nick4");
+    await client.once("nicklist");
+
+    assertEquals(messages, [{
+      params: {
+        channel: "#channel1",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick4" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
+    }, {
+      params: {
+        channel: "#channel2",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "", nick: "nick3" },
+          { prefix: "", nick: "nick4" },
+        ],
+      },
+    }]);
+  });
+
   test("emit 'nicklist' on MODE", async () => {
     const { client, server } = await mock();
     const messages: NicklistEvent[] = [];

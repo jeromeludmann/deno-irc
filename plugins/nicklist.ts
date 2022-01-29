@@ -4,6 +4,7 @@ import { isChannel } from "../core/strings.ts";
 import isupport from "./isupport.ts";
 import names, { type Names } from "./names.ts";
 import join from "./join.ts";
+import nick from "./nick.ts";
 import mode from "./mode.ts";
 import kick, { type KickEvent } from "./kick.ts";
 import kill, { type KillEvent } from "./kill.ts";
@@ -34,7 +35,7 @@ interface NicklistFeatures {
 
 export default createPlugin(
   "nicklist",
-  [isupport, join, kick, kill, mode, names, part, quit, registration],
+  [isupport, join, nick, kick, kill, mode, names, part, quit, registration],
 )<NicklistFeatures>((client) => {
   const namesMap: Record<string, Names> = {};
   client.state.nicklists = {};
@@ -94,6 +95,21 @@ export default createPlugin(
 
     client.state.nicklists[channel] = nicklist;
     client.emit("nicklist", { params: { channel, nicklist } });
+  });
+
+  // Updates nicks.
+  client.on("nick", (msg) => {
+    const { source, params: { nick } } = msg;
+
+    if (!source) return;
+
+    for (const channel in namesMap) {
+      namesMap[channel][nick] = namesMap[channel][source.name];
+      delete namesMap[channel][source.name];
+
+      const nicklist = createNicklist(namesMap[channel]);
+      client.emit("nicklist", { params: { channel, nicklist } });
+    }
   });
 
   // Updates nick prefixes.
