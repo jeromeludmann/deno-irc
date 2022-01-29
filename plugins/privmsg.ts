@@ -32,26 +32,25 @@ interface PrivmsgFeatures {
 
 export default createPlugin("privmsg")<PrivmsgFeatures>((client) => {
   // Sends PRIVMSG command.
+
   client.privmsg = client.msg = (target, text) => {
     client.send("PRIVMSG", target, text);
   };
 
   // Emits 'privmsg' event.
-  client.on("raw", (msg) => {
-    if (
-      msg.command === "PRIVMSG" &&
-      !isCtcp(msg)
-    ) {
-      const { source, params: [target, text] } = msg;
-      const payload: PrivmsgEvent = { source, params: { target, text } };
 
-      client.emit("privmsg", payload);
+  client.on("raw:privmsg", (msg) => {
+    if (isCtcp(msg)) return;
 
-      const event = `privmsg:${
-        isChannel(target) ? "channel" : "private"
-      }` as const;
+    const { source, params: [target, text] } = msg;
+    const payload: PrivmsgEvent = { source, params: { target, text } };
 
-      client.emit(event, payload);
-    }
+    client.emit("privmsg", payload);
+
+    const event = `privmsg:${
+      isChannel(target) ? "channel" : "private"
+    }` as const;
+
+    client.emit(event, payload);
   });
 });

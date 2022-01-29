@@ -1,9 +1,4 @@
-import {
-  type AnyCommand,
-  type AnyErrorReply,
-  type AnyReply,
-  IRC_NUMERICS,
-} from "./protocol.ts";
+import type { AnyIrcCommand, AnyIrcError, AnyIrcReply } from "./protocol.ts";
 
 export interface Mask {
   /** Username of the user. */
@@ -36,10 +31,10 @@ export interface Message<TParams> {
 
 export type Raw = Message<string[]> & {
   /** Command of the message. */
-  command: AnyCommand | AnyReply | AnyErrorReply;
+  command: AnyIrcCommand | AnyIrcReply | AnyIrcError;
 };
 
-export const parseSource = (prefix: string): Source => {
+export function parseSource(prefix: string): Source {
   const source = {} as Source;
   const [name, user, host] = prefix.split(/[@!]+/);
 
@@ -49,24 +44,28 @@ export const parseSource = (prefix: string): Source => {
   }
 
   return source;
-};
+}
 
 // The following is called on each received raw message
 // and must favor performance over readability.
-const parseMessage = (raw: string): Raw => {
+function parseMessage(raw: string): Raw {
   const msg = {} as Raw;
 
   // Indexes used to move through the raw string
+
   let start = 0;
   let end: number;
 
-  // Tags are ignored for now
+  // Parses message tags (ignored for now).
+
   if (raw[start] === "@") {
     end = raw.indexOf(" ", ++start);
     start = end + 1;
   }
 
-  // Prefix parsing
+  // Parses message prefix.
+  // User prefixes can be formatted as `nick!user@host`.
+
   if (raw[start] === ":") {
     end = raw.indexOf(" ", ++start);
     const prefix = raw.slice(start, end);
@@ -74,16 +73,16 @@ const parseMessage = (raw: string): Raw => {
     start = end + 1;
   }
 
-  // Command parsing
+  // Parses message command.
+
   end = raw.indexOf(" ", start);
   if (end === -1) end = raw.length;
   const command = raw.slice(start, end);
-  msg.command = command in IRC_NUMERICS
-    ? (IRC_NUMERICS as Record<string, AnyReply | AnyErrorReply>)[command]
-    : command as AnyCommand;
+  msg.command = command as AnyIrcCommand | AnyIrcReply | AnyIrcError;
   start = end + 1;
 
-  // Params parsing
+  // Parses message parameters.
+
   msg.params = [];
   while (start < raw.length && raw[start] !== ":") {
     end = raw.indexOf(" ", start);
@@ -98,7 +97,7 @@ const parseMessage = (raw: string): Raw => {
   }
 
   return msg;
-};
+}
 
 export class Parser {
   private chunk = "";

@@ -52,10 +52,8 @@ export default createPlugin("join")<JoinFeatures>((client) => {
   };
 
   // Emits 'join' events.
-  client.on("raw", (msg) => {
-    if (msg.command === "JOIN") {
-      const { source, params: [channel] } = msg;
-      client.emit("join", { source, params: { channel } });
-    }
+  client.on("raw:join", (msg) => {
+    const { source, params: [channel] } = msg;
+    client.emit("join", { source, params: { channel } });
   });
 });

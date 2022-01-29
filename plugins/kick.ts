@@ -31,10 +31,8 @@ export default createPlugin("kick")<KickFeatures>((client) => {
   };
 
   // Emits 'kick' event.
-  client.on("raw", (msg) => {
-    if (msg.command === "KICK") {
-      const { source, params: [channel, nick, comment] } = msg;
-      client.emit("kick", { source, params: { channel, nick, comment } });
-    }
+  client.on("raw:kick", (msg) => {
+    const { source, params: [channel, nick, comment] } = msg;
+    client.emit("kick", { source, params: { channel, nick, comment } });
   });
 });

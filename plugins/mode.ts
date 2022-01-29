@@ -58,56 +58,58 @@ interface ModeFeatures {
   };
 }
 
-export default createPlugin("mode", [isupport])<ModeFeatures>((client) => {
-  const parseModes = (
-    rawModes: string,
-    args: string[],
-    supportedModes: Modes,
-  ): Mode[] => {
-    const modes: Mode[] = [];
-    let set: "+" | "-" | "" = "";
+function parseModes(
+  rawModes: string,
+  args: string[],
+  supportedModes: Modes,
+): Mode[] {
+  const modes: Mode[] = [];
+  let set: "+" | "-" | "" = "";
 
-    for (const modeChar of rawModes) {
-      if (modeChar === "+" || modeChar === "-") {
-        set = modeChar;
-        continue;
+  for (const modeChar of rawModes) {
+    if (modeChar === "+" || modeChar === "-") {
+      set = modeChar;
+      continue;
+    }
+
+    if (!(modeChar in supportedModes)) {
+      continue;
+    }
+
+    const { type } = supportedModes[modeChar];
+    const mode = set + modeChar;
+
+    switch (type) {
+      case "a":
+      case "b": { // MUST always have a parameter
+        const arg = args.shift();
+        if (arg === undefined) break;
+        modes.push({ mode, arg });
+        break;
       }
-
-      if (!(modeChar in supportedModes)) {
-        continue;
-      }
-
-      const { type } = supportedModes[modeChar];
-      const mode = set + modeChar;
-
-      switch (type) {
-        case "a":
-        case "b": { // MUST always have a parameter
+      case "c": { // MUST have a parameter only when being set
+        if (set === "+") {
           const arg = args.shift();
           if (arg === undefined) break;
           modes.push({ mode, arg });
-          break;
-        }
-        case "c": { // MUST have a parameter only when being set
-          if (set === "+") {
-            const arg = args.shift();
-            if (arg === undefined) break;
-            modes.push({ mode, arg });
-          } else {
-            modes.push({ mode });
-          }
-          break;
-        }
-        case "d":
-        default: { // MUST NOT have a parameter
+        } else {
           modes.push({ mode });
-          break;
         }
+        break;
+      }
+      case "d":
+      default: { // MUST NOT have a parameter
+        modes.push({ mode });
+        break;
       }
     }
+  }
 
-    return modes;
-  };
+  return modes;
+}
+
+export default createPlugin("mode", [isupport])<ModeFeatures>((client) => {
+  const { supported } = client.state;
 
   // Sends MODE command.
   client.mode = (target, modes, ...args) => {
@@ -115,58 +117,42 @@ export default createPlugin("mode", [isupport])<ModeFeatures>((client) => {
   };
 
   // Emits 'mode' and 'mode_reply' events.
-  client.on("raw", (msg) => {
-    const { supported } = client.state;
 
-    switch (msg.command) {
-      case "MODE": {
-        const { source, params: [target, modeLetters, ...params] } = msg;
+  client.on("raw:mode", (msg) => {
+    const { source, params: [target, modeLetters, ...params] } = msg;
 
-        const supportedModes = isChannel(target)
-          ? supported.modes.channel
-          : supported.modes.user;
+    const supportedModes = isChannel(target)
+      ? supported.modes.channel
+      : supported.modes.user;
 
-        const modes = parseModes(modeLetters, params, supportedModes);
+    const modes = parseModes(modeLetters, params, supportedModes);
 
-        for (const { mode, arg } of modes) {
-          const payload: ModeEvent = { source, params: { target, mode } };
-          if (arg !== undefined) payload.params.arg = arg;
+    for (const { mode, arg } of modes) {
+      const payload: ModeEvent = { source, params: { target, mode } };
+      if (arg !== undefined) payload.params.arg = arg;
 
-          client.emit("mode", payload);
-
-          const event = `mode:${
-            isChannel(target) ? "channel" : "user"
-          }` as const;
-
-          client.emit(event, payload);
-        }
-
-        break;
-      }
-
-      case "RPL_UMODEIS": {
-        const { source, params: [target, rawModes] } = msg;
-        const modes = parseModes(rawModes, [], supported.modes.user);
-
-        const payload: ModeReplyEvent = { source, params: { target, modes } };
-
-        client.emit("mode_reply", payload);
-        client.emit("mode_reply:user", payload);
-
-        break;
-      }
-
-      case "RPL_CHANNELMODEIS": {
-        const { source, params: [target, rawModes, ...args] } = msg;
-        const modes = parseModes(rawModes, args, supported.modes.channel);
-
-        const payload: ModeReplyEvent = { source, params: { target, modes } };
-
-        client.emit("mode_reply", payload);
-        client.emit("mode_reply:channel", payload);
-
-        break;
-      }
+      client.emit("mode", payload);
+      client.emit(`mode:${isChannel(target) ? "channel" : "user"}`, payload);
     }
+  });
+
+  client.on("raw:rpl_umodeis", (msg) => {
+    const { source, params: [target, rawModes] } = msg;
+    const modes = parseModes(rawModes, [], supported.modes.user);
+
+    const payload: ModeReplyEvent = { source, params: { target, modes } };
+
+    client.emit("mode_reply", payload);
+    client.emit("mode_reply:user", payload);
+  });
+
+  client.on("raw:rpl_channelmodeis", (msg) => {
+    const { source, params: [target, rawModes, ...args] } = msg;
+    const modes = parseModes(rawModes, args, supported.modes.channel);
+
+    const payload: ModeReplyEvent = { source, params: { target, modes } };
+
+    client.emit("mode_reply", payload);
+    client.emit("mode_reply:channel", payload);
   });
 });

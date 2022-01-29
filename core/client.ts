@@ -3,7 +3,17 @@ import { EventEmitter, type EventEmitterOptions } from "./events.ts";
 import { Hooks } from "./hooks.ts";
 import { Parser, type Raw } from "./parsers.ts";
 import { loadPlugins, type Plugin } from "./plugins.ts";
-import { type AnyCommand } from "./protocol.ts";
+import {
+  type AnyCommandEventName,
+  type AnyErrorEventName,
+  type AnyIrcCommand,
+  type AnyReplyEventName,
+  PROTOCOL,
+} from "./protocol.ts";
+
+type AnyRawEventName =
+  | "raw"
+  | `raw:${AnyCommandEventName | AnyReplyEventName | AnyErrorEventName}`;
 
 export interface CoreFeatures {
   options: EventEmitterOptions & {
@@ -16,9 +26,8 @@ export interface CoreFeatures {
     "connecting": RemoteAddr;
     "connected": RemoteAddr;
     "disconnected": RemoteAddr;
-    "raw": Raw;
     "error": ClientError;
-  };
+  } & { [K in AnyRawEventName]: Raw };
   state: {
     remoteAddr: RemoteAddr;
   };
@@ -41,9 +50,7 @@ interface ConnectImpl {
 
 export class CoreClient<
   TEvents extends CoreFeatures["events"] = CoreFeatures["events"],
-> extends EventEmitter<
-  CoreFeatures["events"] & TEvents
-> {
+> extends EventEmitter<TEvents> {
   readonly state: CoreFeatures["state"];
 
   protected connectImpl: ConnectImpl = {
@@ -120,6 +127,7 @@ export class CoreClient<
 
       for (const msg of messages) {
         this.emit("raw", msg);
+        this.emit(`raw:${PROTOCOL.ALL[msg.command]}`, msg);
       }
     }
 
@@ -163,7 +171,7 @@ export class CoreClient<
    * Resolves with the raw message sent to the server,
    * or `null` if nothing has been sent. */
   async send(
-    command: AnyCommand,
+    command: AnyIrcCommand,
     ...params: (string | undefined)[]
   ): Promise<string | null> {
     if (this.conn === null) {

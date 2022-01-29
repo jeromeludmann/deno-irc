@@ -26,20 +26,21 @@ interface RegisterFeatures {
 
 export default createPlugin("register")<RegisterFeatures>((client) => {
   // Sends USER command.
+
   client.user = (username, realname) => {
     client.send("USER", username, "0", "*", realname);
   };
 
   // Sends PASS command.
+
   client.pass = (password) => {
     client.send("PASS", password);
   };
 
   // Emits 'register' event.
-  client.on("raw", (msg) => {
-    if (msg.command === "RPL_WELCOME") {
-      const { source, params: [nick, text] } = msg;
-      client.emit("register", { source, params: { nick, text } });
-    }
+
+  client.on("raw:rpl_welcome", (msg) => {
+    const { source, params: [nick, text] } = msg;
+    client.emit("register", { source, params: { nick, text } });
   });
 });

@@ -28,10 +28,8 @@ export default createPlugin("quit")<QuitFeatures>((client) => {
   };
 
   // Emits 'quit' event.
-  client.on("raw", (msg) => {
-    if (msg.command == "QUIT") {
-      const { source, params: [comment] } = msg;
-      client.emit("quit", { source, params: { comment } });
-    }
+  client.on("raw:quit", (msg) => {
+    const { source, params: [comment] } = msg;
+    client.emit("quit", { source, params: { comment } });
   });
 });

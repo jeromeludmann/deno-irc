@@ -28,10 +28,8 @@ export default createPlugin("invite")<InviteFeatures>((client) => {
   };
 
   // Emits 'invite' event.
-  client.on("raw", (msg) => {
-    if (msg.command === "INVITE") {
-      const { source, params: [nick, channel] } = msg;
-      client.emit("invite", { source, params: { nick, channel } });
-    }
+  client.on("raw:invite", (msg) => {
+    const { source, params: [nick, channel] } = msg;
+    client.emit("invite", { source, params: { nick, channel } });
   });
 });

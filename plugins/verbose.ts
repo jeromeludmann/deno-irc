@@ -18,7 +18,9 @@ export default createPlugin(
   if (!enabled) return;
 
   // Prints received messages.
-  client.hooks.afterCall("read", (chunks) => {
+
+  // deno-lint-ignore no-explicit-any
+  client.hooks.afterCall("read" as any, (chunks: string | null) => {
     if (chunks !== null) {
       console.info(
         dim("read"),
@@ -29,34 +31,33 @@ export default createPlugin(
   });
 
   // Prints sent messages.
+
   client.hooks.afterCall("send", (raw) => {
     if (raw === null) return;
     console.info(dim("send"), dim(bold("raw")), dim(JSON.stringify(raw)));
   });
 
   // Prints sent commands.
+
   client.hooks.beforeCall("send", (command, ...params) => {
     console.info("send", bold(command), params);
   });
 
   // Prints emitted events.
+
   client.hooks.beforeCall("emit", (event, payload) => {
-    switch (event) {
-      case "raw": {
-        break;
-      }
-      case "error": {
-        const { type, name, message } = payload as ClientError;
-        console.info("emit", bold(event), { type, name, message });
-        break;
-      }
-      default: {
-        console.info("emit", bold(event), payload);
-      }
+    if (event.startsWith("raw")) {
+      return;
     }
+    if (event === "error") {
+      const { type, name, message } = payload as ClientError;
+      payload = { type, name, message };
+    }
+    console.info("emit", bold(event), payload);
   });
 
   // Prints state changes.
+
   client.hooks.beforeMutate("state", (state, key, value) => {
     const prev = JSON.stringify(state[key]);
     const next = JSON.stringify(value);

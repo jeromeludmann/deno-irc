@@ -20,15 +20,15 @@ interface NickFeatures {
 
 export default createPlugin("nick")<NickFeatures>((client) => {
   // Sends 'nick' command.
+
   client.nick = (nick) => {
     client.send("NICK", nick);
   };
 
   // Emits 'nick' event.
-  client.on("raw", (msg) => {
-    if (msg.command === "NICK") {
-      const { source, params: [nick] } = msg;
-      client.emit("nick", { source, params: { nick } });
-    }
+
+  client.on("raw:nick", (msg) => {
+    const { source, params: [nick] } = msg;
+    client.emit("nick", { source, params: { nick } });
   });
 });

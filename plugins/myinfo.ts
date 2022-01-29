@@ -27,8 +27,8 @@ interface MyinfoFeatures {
 
 export default createPlugin("myinfo")<MyinfoFeatures>((client) => {
   // Emits 'myinfo' event.
-  client.on("raw", (msg) => {
-    if (msg.command !== "RPL_MYINFO") return;
+
+  client.on("raw:rpl_myinfo", (msg) => {
     const { source, params: [, host, version, userModes, channelModes] } = msg;
 
     const user = userModes.split("");
@@ -44,6 +44,7 @@ export default createPlugin("myinfo")<MyinfoFeatures>((client) => {
   });
 
   // Sets 'server' state.
+
   client.on("myinfo", (msg) => {
     client.state.server = msg.params.server;
   });

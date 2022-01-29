@@ -18,7 +18,7 @@ export interface Plugin<
 
 type ExtendedClient<F extends PluginFeatures> =
   & CoreClient<CoreFeatures["events"] & F["events"]>
-  & { readonly hooks: Hooks<ExtendedClient<F> & { read: CoreClient["read"] }> }
+  & { readonly hooks: Hooks<ExtendedClient<F>> }
   & { readonly state: F["state"] }
   & F["commands"];
 

@@ -29,26 +29,25 @@ interface NoticeFeatures {
 
 export default createPlugin("notice")<NoticeFeatures>((client) => {
   // Sends NOTICE command.
+
   client.notice = (target, text) => {
     client.send("NOTICE", target, text);
   };
 
   // Emits 'notice' event.
-  client.on("raw", (msg) => {
-    if (
-      msg.command === "NOTICE" &&
-      !isCtcp(msg)
-    ) {
-      const { source, params: [target, text] } = msg;
-      const payload: NoticeEvent = { source, params: { target, text } };
 
-      client.emit("notice", payload);
+  client.on("raw:notice", (msg) => {
+    if (isCtcp(msg)) return;
 
-      const event = `notice:${
-        isChannel(target) ? "channel" : "private"
-      }` as const;
+    const { source, params: [target, text] } = msg;
+    const payload: NoticeEvent = { source, params: { target, text } };
 
-      client.emit(event, payload);
-    }
+    client.emit("notice", payload);
+
+    const event = `notice:${
+      isChannel(target) ? "channel" : "private"
+    }` as const;
+
+    client.emit(event, payload);
   });
 });

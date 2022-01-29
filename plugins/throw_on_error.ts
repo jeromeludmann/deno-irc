@@ -4,12 +4,12 @@ import { createPlugin } from "../core/plugins.ts";
 export default createPlugin("throw_on_error")((client) => {
   // Wraps server ERROR message into an `Error` object.
   // It will throw error if there are no error listeners bound to it.
+
   const emitError = (msg: Raw) => {
-    if (msg.command === "ERROR") {
-      const { command, params } = msg;
-      const message = command + ": " + params.join(": ");
-      client.emitError("read", message, emitError);
-    }
+    const { command, params } = msg;
+    const message = command + ": " + params.join(": ");
+    client.emitError("read", message, emitError);
   };
-  client.on("raw", emitError);
+
+  client.on("raw:error", emitError);
 });

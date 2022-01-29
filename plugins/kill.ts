@@ -28,10 +28,8 @@ export default createPlugin("kill")<KillFeatures>((client) => {
   };
 
   // Emits 'kill' event.
-  client.on("raw", (msg) => {
-    if (msg.command === "KILL") {
-      const { source, params: [nick, comment] } = msg;
-      client.emit("kill", { source, params: { nick, comment } });
-    }
+  client.on("raw:kill", (msg) => {
+    const { source, params: [nick, comment] } = msg;
+    client.emit("kill", { source, params: { nick, comment } });
   });
 });

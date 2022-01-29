@@ -96,11 +96,7 @@ export default createPlugin(
   });
 
   // Updates supported state.
-  client.on("raw", (msg) => {
-    if (msg.command !== "RPL_ISUPPORT") {
-      return;
-    }
-
+  client.on("raw:rpl_isupport", (msg) => {
     const [, ...params] = msg.params;
     params.pop(); // remove useless trailing "are supported by this server"
 

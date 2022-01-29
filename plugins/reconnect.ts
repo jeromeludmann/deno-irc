@@ -62,6 +62,7 @@ export default createPlugin(
   };
 
   // Reconnects on connect error.
+
   client.on("error", (error) => {
     if (error.type === "connect") {
       delayReconnect();
@@ -69,25 +70,25 @@ export default createPlugin(
   });
 
   // Reconnects on server error.
-  client.on("raw", (msg) => {
-    if (msg.command === "ERROR") {
-      delayReconnect();
-    }
+
+  client.on("raw:error", () => {
+    delayReconnect();
   });
 
   // Increments attempts.
+
   client.on("connecting", () => {
     currentAttempts++;
   });
 
   // Resets attempts
-  client.on("raw", (msg) => {
-    if (msg.command === "RPL_WELCOME") {
-      currentAttempts = 0;
-    }
+
+  client.on("raw:rpl_welcome", () => {
+    currentAttempts = 0;
   });
 
   // Make error listener required.
+
   const requireErrorListener = () => {
     if (client.count("error") > 0) return;
     const error = "plugins/reconnect requires an error listener";

@@ -28,7 +28,7 @@ describe("core/parsers", (test) => {
     assertEquals(raw3, [
       {
         source: { name: "serverhost" },
-        command: "RPL_WELCOME",
+        command: "001",
         params: ["nick", "Welcome to the server"],
       },
       {

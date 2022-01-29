@@ -118,7 +118,7 @@ describe("core/client", (test) => {
       },
       {
         source: { name: "serverhost" },
-        command: "RPL_WELCOME",
+        command: "001",
         params: ["me", "Welcome to the server"],
       },
     ]);

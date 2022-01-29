@@ -11,7 +11,7 @@ describe("plugins/error_reply", (test) => {
 
     assertEquals(error, {
       source: { name: "serverhost" },
-      command: "ERR_NOSUCHCHANNEL",
+      command: "403", // ERR_NOSUCHCHANNEL
       params: { values: ["#null"], text: "No such channel" },
     });
   });
@@ -24,7 +24,7 @@ describe("plugins/error_reply", (test) => {
 
     assertEquals(error, {
       source: { name: "serverhost" },
-      command: "ERR_UNKNOWNCOMMAND",
+      command: "421", // ERR_UNKNOWNCOMMAND
       params: { values: ["TEST"], text: "Unknown command" },
     });
   });
@@ -37,7 +37,7 @@ describe("plugins/error_reply", (test) => {
 
     assertEquals(error, {
       source: { name: "serverhost" },
-      command: "ERR_ERRONEUSNICKNAME",
+      command: "432", // ERR_ERRONEUSNICKNAME
       params: { values: ["*", "0nick"], text: "Erroneous Nickname" },
     });
   });
@@ -50,7 +50,7 @@ describe("plugins/error_reply", (test) => {
 
     assertEquals(error, {
       source: { name: "serverhost" },
-      command: "ERR_NOTREGISTERED",
+      command: "451", // ERR_NOTREGISTERED
       params: { values: [], text: "You have not registered" },
     });
   });

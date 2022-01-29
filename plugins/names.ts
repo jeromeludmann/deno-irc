@@ -29,62 +29,56 @@ export default createPlugin(
   "names",
   [isupport, registration],
 )<NamesFeatures>((client) => {
+  const { supported } = client.state;
   const buffers: Record<string, Names> = {};
+
   client.state.capabilities.push("multi-prefix");
 
   // Sends NAMES command.
+
   client.names = (channels): void => {
     if (!Array.isArray(channels)) channels = [channels];
     client.send("NAMES", channels.join(","));
   };
 
   // Emits 'names_reply' event.
-  client.on("raw", (msg) => {
-    const { supported } = client.state;
 
-    switch (msg.command) {
-      case "RPL_NAMREPLY": {
-        const [, , channel, prefixedNicks] = msg.params;
-        buffers[channel] ??= {};
+  client.on("raw:rpl_namreply", (msg) => {
+    const [, , channel, prefixedNicks] = msg.params;
+    buffers[channel] ??= {};
 
-        for (const prefixedNick of prefixedNicks.split(" ")) {
-          const prefixes = [];
+    for (const prefixedNick of prefixedNicks.split(" ")) {
+      const prefixes = [];
 
-          // extracts prefixes from prefixed nick
-          for (const char of prefixedNick) {
-            if (char in supported.prefixes) prefixes.push(char);
-            else break;
-          }
-
-          // extracts nick from prefixed nick
-          const nick = prefixedNick.slice(prefixes.length);
-
-          buffers[channel][nick] = [];
-
-          // adds prefixes to nick entry
-          for (const prefix of prefixes) {
-            const index = supported.prefixes[prefix].priority;
-            buffers[channel][nick][index] = prefix;
-          }
-        }
-
-        break;
+      // extracts prefixes from prefixed nick
+      for (const char of prefixedNick) {
+        if (char in supported.prefixes) prefixes.push(char);
+        else break;
       }
 
-      case "RPL_ENDOFNAMES": {
-        const { source, params: [, channel] } = msg;
+      // extracts nick from prefixed nick
+      const nick = prefixedNick.slice(prefixes.length);
 
-        if (channel in buffers) {
-          client.emit("names_reply", {
-            source,
-            params: { channel, names: buffers[channel] },
-          });
+      buffers[channel][nick] = [];
 
-          delete buffers[channel];
-        }
-
-        break;
+      // adds prefixes to nick entry
+      for (const prefix of prefixes) {
+        const index = supported.prefixes[prefix].priority;
+        buffers[channel][nick][index] = prefix;
       }
+    }
+  });
+
+  client.on("raw:rpl_endofnames", (msg) => {
+    const { source, params: [, channel] } = msg;
+
+    if (channel in buffers) {
+      client.emit("names_reply", {
+        source,
+        params: { channel, names: buffers[channel] },
+      });
+
+      delete buffers[channel];
     }
   });
 });

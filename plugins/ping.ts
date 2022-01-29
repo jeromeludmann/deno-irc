@@ -63,6 +63,7 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
   const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
 
   // Sends PING command.
+
   client.ping = (target) => {
     const key = Date.now().toString();
 
@@ -74,22 +75,19 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
   };
 
   // Emits 'ping' and 'pong' events.
-  client.on("raw", (msg) => {
-    switch (msg.command) {
-      case "PING": {
-        const { source, params: keys } = msg;
-        client.emit("ping", { source, params: { keys } });
-        break;
-      }
-      case "PONG": {
-        const { source, params: [daemon, key] } = msg;
-        client.emit("pong", { source, params: { daemon, key } });
-        break;
-      }
-    }
+
+  client.on("raw:ping", (msg) => {
+    const { source, params: keys } = msg;
+    client.emit("ping", { source, params: { keys } });
+  });
+
+  client.on("raw:pong", (msg) => {
+    const { source, params: [daemon, key] } = msg;
+    client.emit("pong", { source, params: { daemon, key } });
   });
 
   // Emits 'ctcp_ping' event.
+
   client.on("ctcp", (msg) => {
     if (
       msg.command === "PING" &&
@@ -109,11 +107,13 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
   });
 
   // Replies to PING.
+
   client.on("ping", (msg) => {
     client.send("PONG", ...msg.params.keys);
   });
 
   // Replies to CTCP PING.
+
   if (!ctcpReplyEnabled) return;
   client.on("ctcp_ping", (msg) => {
     const { source, params: { key } } = msg;

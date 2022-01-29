@@ -35,6 +35,7 @@ export default createPlugin("list")<ListFeatures>((client) => {
   let buffer: Channel[] = [];
 
   // Sends LIST command.
+
   client.list = (channels, server) => {
     const params: string[] = [];
 
@@ -53,23 +54,19 @@ export default createPlugin("list")<ListFeatures>((client) => {
   // Emits 'list_reply' event.
   // Accumulates channel list parts into buffer
   // and emits a `list_reply` event once ended.
-  client.on("raw", (msg) => {
-    switch (msg.command) {
-      case "RPL_LISTSTART": {
-        buffer = [];
-        break;
-      }
-      case "RPL_LIST": {
-        const [, name, count, topic = ""] = msg.params;
-        buffer.push({ name, count: parseInt(count, 10), topic });
-        break;
-      }
-      case "RPL_LISTEND": {
-        const { source } = msg;
-        client.emit("list_reply", { source, params: { channels: buffer } });
-        buffer = []; // useful because sometimes RPL_LISTSTART could not be sent
-        break;
-      }
-    }
+
+  client.on("raw:rpl_liststart", () => {
+    buffer = [];
+  });
+
+  client.on("raw:rpl_list", (msg) => {
+    const [, name, count, topic = ""] = msg.params;
+    buffer.push({ name, count: parseInt(count, 10), topic });
+  });
+
+  client.on("raw:rpl_listend", (msg) => {
+    const { source } = msg;
+    client.emit("list_reply", { source, params: { channels: buffer } });
+    buffer = []; // useful because sometimes RPL_LISTSTART could not be sent
   });
 });

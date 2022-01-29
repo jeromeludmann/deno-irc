@@ -69,24 +69,26 @@ export default createPlugin(
   };
 
   // Sends capabilities and registers once connected.
+
   client.on("connected", () => {
     sendCapabilities();
     sendRegistration();
   });
 
   // Registers if receives ERR_NOTREGISTERED message
-  client.on("raw", (msg) => {
-    if (msg.command === "ERR_NOTREGISTERED") {
-      sendRegistration();
-    }
+
+  client.on("raw:err_notregistered", () => {
+    sendRegistration();
   });
 
   // Initializes 'nick' state.
+
   client.on("register", (msg) => {
     client.state.user.nick = msg.params.nick;
   });
 
   // Updates 'nick' state.
+
   client.on("nick", (msg) => {
     const { source, params } = msg;
     const { user } = client.state;

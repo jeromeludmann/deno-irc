@@ -23,15 +23,15 @@ interface PartFeatures {
 
 export default createPlugin("part")<PartFeatures>((client) => {
   // Sends PART command.
+
   client.part = (channel, comment) => {
     client.send("PART", channel, comment);
   };
 
   // Emits 'part' events.
-  client.on("raw", (msg) => {
-    if (msg.command === "PART") {
-      const { source, params: [channel, comment] } = msg;
-      client.emit("part", { source, params: { channel, comment } });
-    }
+
+  client.on("raw:part", (msg) => {
+    const { source, params: [channel, comment] } = msg;
+    client.emit("part", { source, params: { channel, comment } });
   });
 });

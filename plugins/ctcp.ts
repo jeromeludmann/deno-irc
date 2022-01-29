@@ -80,18 +80,21 @@ export default createPlugin("ctcp", [])<CtcpFeatures>((client) => {
   };
 
   // Emits 'ctcp' event.
-  client.on("raw", (msg) => {
-    if (!isCtcp(msg)) return;
-    const { source, params: [target, rawCtcp] } = msg;
+  const onCtcp = (type: "query" | "reply") =>
+    (msg: Raw) => {
+      if (!isCtcp(msg)) return;
 
-    const i = rawCtcp.indexOf(" ", 1);
-    const command = rawCtcp.slice(1, i) as AnyCtcpCommand;
-    const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
-    const type = msg.command === "PRIVMSG" ? "query" : "reply";
+      const { source, params: [target, rawCtcp] } = msg;
 
-    const ctcp: CtcpEvent = { source, command, params: { target, type } };
-    if (ctcpParam) ctcp.params.param = ctcpParam;
+      const i = rawCtcp.indexOf(" ", 1);
+      const command = rawCtcp.slice(1, i) as AnyCtcpCommand;
+      const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
 
-    client.emit("ctcp", ctcp);
-  });
+      const ctcp: CtcpEvent = { source, command, params: { target, type } };
+      if (ctcpParam) ctcp.params.param = ctcpParam;
+
+      client.emit("ctcp", ctcp);
+    };
+  client.on("raw:privmsg", onCtcp("query"));
+  client.on("raw:notice", onCtcp("reply"));
 });

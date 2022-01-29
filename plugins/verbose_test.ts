@@ -9,7 +9,7 @@ describe("plugins/verbose", (test) => {
     const { client, server, console } = await mock(options);
 
     server.send(":someone!user@host JOIN #channel");
-    await client.once("raw");
+    await client.once("join");
 
     assertArrayIncludes(console.stdout, [
       ["read", "chunks", '":someone!user@host JOIN #channel\\r\\n"'],
@@ -90,7 +90,7 @@ describe("plugins/verbose", (test) => {
     await client.once("connected");
     client.send("JOIN", "#channel");
     server.send(":me!user@host JOIN #channel");
-    await client.once("raw");
+    await client.once("join");
 
     assertEquals(console.stdout, []);
   });
