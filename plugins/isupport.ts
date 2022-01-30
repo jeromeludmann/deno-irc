@@ -1,4 +1,5 @@
 import { createPlugin } from "../core/plugins.ts";
+import { type Message } from "../core/parsers.ts";
 import myinfo from "./myinfo.ts";
 
 export interface Modes {
@@ -22,8 +23,19 @@ export interface Isupport {
   prefixes: Prefixes;
 }
 
+export interface IsupportEventParams {
+  value?: string;
+}
+
+export type IsupportEvent = Message<IsupportEventParams>;
+
+type AnyIsupportParamKey = "USERMODES" | "CHANMODES" | "PREFIX";
+
 interface IsupportFeatures {
   state: { supported: Isupport };
+  events: {
+    [K in `isupport:${Lowercase<AnyIsupportParamKey>}`]: IsupportEvent;
+  };
 }
 
 export const getDefaults = (): Isupport => ({
@@ -74,6 +86,7 @@ export default createPlugin(
   // Removes useless and adds missing supported modes.
   // These supported modes can be overridden later with their type information
   // while receiving USERMODES and CHANMODES parameters from RPL_ISUPPORT.
+
   client.on("myinfo", (msg) => {
     const { params } = msg;
     const { supported } = client.state;
@@ -96,60 +109,84 @@ export default createPlugin(
   });
 
   // Updates supported state.
+
   client.on("raw:rpl_isupport", (msg) => {
-    const [, ...params] = msg.params;
+    const { source, params: [, ...params] } = msg;
     params.pop(); // remove useless trailing "are supported by this server"
 
     for (const param of params) {
-      const [paramKey, paramValue = undefined] = param.split("=");
-      if (paramKey.startsWith("-")) continue; // ignore unavailable feature
+      const [key, value = undefined] = param.split("=");
 
-      let supportedModes: Modes;
-
-      switch (paramKey) {
-        case "USERMODES": // USERMODES=,,s,BIRWcgikorw
-          supportedModes = client.state.supported.modes.user;
-          // USERMODES always falls through CHANMODES with `supportedModes` set.
-        case "CHANMODES": { // CHANMODES=IXbeg,k,Hfjl,ACKMOPRTcimnprstz
-          supportedModes ??= client.state.supported.modes.channel;
-          if (paramValue === undefined) break;
-
-          // Do NOT reset supported modes here!
-          // Keep existing defaults and only override them. Following lines
-          // should always work with both USERMODES and CHANMODES.
-
-          let modeType = "a".charCodeAt(0);
-
-          for (const modeChar of paramValue) {
-            const type = { type: String.fromCharCode(modeType) };
-            modeChar === "," ? ++modeType : (supportedModes[modeChar] = type);
-          }
-
-          break;
-        }
-
-        case "PREFIX": { // PREFIX=(qaohv)~&@%+
-          if (paramValue === undefined) break;
-          const match = paramValue.match(/\((.*?)\)(.*)/);
-          if (match === null) break;
-
-          const [, mode, prefixes] = match;
-
-          // ALWAYS RESET supported prefixes here
-          // in order to avoid prefix priority offsets!
-          client.state.supported.prefixes = {};
-
-          for (let i = 0; i < mode.length; ++i) {
-            client.state.supported.prefixes[prefixes[i]] = { priority: i };
-            client.state.supported.modes.channel[mode[i]] = {
-              type: "b", // RFC: modes coming from PREFIX should always be treated as type 'b'
-              prefix: prefixes[i],
-            };
-          }
-
-          break;
-        }
+      // ignore unavailable feature
+      if (key.startsWith("-")) {
+        continue;
       }
+
+      client.emit(
+        `isupport:${key.toLowerCase() as Lowercase<AnyIsupportParamKey>}`,
+        { source, params: { value } },
+      );
+    }
+  });
+
+  // Emits 'isupport:usermodes' and 'isupport:chanmodes' event.
+  //
+  // USERMODES=,,s,BIRWcgikorw
+  // CHANMODES=IXbeg,k,Hfjl,ACKMOPRTcimnprstz
+
+  const { modes } = client.state.supported;
+
+  const emitsModeEvent = (supportedModes: Modes) =>
+    (msg: IsupportEvent) => {
+      const { params: { value: paramValue } } = msg;
+
+      if (paramValue === undefined) {
+        return;
+      }
+
+      // Do NOT reset supported modes here!
+      // Keep existing defaults and only override them. Following lines
+      // should always work with both USERMODES and CHANMODES.
+
+      let modeType = "a".charCodeAt(0);
+
+      for (const modeChar of paramValue) {
+        const type = { type: String.fromCharCode(modeType) };
+        modeChar === "," ? ++modeType : (supportedModes[modeChar] = type);
+      }
+    };
+
+  client.on("isupport:usermodes", emitsModeEvent(modes.user));
+  client.on("isupport:chanmodes", emitsModeEvent(modes.channel));
+
+  // Emits 'isupport:prefix' event.
+  //
+  // PREFIX=(qaohv)~&@%+
+
+  client.on("isupport:prefix", (msg) => {
+    const { params: { value } } = msg;
+
+    if (value === undefined) {
+      return;
+    }
+
+    const match = value.match(/\((.*?)\)(.*)/);
+    if (match === null) {
+      return;
+    }
+
+    const [, mode, prefixes] = match;
+
+    // ALWAYS RESET supported prefixes here
+    // in order to avoid prefix priority offsets!
+    client.state.supported.prefixes = {};
+
+    for (let i = 0; i < mode.length; ++i) {
+      client.state.supported.prefixes[prefixes[i]] = { priority: i };
+      client.state.supported.modes.channel[mode[i]] = {
+        type: "b", // RFC: modes coming from PREFIX should always be treated as type 'b'
+        prefix: prefixes[i],
+      };
     }
   });
 });
