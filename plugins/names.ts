@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
+import cap from "./cap.ts";
 import isupport from "./isupport.ts";
-import registration from "./registration.ts";
 
 export type Names = Record<string, string[]>;
 
@@ -27,7 +27,7 @@ interface NamesFeatures {
 
 export default createPlugin(
   "names",
-  [isupport, registration],
+  [cap, isupport],
 )<NamesFeatures>((client) => {
   const { supported } = client.state;
   const buffers: Record<string, Names> = {};

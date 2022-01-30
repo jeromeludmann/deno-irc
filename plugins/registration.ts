@@ -1,4 +1,5 @@
 import { createPlugin } from "../core/plugins.ts";
+import cap from "./cap.ts";
 import nick from "./nick.ts";
 import register from "./register.ts";
 
@@ -7,16 +8,6 @@ export interface User {
   username: string;
   realname: string;
 }
-
-type AnyCapabilityCommand =
-  | "LS"
-  | "LIST"
-  | "REQ"
-  | "ACK"
-  | "NAK"
-  | "NEW"
-  | "DEL"
-  | "END";
 
 interface RegistrationFeatures {
   options: {
@@ -33,31 +24,29 @@ interface RegistrationFeatures {
     password?: string;
   };
   state: {
-    capabilities: string[];
     user: User;
   };
 }
 
 export default createPlugin(
   "registration",
-  [nick, register],
+  [cap, nick, register],
 )<RegistrationFeatures>((client, options) => {
   const { nick, username = nick, realname = nick, password } = options;
-  client.state.capabilities = [];
   client.state.user = { nick, username, realname };
 
   const sendCapabilities = () => {
     const { capabilities } = client.state;
 
-    const cap = (command: AnyCapabilityCommand, ...params: string[]) =>
-      client.send("CAP", command, ...params);
-
-    if (capabilities.length > 0) {
-      for (const capability of capabilities) {
-        cap("REQ", capability);
-      }
-      cap("END");
+    if (capabilities.length === 0) {
+      return;
     }
+
+    for (const capability of capabilities) {
+      client.cap("REQ", capability);
+    }
+
+    client.cap("END");
   };
 
   const sendRegistration = () => {

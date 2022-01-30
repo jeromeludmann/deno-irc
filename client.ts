@@ -2,6 +2,7 @@ import { CoreClient, type CoreFeatures } from "./core/client.ts";
 import { type CombinePluginFeatures } from "./core/plugins.ts";
 
 import action from "./plugins/action.ts";
+import cap from "./plugins/cap.ts";
 import clientinfo from "./plugins/clientinfo.ts";
 import ctcp from "./plugins/ctcp.ts";
 import errorReply from "./plugins/error_reply.ts";
@@ -39,6 +40,7 @@ import whois from "./plugins/whois.ts";
 
 const plugins = [
   action,
+  cap,
   clientinfo,
   ctcp,
   errorReply,
