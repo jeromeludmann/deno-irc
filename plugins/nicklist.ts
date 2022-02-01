@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isChannel } from "../core/strings.ts";
 import chanmodes from "./chanmodes.ts";
+import chantypes from "./chantypes.ts";
 import names, { type Names } from "./names.ts";
 import join from "./join.ts";
 import nick from "./nick.ts";
@@ -37,6 +37,7 @@ export default createPlugin(
   "nicklist",
   [
     chanmodes,
+    chantypes,
     join,
     nick,
     kick,
@@ -133,7 +134,11 @@ export default createPlugin(
 
   client.on("mode:channel", (msg) => {
     const { params: { target: channel, mode, arg } } = msg;
-    if (arg === undefined || mode.length !== 2 || !isChannel(channel)) {
+    if (
+      arg === undefined ||
+      mode.length !== 2 ||
+      !client.utils.isChannel(channel)
+    ) {
       return;
     }
 

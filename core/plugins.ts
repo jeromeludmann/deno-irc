@@ -3,8 +3,15 @@
 import { type CoreClient, type CoreFeatures } from "./client.ts";
 import { type Hooks } from "./hooks.ts";
 
+type AnyPluginFeaturesKey =
+  | "options"
+  | "commands"
+  | "events"
+  | "state"
+  | "utils";
+
 type PluginFeatures = {
-  [K in "options" | "commands" | "events" | "state"]?: Record<string, unknown>;
+  [K in AnyPluginFeaturesKey]?: Record<string, unknown>;
 };
 
 export interface Plugin<
@@ -20,6 +27,7 @@ type ExtendedClient<F extends PluginFeatures> =
   & CoreClient<CoreFeatures["events"] & F["events"]>
   & { readonly hooks: Hooks<ExtendedClient<F>> }
   & { readonly state: F["state"] }
+  & { readonly utils: F["utils"] }
   & F["commands"];
 
 type ExtendedOptions<T extends PluginFeatures> =

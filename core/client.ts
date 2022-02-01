@@ -31,6 +31,7 @@ export interface CoreFeatures {
   state: {
     remoteAddr: RemoteAddr;
   };
+  utils: Record<never, never>;
 }
 
 const BUFFER_SIZE = 4096;
@@ -52,6 +53,7 @@ export class CoreClient<
   TEvents extends CoreFeatures["events"] = CoreFeatures["events"],
 > extends EventEmitter<TEvents> {
   readonly state: CoreFeatures["state"];
+  readonly utils: CoreFeatures["utils"];
 
   protected connectImpl: ConnectImpl = {
     noTls: Deno.connect,
@@ -74,6 +76,7 @@ export class CoreClient<
 
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
     this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
+    this.utils = {};
 
     // When `loadPlugins` is called, plugins can add their own error listeners.
     // In order to keep the default error throwing behavior (at least one error

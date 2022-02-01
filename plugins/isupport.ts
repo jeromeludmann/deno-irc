@@ -7,7 +7,7 @@ export interface IsupportEventParams {
 
 export type IsupportEvent = Message<IsupportEventParams>;
 
-type AnyIsupportParamKey = "USERMODES" | "CHANMODES" | "PREFIX";
+type AnyIsupportParamKey = "USERMODES" | "CHANMODES" | "PREFIX" | "CHANTYPES";
 
 interface IsupportFeatures {
   events: {

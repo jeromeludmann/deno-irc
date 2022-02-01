@@ -4,6 +4,7 @@ import { type CombinePluginFeatures } from "./core/plugins.ts";
 import action from "./plugins/action.ts";
 import cap from "./plugins/cap.ts";
 import chanmodes from "./plugins/chanmodes.ts";
+import chantypes from "./plugins/chantypes.ts";
 import clientinfo from "./plugins/clientinfo.ts";
 import ctcp from "./plugins/ctcp.ts";
 import errorReply from "./plugins/error_reply.ts";
@@ -44,6 +45,7 @@ const plugins = [
   action,
   cap,
   chanmodes,
+  chantypes,
   clientinfo,
   ctcp,
   errorReply,
@@ -87,14 +89,18 @@ export type Options = ClientFeatures["options"];
 export type States = ClientFeatures["state"];
 export type Commands = ClientFeatures["commands"];
 export type Events = ClientFeatures["events"];
+export type Utils = ClientFeatures["utils"];
 
 // deno-lint-ignore no-empty-interface
 export interface ClientOptions extends Options {}
 // deno-lint-ignore no-empty-interface
 export interface ClientState extends States {}
+// deno-lint-ignore no-empty-interface
+export interface ClientUtils extends Utils {}
 
 export interface Client extends Commands {
   readonly state: Readonly<ClientState>;
+  readonly utils: Readonly<ClientUtils>;
 }
 
 export class Client extends CoreClient<Events> {

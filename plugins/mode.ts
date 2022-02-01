@@ -1,8 +1,8 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isChannel } from "../core/strings.ts";
 import chanmodes, { type Modes } from "./chanmodes.ts";
 import usermodes from "./usermodes.ts";
+import chantypes from "./chantypes.ts";
 
 interface Mode {
   /** Mode letter. */
@@ -109,7 +109,7 @@ function parseModes(
 
 export default createPlugin(
   "mode",
-  [chanmodes, usermodes],
+  [chanmodes, usermodes, chantypes],
 )<ModeFeatures>((client) => {
   // Sends MODE command.
   client.mode = (target, modes, ...args) => {
@@ -122,7 +122,9 @@ export default createPlugin(
     const { source, params } = msg;
     const [target, modeChars, ...args] = params;
 
-    const supportedModes = isChannel(target)
+    const isChannel = client.utils.isChannel(target);
+
+    const supportedModes = isChannel
       ? client.state.chanmodes
       : client.state.usermodes;
 
@@ -133,7 +135,7 @@ export default createPlugin(
       if (arg !== undefined) payload.params.arg = arg;
 
       client.emit("mode", payload);
-      client.emit(isChannel(target) ? "mode:channel" : "mode:user", payload);
+      client.emit(isChannel ? "mode:channel" : "mode:user", payload);
     }
   });
 
@@ -143,7 +145,9 @@ export default createPlugin(
     const { source, params } = msg;
     const [target, modeChars, ...args] = params;
 
-    const supportedModes = isChannel(target)
+    const isChannel = client.utils.isChannel(target);
+
+    const supportedModes = isChannel
       ? client.state.chanmodes
       : client.state.usermodes;
 
@@ -151,9 +155,6 @@ export default createPlugin(
     const payload: ModeReplyEvent = { source, params: { target, modes } };
 
     client.emit("mode_reply", payload);
-    client.emit(
-      isChannel(target) ? "mode_reply:channel" : "mode_reply:user",
-      payload,
-    );
+    client.emit(isChannel ? "mode_reply:channel" : "mode_reply:user", payload);
   });
 });

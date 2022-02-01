@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isChannel } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
+import chantypes from "./chantypes.ts";
 
 export interface NoticeEventParams {
   /** Target of the NOTICE.
@@ -27,7 +27,10 @@ interface NoticeFeatures {
   };
 }
 
-export default createPlugin("notice")<NoticeFeatures>((client) => {
+export default createPlugin(
+  "notice",
+  [chantypes],
+)<NoticeFeatures>((client) => {
   // Sends NOTICE command.
 
   client.notice = (target, text) => {
@@ -44,9 +47,8 @@ export default createPlugin("notice")<NoticeFeatures>((client) => {
 
     client.emit("notice", payload);
 
-    const event = `notice:${
-      isChannel(target) ? "channel" : "private"
-    }` as const;
+    const targetType = client.utils.isChannel(target) ? "channel" : "private";
+    const event = `notice:${targetType}` as const;
 
     client.emit(event, payload);
   });

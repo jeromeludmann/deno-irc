@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isChannel } from "../core/strings.ts";
 import { isCtcp } from "./ctcp.ts";
+import chantypes from "./chantypes.ts";
 
 export interface PrivmsgEventParams {
   /** Target of the PRIVMSG.
@@ -30,7 +30,10 @@ interface PrivmsgFeatures {
   };
 }
 
-export default createPlugin("privmsg")<PrivmsgFeatures>((client) => {
+export default createPlugin(
+  "privmsg",
+  [chantypes],
+)<PrivmsgFeatures>((client) => {
   // Sends PRIVMSG command.
 
   client.privmsg = client.msg = (target, text) => {
@@ -47,9 +50,8 @@ export default createPlugin("privmsg")<PrivmsgFeatures>((client) => {
 
     client.emit("privmsg", payload);
 
-    const event = `privmsg:${
-      isChannel(target) ? "channel" : "private"
-    }` as const;
+    const targetType = client.utils.isChannel(target) ? "channel" : "private";
+    const event = `privmsg:${targetType}` as const;
 
     client.emit(event, payload);
   });
