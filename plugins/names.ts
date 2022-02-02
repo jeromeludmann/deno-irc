@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
-import isupport from "./isupport.ts";
+import chanmodes from "./chanmodes.ts";
 
 export type Names = Record<string, string[]>;
 
@@ -27,9 +27,8 @@ interface NamesFeatures {
 
 export default createPlugin(
   "names",
-  [cap, isupport],
+  [cap, chanmodes],
 )<NamesFeatures>((client) => {
-  const { supported } = client.state;
   const buffers: Record<string, Names> = {};
 
   client.state.capabilities.push("multi-prefix");
@@ -50,20 +49,21 @@ export default createPlugin(
     for (const prefixedNick of prefixedNicks.split(" ")) {
       const prefixes = [];
 
-      // extracts prefixes from prefixed nick
+      // extracts prefixes and nick from prefixed nick
+
       for (const char of prefixedNick) {
-        if (char in supported.prefixes) prefixes.push(char);
-        else break;
+        if (char in client.state.prefixes) prefixes.push(char);
+        else break; // all prefixes pushed
       }
 
-      // extracts nick from prefixed nick
       const nick = prefixedNick.slice(prefixes.length);
+
+      // adds prefixes to nick entry
 
       buffers[channel][nick] = [];
 
-      // adds prefixes to nick entry
       for (const prefix of prefixes) {
-        const index = supported.prefixes[prefix].priority;
+        const index = client.state.prefixes[prefix].priority;
         buffers[channel][nick][index] = prefix;
       }
     }

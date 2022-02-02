@@ -8,10 +8,8 @@ export interface Server {
 
 export interface MyinfoEventParams {
   server: Server;
-  modes: {
-    user: string[];
-    channel: string[];
-  };
+  usermodes: string;
+  chanmodes: string;
 }
 
 export type MyinfoEvent = Message<MyinfoEventParams>;
@@ -29,16 +27,15 @@ export default createPlugin("myinfo")<MyinfoFeatures>((client) => {
   // Emits 'myinfo' event.
 
   client.on("raw:rpl_myinfo", (msg) => {
-    const { source, params: [, host, version, userModes, channelModes] } = msg;
-
-    const user = userModes.split("");
-    const channel = channelModes.split("");
+    const { source, params } = msg;
+    const [, host, version, usermodes, chanmodes] = params;
 
     client.emit("myinfo", {
       source,
       params: {
         server: { host, version },
-        modes: { user, channel },
+        usermodes,
+        chanmodes,
       },
     });
   });

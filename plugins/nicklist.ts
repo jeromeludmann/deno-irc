@@ -1,7 +1,7 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 import { isChannel } from "../core/strings.ts";
-import isupport from "./isupport.ts";
+import chanmodes from "./chanmodes.ts";
 import names, { type Names } from "./names.ts";
 import join from "./join.ts";
 import nick from "./nick.ts";
@@ -35,21 +35,27 @@ interface NicklistFeatures {
 
 export default createPlugin(
   "nicklist",
-  [isupport, join, nick, kick, kill, mode, names, part, quit, registration],
+  [
+    chanmodes,
+    join,
+    nick,
+    kick,
+    kill,
+    mode,
+    names,
+    part,
+    quit,
+    registration,
+  ],
 )<NicklistFeatures>((client) => {
   const namesMap: Record<string, Names> = {};
   client.state.nicklists = {};
 
   const createNicklist = (names: Names): Nicklist => {
-    const { supported } = client.state;
     const nicks: Record<string, string[]> = {};
 
-    const createGroup = (prefix: string): Nicklist =>
-      nicks[prefix]
-        .sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
-        .map((nick) => ({ prefix, nick }));
-
     // group nicks by prefix
+
     for (const nick in names) {
       const [prefix = ""] = names[nick].join("");
       nicks[prefix] ??= [];
@@ -57,12 +63,20 @@ export default createPlugin(
     }
 
     // sort grouped nicks
+
+    const createGroup = (prefix: string): Nicklist =>
+      nicks[prefix]
+        .sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
+        .map((nick) => ({ prefix, nick }));
+
     const groups: Nicklist[] = [];
-    for (const prefix in supported.prefixes) {
-      const index = supported.prefixes[prefix].priority;
+
+    for (const prefix in client.state.prefixes) {
+      const index = client.state.prefixes[prefix].priority;
       if (!(prefix in nicks)) continue;
       groups[index] = createGroup(prefix);
     }
+
     if ("" in nicks) {
       groups.push(createGroup(""));
     }
@@ -71,6 +85,7 @@ export default createPlugin(
   };
 
   // Initializes nicklist.
+
   client.on("names_reply", (msg) => {
     const { params: { channel, names } } = msg;
 
@@ -83,6 +98,7 @@ export default createPlugin(
   });
 
   // Adds nick to nicklist.
+
   client.on("join", (msg) => {
     const { source, params: { channel } } = msg;
 
@@ -98,6 +114,7 @@ export default createPlugin(
   });
 
   // Updates nicks.
+
   client.on("nick", (msg) => {
     const { source, params: { nick } } = msg;
 
@@ -113,27 +130,23 @@ export default createPlugin(
   });
 
   // Updates nick prefixes.
+
   client.on("mode:channel", (msg) => {
     const { params: { target: channel, mode, arg } } = msg;
-
-    if (
-      arg === undefined ||
-      mode.length !== 2 ||
-      !isChannel(channel)
-    ) {
+    if (arg === undefined || mode.length !== 2 || !isChannel(channel)) {
       return;
     }
 
-    const { prefix } = client.state.supported.modes.channel[mode.charAt(1)];
-    if (prefix === undefined) {
-      return;
-    }
+    const [modeSet, modeLetter] = mode;
 
-    const index = client.state.supported.prefixes[prefix].priority;
+    const { prefix } = client.state.chanmodes[modeLetter];
+    if (prefix === undefined) return;
+
+    const index = client.state.prefixes[prefix].priority;
 
     namesMap[channel] ??= {};
     namesMap[channel][arg] ??= [];
-    namesMap[channel][arg][index] = mode.charAt(0) === "+" ? prefix : "";
+    namesMap[channel][arg][index] = modeSet === "+" ? prefix : "";
 
     const nicklist = createNicklist(namesMap[channel]);
 
@@ -142,6 +155,7 @@ export default createPlugin(
   });
 
   // Removes nick from nicklist.
+
   const removeNick = (msg: PartEvent | QuitEvent | KickEvent | KillEvent) => {
     const remove = (nick: string, channel?: string) => {
       if (channel === undefined) {
@@ -177,6 +191,7 @@ export default createPlugin(
       remove(nick, channel);
     }
   };
+
   client.on("part", removeNick);
   client.on("kick", removeNick);
   client.on("quit", removeNick);

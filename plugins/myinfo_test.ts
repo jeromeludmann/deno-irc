@@ -29,10 +29,8 @@ describe("plugins/myinfo", (test) => {
       source: { name: "serverhost" },
       params: {
         server: { host: "serverhost", version: "IRC-version" },
-        modes: {
-          user: ["i", "o", "u", "w"],
-          channel: ["i", "k", "l", "m", "n", "o", "p", "r", "s", "t", "v"],
-        },
+        usermodes: "iouw",
+        chanmodes: "iklmnoprstv",
       },
     });
   });

@@ -3,6 +3,7 @@ import { type CombinePluginFeatures } from "./core/plugins.ts";
 
 import action from "./plugins/action.ts";
 import cap from "./plugins/cap.ts";
+import chanmodes from "./plugins/chanmodes.ts";
 import clientinfo from "./plugins/clientinfo.ts";
 import ctcp from "./plugins/ctcp.ts";
 import errorReply from "./plugins/error_reply.ts";
@@ -34,6 +35,7 @@ import registration from "./plugins/registration.ts";
 import throwOnError from "./plugins/throw_on_error.ts";
 import time from "./plugins/time.ts";
 import topic from "./plugins/topic.ts";
+import usermodes from "./plugins/usermodes.ts";
 import verbose from "./plugins/verbose.ts";
 import version from "./plugins/version.ts";
 import whois from "./plugins/whois.ts";
@@ -41,6 +43,7 @@ import whois from "./plugins/whois.ts";
 const plugins = [
   action,
   cap,
+  chanmodes,
   clientinfo,
   ctcp,
   errorReply,
@@ -72,6 +75,7 @@ const plugins = [
   throwOnError,
   time,
   topic,
+  usermodes,
   verbose,
   version,
   whois,

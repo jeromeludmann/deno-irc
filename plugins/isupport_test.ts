@@ -1,131 +1,72 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { getDefaults } from "./isupport.ts";
 
 describe("plugins/isupport", (test) => {
-  test("set default user modes state", async () => {
-    const { client } = await mock();
-    const { supported } = client.state;
-    assertEquals(supported.modes.user, getDefaults().modes.user);
-  });
-
-  test("set default channel modes state", async () => {
-    const { client } = await mock();
-    const { supported } = client.state;
-    assertEquals(supported.modes.channel, getDefaults().modes.channel);
-  });
-
-  test("set default nick prefixes state", async () => {
-    const { client } = await mock();
-    const { supported } = client.state;
-    assertEquals(supported.prefixes, getDefaults().prefixes);
-  });
-
-  test("update modes state on RPL_MYINFO", async () => {
+  test("emit 'isupport:usermodes' on RPL_ISUPPORT", async () => {
     const { client, server } = await mock();
-    const { supported } = client.state;
-
-    server.send(
-      ":serverhost 004 me serverhost IRC-version iow bopv bkloveqjfI",
-    );
-    await client.once("myinfo");
-
-    assertEquals(supported.modes, {
-      user: {
-        "i": { type: "d" },
-        "o": { type: "d" },
-        "w": { type: "d" },
-      },
-      channel: {
-        "b": { type: "a" },
-        "o": { type: "b", prefix: "@" },
-        "v": { type: "b", prefix: "+" },
-        "p": { type: "d" },
-      },
-    });
-  });
-
-  test("override user modes state on RPL_ISUPPORT", async () => {
-    const { client, server } = await mock();
-    const { supported } = client.state;
 
     server.send(
       ":serverhost 005 nick USERMODES=,,s,iow :are supported by this server",
     );
-    await client.once("raw");
+    const msg = await client.once("isupport:usermodes");
 
-    assertEquals(supported.modes.user, {
-      ...getDefaults().modes.user,
-      "s": { type: "c" },
-      "i": { type: "d" },
-      "o": { type: "d" },
-      "w": { type: "d" },
+    assertEquals(msg, {
+      params: { value: ",,s,iow" },
+      source: { name: "serverhost" },
     });
   });
 
-  test("override channel modes state on RPL_ISUPPORT", async () => {
+  test("emit 'isupport:chanmodes' on RPL_ISUPPORT", async () => {
     const { client, server } = await mock();
-    const { supported } = client.state;
 
     server.send(
       ":serverhost 005 nick CHANMODES=I,k,H,A :are supported by this server",
     );
-    await client.once("raw");
+    const msg = await client.once("isupport:chanmodes");
 
-    assertEquals(supported.modes.channel, {
-      ...getDefaults().modes.channel,
-      "I": { type: "a" },
-      "k": { type: "b" },
-      "H": { type: "c" },
-      "A": { type: "d" },
+    assertEquals(msg, {
+      params: { value: "I,k,H,A" },
+      source: { name: "serverhost" },
     });
   });
 
-  test("override channel modes state with PREFIX on RPL_ISUPPORT", async () => {
+  test("emit 'isupport:prefix' on RPL_ISUPPORT", async () => {
     const { client, server } = await mock();
-    const { supported } = client.state;
 
     server.send(
       ":serverhost 005 nick PREFIX=(qaohv)~&@%+ :are supported by this server",
     );
-    await client.once("raw");
+    const msg = await client.once("isupport:prefix");
 
-    assertEquals(supported.modes.channel, {
-      ...getDefaults().modes.channel,
-      "q": { type: "b", prefix: "~" },
-      "a": { type: "b", prefix: "&" },
-      "o": { type: "b", prefix: "@" },
-      "h": { type: "b", prefix: "%" },
-      "v": { type: "b", prefix: "+" },
+    assertEquals(msg, {
+      params: { value: "(qaohv)~&@%+" },
+      source: { name: "serverhost" },
     });
   });
 
-  test("replace nick prefixes state on RPL_ISUPPORT", async () => {
+  test("emit 'isupport:*' on RPL_ISUPPORT", async () => {
     const { client, server } = await mock();
-    const { supported } = client.state;
 
-    server.send(
-      ":serverhost 005 nick PREFIX=(ov)@+ :are supported by this server",
-    );
-    await client.once("raw");
+    server.send([
+      ":serverhost 005 nick USERMODES=,,s,iow PREFIX=(qaohv)~&@%+ :are supported by this server",
+      ":serverhost 005 nick CHANMODES=I,k,H,A :are supported by this server",
+    ]);
+    const messages = await Promise.all([
+      client.once("isupport:usermodes"),
+      client.once("isupport:chanmodes"),
+      client.once("isupport:prefix"),
+    ]);
 
-    assertEquals(supported.prefixes, {
-      "@": { priority: 0 },
-      "+": { priority: 1 },
-    });
-
-    server.send(
-      ":serverhost 005 nick PREFIX=(qaohv)~&@%+ :are supported by this server",
-    );
-    await client.once("raw");
-
-    assertEquals(supported.prefixes, {
-      "~": { priority: 0 },
-      "&": { priority: 1 },
-      "@": { priority: 2 },
-      "%": { priority: 3 },
-      "+": { priority: 4 },
-    });
+    assertEquals(messages, [{
+      params: { value: ",,s,iow" },
+      source: { name: "serverhost" },
+    }, {
+      params: { value: "I,k,H,A" },
+      source: { name: "serverhost" },
+    }, {
+      params: { value: "(qaohv)~&@%+" },
+      source: { name: "serverhost" },
+    }]);
   });
 });

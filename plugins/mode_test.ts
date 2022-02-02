@@ -27,7 +27,7 @@ describe("plugins/mode", (test) => {
     ]);
   });
 
-  test("emit 'mode' on MODE +i (from server)", async () => {
+  test("emit 'mode' on MODE nick +i (from server)", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost MODE nick +i");
@@ -39,7 +39,7 @@ describe("plugins/mode", (test) => {
     });
   });
 
-  test("emit 'mode' on MODE +i (from user)", async () => {
+  test("emit 'mode' on MODE nick +i (from user)", async () => {
     const { client, server } = await mock();
 
     server.send(":someone!user@host MODE nick +i");
