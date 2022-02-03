@@ -26,35 +26,6 @@ export type CtcpEvent = Message<CtcpEventParams> & {
   command: AnyCtcpCommand;
 };
 
-export function isCtcp(msg: Raw): boolean {
-  const { params } = msg;
-
-  if (params.length !== 2) {
-    return false;
-  }
-
-  if (
-    params[1][0] !== "\x01" ||
-    params[1][params[1].length - 1] !== "\x01"
-  ) {
-    return false;
-  }
-
-  if (
-    msg.command !== "PRIVMSG" &&
-    msg.command !== "NOTICE"
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-export function createCtcp(command: AnyCtcpCommand, param?: string): string {
-  const ctcpParam = param === undefined ? "" : ` ${param}`;
-  return `\x01${command}${ctcpParam}\x01`;
-}
-
 interface CtcpFeatures {
   commands: {
     /** Sends a CTCP message to a `target` with a `command` and a `param`.
@@ -70,20 +41,24 @@ interface CtcpFeatures {
   events: {
     "ctcp": CtcpEvent;
   };
+  utils: {
+    isCtcp: (msg: Raw) => boolean;
+    createCtcp: (command: AnyCtcpCommand, param?: string) => string;
+  };
 }
 
 export default createPlugin("ctcp", [])<CtcpFeatures>((client) => {
   // Sends CTCP command.
 
   client.ctcp = (target, command, param) => {
-    const ctcp = createCtcp(command, param);
+    const ctcp = client.utils.createCtcp(command, param);
     client.send("PRIVMSG", target, ctcp);
   };
 
   // Emits 'ctcp' event.
 
   client.on(["raw:privmsg", "raw:notice"], (msg) => {
-    if (!isCtcp(msg)) return;
+    if (!client.utils.isCtcp(msg)) return;
 
     const { source, params: [target, rawCtcp] } = msg;
 
@@ -97,4 +72,35 @@ export default createPlugin("ctcp", [])<CtcpFeatures>((client) => {
 
     client.emit("ctcp", ctcp);
   });
+
+  // Utils.
+
+  client.utils.isCtcp = (msg) => {
+    const { params } = msg;
+
+    if (params.length !== 2) {
+      return false;
+    }
+
+    if (
+      params[1][0] !== "\x01" ||
+      params[1][params[1].length - 1] !== "\x01"
+    ) {
+      return false;
+    }
+
+    if (
+      msg.command !== "PRIVMSG" &&
+      msg.command !== "NOTICE"
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
+  client.utils.createCtcp = (command, param) => {
+    const ctcpParam = param === undefined ? "" : ` ${param}`;
+    return `\x01${command}${ctcpParam}\x01`;
+  };
 });

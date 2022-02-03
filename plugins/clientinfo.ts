@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import ctcp, { type AnyCtcpCommand, createCtcp } from "./ctcp.ts";
+import ctcp, { type AnyCtcpCommand } from "./ctcp.ts";
 
 export interface CtcpClientinfoEventParams {
   /** Target of the CTCP CLIENTINFO query. */
@@ -73,7 +73,7 @@ export default createPlugin(
 
     if (source) {
       const param = SUPPORTED_COMMANDS.join(" ");
-      const ctcp = createCtcp("CLIENTINFO", param);
+      const ctcp = client.utils.createCtcp("CLIENTINFO", param);
       client.send("NOTICE", source.name, ctcp);
     }
   });

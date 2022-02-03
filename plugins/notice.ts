@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isCtcp } from "./ctcp.ts";
+import ctcp from "./ctcp.ts";
 import chantypes from "./chantypes.ts";
 
 export interface NoticeEventParams {
@@ -29,7 +29,7 @@ interface NoticeFeatures {
 
 export default createPlugin(
   "notice",
-  [chantypes],
+  [ctcp, chantypes],
 )<NoticeFeatures>((client) => {
   // Sends NOTICE command.
 
@@ -40,7 +40,7 @@ export default createPlugin(
   // Emits 'notice' event.
 
   client.on("raw:notice", (msg) => {
-    if (isCtcp(msg)) return;
+    if (client.utils.isCtcp(msg)) return;
 
     const { source, params: [target, text] } = msg;
     const payload: NoticeEvent = { source, params: { target, text } };

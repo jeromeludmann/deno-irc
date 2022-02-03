@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import ctcp, { createCtcp } from "./ctcp.ts";
+import ctcp from "./ctcp.ts";
 
 export interface CtcpVersionEventParams {
   /** Target of the CTCP VERSION query. */
@@ -76,7 +76,7 @@ export default createPlugin(
   client.on("ctcp_version", (msg) => {
     const { source } = msg;
     if (source) {
-      const ctcp = createCtcp("VERSION", version);
+      const ctcp = client.utils.createCtcp("VERSION", version);
       client.send("NOTICE", source.name, ctcp);
     }
   });

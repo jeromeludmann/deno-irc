@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { isCtcp } from "./ctcp.ts";
+import ctcp from "./ctcp.ts";
 import chantypes from "./chantypes.ts";
 
 export interface PrivmsgEventParams {
@@ -32,7 +32,7 @@ interface PrivmsgFeatures {
 
 export default createPlugin(
   "privmsg",
-  [chantypes],
+  [ctcp, chantypes],
 )<PrivmsgFeatures>((client) => {
   // Sends PRIVMSG command.
 
@@ -43,7 +43,7 @@ export default createPlugin(
   // Emits 'privmsg' event.
 
   client.on("raw:privmsg", (msg) => {
-    if (isCtcp(msg)) return;
+    if (client.utils.isCtcp(msg)) return;
 
     const { source, params: [target, text] } = msg;
     const payload: PrivmsgEvent = { source, params: { target, text } };

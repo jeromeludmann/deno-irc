@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import ctcp, { createCtcp } from "./ctcp.ts";
+import ctcp from "./ctcp.ts";
 
 export interface PingEventParams {
   /** Keys of the PING. */
@@ -118,7 +118,7 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
   client.on("ctcp_ping", (msg) => {
     const { source, params: { key } } = msg;
     if (source) {
-      const ctcp = createCtcp("PING", key);
+      const ctcp = client.utils.createCtcp("PING", key);
       client.send("NOTICE", source.name, ctcp);
     }
   });

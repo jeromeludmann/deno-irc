@@ -1,8 +1,6 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { type Raw } from "../core/parsers.ts";
-import { isCtcp } from "./ctcp.ts";
 
 describe("plugins/ctcp", (test) => {
   test("send CTCP", async () => {
@@ -62,41 +60,46 @@ describe("plugins/ctcp", (test) => {
     ]);
   });
 
-  test("check CTCP format", () => {
+  test("check CTCP message", async () => {
+    const { client } = await mock();
+
     assertEquals(
-      isCtcp({ command: "PRIVMSG", params: ["nick", "Hello world"] } as Raw),
+      client.utils.isCtcp(
+        { command: "PRIVMSG", params: ["nick", "Hello world"] },
+      ),
       false,
     );
 
     assertEquals(
-      isCtcp({ command: "NOTICE", params: ["nick", "Hello world"] } as Raw),
+      client.utils.isCtcp({
+        command: "NOTICE",
+        params: ["nick", "Hello world"],
+      }),
       false,
     );
 
     assertEquals(
-      isCtcp({ command: "JOIN", params: ["#channel"] } as Raw),
-      false,
-    );
-
-    assertEquals(
-      isCtcp({ command: "PART", params: ["#channel", "Goodbye!"] } as Raw),
-      false,
-    );
-
-    assertEquals(
-      isCtcp({
+      client.utils.isCtcp({
         command: "PRIVMSG",
         params: ["nick", "\x01Hello world\x01"],
-      } as Raw),
+      }),
       true,
     );
 
     assertEquals(
-      isCtcp({
+      client.utils.isCtcp({
         command: "NOTICE",
         params: ["nick", "\x01Hello world\x01"],
-      } as Raw),
+      }),
       true,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "JOIN",
+        params: ["nick", "\x01Hello world\x01"],
+      }),
+      false,
     );
   });
 });

@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import ctcp, { createCtcp } from "./ctcp.ts";
+import ctcp from "./ctcp.ts";
 
 export interface CtcpTimeEventParams {
   /** Target of the CTCP TIME query. */
@@ -71,7 +71,7 @@ export default createPlugin("time", [ctcp])<TimeFeatures>((client, options) => {
     const { source } = msg;
     if (source) {
       const time = new Date().toLocaleString();
-      const ctcp = createCtcp("TIME", time);
+      const ctcp = client.utils.createCtcp("TIME", time);
       client.send("NOTICE", source.name, ctcp);
     }
   });
