@@ -1,4 +1,4 @@
-import { type Message, type Raw } from "../core/parsers.ts";
+import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 import { isChannel } from "../core/strings.ts";
 import chanmodes, { type Modes } from "./chanmodes.ts";
@@ -139,7 +139,7 @@ export default createPlugin(
 
   // Emits 'mode_reply:*' events.
 
-  const emitModeReplyEvents = (msg: Raw) => {
+  client.on(["raw:rpl_umodeis", "raw:rpl_channelmodeis"], (msg) => {
     const { source, params } = msg;
     const [target, modeChars, ...args] = params;
 
@@ -155,8 +155,5 @@ export default createPlugin(
       isChannel(target) ? "mode_reply:channel" : "mode_reply:user",
       payload,
     );
-  };
-
-  client.on("raw:rpl_umodeis", emitModeReplyEvents);
-  client.on("raw:rpl_channelmodeis", emitModeReplyEvents);
+  });
 });

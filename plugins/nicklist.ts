@@ -6,10 +6,10 @@ import names, { type Names } from "./names.ts";
 import join from "./join.ts";
 import nick from "./nick.ts";
 import mode from "./mode.ts";
-import kick, { type KickEvent } from "./kick.ts";
-import kill, { type KillEvent } from "./kill.ts";
-import part, { type PartEvent } from "./part.ts";
-import quit, { type QuitEvent } from "./quit.ts";
+import kick from "./kick.ts";
+import kill from "./kill.ts";
+import part from "./part.ts";
+import quit from "./quit.ts";
 import registration from "./registration.ts";
 
 export type Nicklist = { prefix: string; nick: string }[];
@@ -156,44 +156,39 @@ export default createPlugin(
 
   // Removes nick from nicklist.
 
-  const removeNick = (msg: PartEvent | QuitEvent | KickEvent | KillEvent) => {
-    const remove = (nick: string, channel?: string) => {
-      if (channel === undefined) {
-        for (const channel in namesMap) {
-          remove(nick, channel);
-        }
-        return;
+  const removeNick = (nick: string, channel?: string) => {
+    if (channel === undefined) {
+      for (const channel in namesMap) {
+        removeNick(nick, channel);
       }
+      return;
+    }
 
-      let nicklist: Nicklist;
+    let nicklist: Nicklist;
 
-      if (nick === client.state.user.nick) {
-        delete namesMap[channel];
-        delete client.state.nicklists[channel];
-        nicklist = [];
-      } else {
-        if (channel in namesMap) {
-          delete namesMap[channel][nick];
-        }
-        nicklist = createNicklist(namesMap[channel]);
-        client.state.nicklists[channel] = nicklist;
+    if (nick === client.state.user.nick) {
+      delete namesMap[channel];
+      delete client.state.nicklists[channel];
+      nicklist = [];
+    } else {
+      if (channel in namesMap) {
+        delete namesMap[channel][nick];
       }
+      nicklist = createNicklist(namesMap[channel]);
+      client.state.nicklists[channel] = nicklist;
+    }
 
-      client.emit("nicklist", { params: { channel, nicklist } });
-    };
+    client.emit("nicklist", { params: { channel, nicklist } });
+  };
 
+  client.on(["part", "kick", "quit", "kill"], (msg) => {
     const { source, params } = msg;
 
     const nick = "nick" in params ? params.nick : source?.name;
     const channel = "channel" in params ? params.channel : undefined;
 
     if (nick !== undefined) {
-      remove(nick, channel);
+      removeNick(nick, channel);
     }
-  };
-
-  client.on("part", removeNick);
-  client.on("kick", removeNick);
-  client.on("quit", removeNick);
-  client.on("kill", removeNick);
+  });
 });

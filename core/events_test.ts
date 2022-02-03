@@ -168,4 +168,20 @@ describe("core/events", (test) => {
       'Too many listeners for "event" event',
     );
   });
+
+  test("add one listener on three events and emit an event", () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+
+    emitter.on(["event1", "event2", "event3"], () => {
+      triggered++;
+    });
+
+    emitter.emit("event1", {}); // +1
+    emitter.emit("event2", {}); // +2
+    emitter.emit("event3", {}); // +3
+    emitter.emit("event4", {}); // should not be triggered
+
+    assertEquals(triggered, 3);
+  });
 });

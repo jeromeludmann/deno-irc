@@ -55,32 +55,34 @@ export class EventEmitter<TEvents extends Record<string, any>> {
 
   /** Adds a `listener` for the `eventName`. */
   on<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): () => void {
-    if (this.count(eventName) === this.maxListeners) {
-      throw new Error(`Too many listeners for "${eventName}" event`);
-    }
+    for (const ev of Array.isArray(eventName) ? eventName : [eventName]) {
+      if (this.count(ev) === this.maxListeners) {
+        throw new Error(`Too many listeners for "${ev}" event`);
+      }
 
-    this.listeners[eventName] ??= [];
-    this.listeners[eventName].push(listener);
+      this.listeners[ev] ??= [];
+      this.listeners[ev].push(listener);
+    }
 
     return () => this.off(eventName, listener);
   }
 
   /** Adds a one-time `listener` for the `eventName`. */
   once<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void;
 
   /** Promise-based version of `.once(eventName, listener)`. */
   async once<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
   ): Promise<InferredPayload<TEvents, T>>;
 
   once<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
     listener?: Listener<InferredPayload<TEvents, T>>,
   ): void | Promise<InferredPayload<TEvents, T>> {
     if (listener) {
@@ -100,7 +102,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
 
   /** Waits for an `eventName` during `delay` in ms. */
   wait<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
     delay: number,
   ): Promise<InferredPayload<TEvents, T> | null> {
     return new Promise((resolve) => {
@@ -120,11 +122,13 @@ export class EventEmitter<TEvents extends Record<string, any>> {
 
   /** Removes the `listener` of the `eventName`. */
   off<T extends keyof TEvents>(
-    eventName: T,
+    eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
-    const listeners = this.listeners[eventName].filter((fn) => fn !== listener);
-    this.listeners[eventName] = listeners;
+    for (const ev of Array.isArray(eventName) ? eventName : [eventName]) {
+      const listeners = this.listeners[ev].filter((fn) => fn !== listener);
+      this.listeners[ev] = listeners;
+    }
   }
 
   /** Counts the listeners of the `eventName`. */

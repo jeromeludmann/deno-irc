@@ -113,6 +113,15 @@ if (msg === null) {
 }
 ```
 
+Subscribing to more than one event is also possible by passing an array of event
+names:
+
+```ts
+client.on(["part", "kick"], (msg) => {
+  // msg is PartEvent | KickEvent
+});
+```
+
 ### Commands
 
 Commands are the way to send messages to the server.
