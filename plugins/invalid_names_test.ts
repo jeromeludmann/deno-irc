@@ -7,7 +7,7 @@ describe("plugins/invalid_names", (test) => {
     const { client, server } = await mock({ resolveInvalidNames: true });
 
     server.send(":serverhost 433 me new_nick :Nickname is already in use");
-    await client.once("raw");
+    await client.once("raw:err_nicknameinuse");
     const raw = server.receive();
 
     assertEquals(raw, ["NICK new_nick_"]);
@@ -17,7 +17,7 @@ describe("plugins/invalid_names", (test) => {
     const { client, server } = await mock({ resolveInvalidNames: true });
 
     server.send(":serverhost 432 me `^$ :Erroneous nickname");
-    await client.once("raw");
+    await client.once("raw:err_erroneusnickname");
     const raw = server.receive();
 
     assertMatch(raw[0], /^NICK _[a-zA-Z0-9]+$/);
@@ -27,7 +27,7 @@ describe("plugins/invalid_names", (test) => {
     const { client, server } = await mock({ resolveInvalidNames: true });
 
     server.send(":serverhost 468 * USER :Your username is not valid");
-    await client.once("raw");
+    await client.once("raw:err_invalidusername");
     const raw = server.receive();
 
     assertMatch(raw[0], /^USER _[a-zA-Z0-9]+ 0 \* me$/);
@@ -37,11 +37,11 @@ describe("plugins/invalid_names", (test) => {
     const { client, server } = await mock({ resolveInvalidNames: false });
 
     server.send(":serverhost 433 me new_nick :Nickname is already in use");
-    await client.once("raw");
+    await client.once("raw:err_nicknameinuse");
     server.send(":serverhost 432 me `^$ :Erroneous nickname");
-    await client.once("raw");
+    await client.once("raw:err_erroneusnickname");
     server.send(":serverhost 468 * USER :Your username is not valid");
-    await client.once("raw");
+    await client.once("raw:err_invalidusername");
     const raw = server.receive();
 
     assertEquals(raw, []);

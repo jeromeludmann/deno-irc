@@ -33,6 +33,16 @@ export class Hooks<T extends Record<PropertyKey, any>> {
     });
   }
 
+  /** Base hook call method. */
+  hookCall<
+    K extends { [K in keyof T]: T[K] extends Function ? K : never }[keyof T],
+    F extends T[K] extends Function ? T[K] : never,
+    H extends (fn: F, ...args: Parameters<F>) => void,
+  >(key: K, hook: H): void {
+    const fn = this.target[key].bind(this.target);
+    (this.target as any)[key] = (...args: Parameters<F>) => hook(fn, ...args);
+  }
+
   /** Hooks before mutating object. */
   beforeMutate<
     K extends { [K in keyof T]: T[K] extends Function ? never : K }[keyof T],
@@ -55,14 +65,5 @@ export class Hooks<T extends Record<PropertyKey, any>> {
       },
     };
     this.target[key] = new Proxy(this.target[key], proxyHandler);
-  }
-
-  private hookCall<
-    K extends { [K in keyof T]: T[K] extends Function ? K : never }[keyof T],
-    F extends T[K] extends Function ? T[K] : never,
-    H extends (fn: F, ...args: Parameters<F>) => void,
-  >(key: K, hook: H): void {
-    const fn = this.target[key].bind(this.target);
-    (this.target as any)[key] = (...args: Parameters<F>) => hook(fn, ...args);
   }
 }

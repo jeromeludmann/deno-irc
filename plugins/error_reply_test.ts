@@ -7,12 +7,12 @@ describe("plugins/error_reply", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 403 #null :No such channel");
-    const error = await client.once("error_reply");
+    const msg = await client.once("error_reply");
 
-    assertEquals(error, {
+    assertEquals(msg, {
       source: { name: "serverhost" },
-      command: "403", // ERR_NOSUCHCHANNEL
-      params: { values: ["#null"], text: "No such channel" },
+      command: "err_nosuchchannel",
+      params: { args: ["#null"], text: "No such channel" },
     });
   });
 
@@ -20,12 +20,12 @@ describe("plugins/error_reply", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 421 TEST :Unknown command");
-    const error = await client.once("error_reply");
+    const msg = await client.once("error_reply");
 
-    assertEquals(error, {
+    assertEquals(msg, {
       source: { name: "serverhost" },
-      command: "421", // ERR_UNKNOWNCOMMAND
-      params: { values: ["TEST"], text: "Unknown command" },
+      command: "err_unknowncommand",
+      params: { args: ["TEST"], text: "Unknown command" },
     });
   });
 
@@ -33,12 +33,12 @@ describe("plugins/error_reply", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 432 * 0nick :Erroneous Nickname");
-    const error = await client.once("error_reply");
+    const msg = await client.once("error_reply");
 
-    assertEquals(error, {
+    assertEquals(msg, {
       source: { name: "serverhost" },
-      command: "432", // ERR_ERRONEUSNICKNAME
-      params: { values: ["*", "0nick"], text: "Erroneous Nickname" },
+      command: "err_erroneusnickname",
+      params: { args: ["*", "0nick"], text: "Erroneous Nickname" },
     });
   });
 
@@ -46,12 +46,12 @@ describe("plugins/error_reply", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 451 :You have not registered");
-    const error = await client.once("error_reply");
+    const msg = await client.once("error_reply");
 
-    assertEquals(error, {
+    assertEquals(msg, {
       source: { name: "serverhost" },
-      command: "451", // ERR_NOTREGISTERED
-      params: { values: [], text: "You have not registered" },
+      command: "err_notregistered",
+      params: { args: [], text: "You have not registered" },
     });
   });
 });

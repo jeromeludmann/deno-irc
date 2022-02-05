@@ -270,11 +270,11 @@ export const PROTOCOL = {
   ALL: { ...COMMANDS, ...REPLIES, ...ERRORS },
 };
 
-export type AnyIrcCommand = keyof typeof COMMANDS;
-export type AnyCommandEventName = typeof COMMANDS[AnyIrcCommand];
+export type AnyRawCommand = keyof typeof COMMANDS;
+export type AnyCommand = typeof COMMANDS[AnyRawCommand];
 
-export type AnyIrcReply = keyof typeof REPLIES;
-export type AnyReplyEventName = typeof REPLIES[AnyIrcReply];
+export type AnyRawReply = keyof typeof REPLIES;
+export type AnyReply = typeof REPLIES[AnyRawReply];
 
-export type AnyIrcError = keyof typeof ERRORS;
-export type AnyErrorEventName = typeof ERRORS[AnyIrcError];
+export type AnyRawError = keyof typeof ERRORS;
+export type AnyError = typeof ERRORS[AnyRawError];

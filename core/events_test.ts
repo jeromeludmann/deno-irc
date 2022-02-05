@@ -184,4 +184,36 @@ describe("core/events", (test) => {
 
     assertEquals(triggered, 3);
   });
+
+  test("add one listener on three events and remove it", () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+
+    const off = emitter.on(["event1", "event2", "event3"], () => {
+      triggered++;
+    });
+
+    off();
+
+    emitter.emit("event1", {}); // should not be triggered
+    emitter.emit("event2", {}); // should not be triggered
+    emitter.emit("event3", {}); // should not be triggered
+
+    assertEquals(triggered, 0);
+  });
+
+  test("wait for several events", () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+
+    emitter.once(["event1", "event2", "event3"], () => {
+      triggered++;
+    });
+
+    emitter.emit("event1", { key: "value" }); // +1
+    emitter.emit("event2", { key: "value" }); // should not be triggered
+    emitter.emit("event3", { key: "value" }); // should not be triggered
+
+    assertEquals(triggered, 1);
+  });
 });

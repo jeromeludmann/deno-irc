@@ -4,6 +4,7 @@ import { mockConsole } from "../testing/console.ts";
 import { MockServer } from "../testing/server.ts";
 import { MockCoreClient } from "../testing/client.ts";
 import { type CoreFeatures } from "./client.ts";
+import { type Raw } from "./parsers.ts";
 import { createPlugin, type Plugin } from "./plugins.ts";
 
 describe("core/client", (test) => {
@@ -106,19 +107,19 @@ describe("core/client", (test) => {
     await client.connect("host");
 
     server.send("PING key");
-    messages.push(await client.once("raw"));
+    messages.push(await client.once("raw:ping"));
 
     server.send(":serverhost 001 me :Welcome to the server");
-    messages.push(await client.once("raw"));
+    messages.push(await client.once("raw:rpl_welcome"));
 
     assertEquals(messages, [
       {
-        command: "PING",
+        command: "ping",
         params: ["key"],
       },
       {
         source: { name: "serverhost" },
-        command: "001",
+        command: "rpl_welcome",
         params: ["me", "Welcome to the server"],
       },
     ]);
@@ -199,13 +200,48 @@ describe("core/client", (test) => {
     const noop = () => {};
 
     const subscribeForever = () => {
-      for (;;) client.on("raw", noop);
+      for (;;) client.on("connected", noop);
     };
 
     assertThrows(
       subscribeForever,
       Error,
-      'Too many listeners for "raw" event',
+      'Too many listeners for "connected" event',
     );
+  });
+
+  test("translate global raw event to granular raw events", async () => {
+    const { client, server } = mock();
+    const messages: Raw[] = [];
+
+    await client.connect("host");
+
+    client.on("raw", (msg) => messages.push(msg));
+
+    server.send([
+      "PING key",
+      ":serverhost 001 me :Welcome to the server",
+      ":someone!user@host JOIN #channel",
+      ":someone!user@host NICK me",
+    ]);
+
+    await client.once("raw:nick");
+
+    assertEquals(messages, [{
+      command: "ping",
+      params: ["key"],
+    }, {
+      command: "rpl_welcome",
+      params: ["me", "Welcome to the server"],
+      source: { name: "serverhost" },
+    }, {
+      command: "join",
+      params: ["#channel"],
+      source: { mask: { host: "host", user: "user" }, name: "someone" },
+    }, {
+      command: "nick",
+      params: ["me"],
+      source: { mask: { host: "host", user: "user" }, name: "someone" },
+    }]);
   });
 });

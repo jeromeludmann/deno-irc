@@ -32,7 +32,7 @@ describe("plugins/registration", (test) => {
     server.receive();
 
     server.send(":serverhost 451 me :You have not registered");
-    await client.once("raw");
+    await client.once("raw:err_notregistered");
     const raw = server.receive();
 
     assertEquals(raw, [

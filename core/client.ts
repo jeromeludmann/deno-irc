@@ -4,16 +4,17 @@ import { Hooks } from "./hooks.ts";
 import { Parser, type Raw } from "./parsers.ts";
 import { loadPlugins, type Plugin } from "./plugins.ts";
 import {
-  type AnyCommandEventName,
-  type AnyErrorEventName,
-  type AnyIrcCommand,
-  type AnyReplyEventName,
+  type AnyCommand,
+  type AnyError,
+  type AnyRawCommand,
+  type AnyReply,
   PROTOCOL,
 } from "./protocol.ts";
 
-type AnyRawEventName =
-  | "raw"
-  | `raw:${AnyCommandEventName | AnyReplyEventName | AnyErrorEventName}`;
+type AnyRawEventName = `raw:${
+  | AnyCommand
+  | AnyReply
+  | AnyError}`;
 
 export interface CoreFeatures {
   options: EventEmitterOptions & {
@@ -27,12 +28,17 @@ export interface CoreFeatures {
     "connected": RemoteAddr;
     "disconnected": RemoteAddr;
     "error": ClientError;
+    "raw": Raw; // never be emitted, but using it will generate all raw events
   } & { [K in AnyRawEventName]: Raw };
   state: {
     remoteAddr: RemoteAddr;
   };
   utils: Record<never, never>;
 }
+
+const ALL_RAW_EVENTS = Object
+  .values(PROTOCOL.ALL)
+  .map((command) => `raw:${command}` as const);
 
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
@@ -60,7 +66,7 @@ export class CoreClient<
     withTls: Deno.connectTls,
   };
   protected conn: Deno.Conn | null = null;
-  protected hooks = new Hooks(this);
+  protected hooks = new Hooks<CoreClient<TEvents>>(this);
 
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
@@ -78,12 +84,26 @@ export class CoreClient<
     this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
     this.utils = {};
 
+    // The 'raw' event is never emitted. But when the client uses it,
+    // this event will be translated into ALL available raw events.
+
+    this.translateGlobalIntoGranularRawEvents();
+
     // When `loadPlugins` is called, plugins can add their own error listeners.
     // In order to keep the default error throwing behavior (at least one error
     // listener is required to handle errors), `resetErrorThrowingBehavior`
     // should always be called after to ignore already added error listeners.
+
     loadPlugins(this, options, plugins);
     this.resetErrorThrowingBehavior();
+  }
+
+  private translateGlobalIntoGranularRawEvents() {
+    this.hooks.hookCall("on", (on, eventName, listener) => {
+      const eventNames = Array.isArray(eventName) ? eventName : [eventName]
+        .flatMap((event) => event === "raw" ? ALL_RAW_EVENTS : event);
+      return on(eventNames, listener);
+    });
   }
 
   /** Connects to a server using a hostname and an optional port.
@@ -121,23 +141,22 @@ export class CoreClient<
     return this.conn;
   }
 
-  protected async loop(conn: Deno.Conn): Promise<void> {
+  private async loop(conn: Deno.Conn): Promise<void> {
     for (;;) {
       const chunks = await this.read(conn);
       if (chunks === null) break;
 
-      const messages = this.parser.parseMessages(chunks);
+      const messageGenerator = this.parser.parseMessages(chunks);
 
-      for (const msg of messages) {
-        this.emit("raw", msg);
-        this.emit(`raw:${PROTOCOL.ALL[msg.command]}`, msg);
+      for (const msg of messageGenerator) {
+        this.emit(`raw:${msg.command}`, msg);
       }
     }
 
     this.close();
   }
 
-  protected async read(conn: Deno.Conn): Promise<string | null> {
+  private async read(conn: Deno.Conn): Promise<string | null> {
     let read: number | null;
 
     try {
@@ -154,7 +173,7 @@ export class CoreClient<
     return chunks;
   }
 
-  protected close(): void {
+  private close(): void {
     if (this.conn === null) {
       return;
     }
@@ -174,7 +193,7 @@ export class CoreClient<
    * Resolves with the raw message sent to the server,
    * or `null` if nothing has been sent. */
   async send(
-    command: AnyIrcCommand,
+    command: AnyRawCommand,
     ...params: (string | undefined)[]
   ): Promise<string | null> {
     if (this.conn === null) {
@@ -214,7 +233,7 @@ export class CoreClient<
     this.close();
   }
 
-  /** Emits correctly an error. */
+  /** Emits properly an error. */
   emitError(...args: ErrorArgs): void {
     const [, error] = args;
     const isSilentError = (

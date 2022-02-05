@@ -65,14 +65,14 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(
       client.utils.isCtcp(
-        { command: "PRIVMSG", params: ["nick", "Hello world"] },
+        { command: "privmsg", params: ["nick", "Hello world"] },
       ),
       false,
     );
 
     assertEquals(
       client.utils.isCtcp({
-        command: "NOTICE",
+        command: "notice",
         params: ["nick", "Hello world"],
       }),
       false,
@@ -80,7 +80,7 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(
       client.utils.isCtcp({
-        command: "PRIVMSG",
+        command: "privmsg",
         params: ["nick", "\x01Hello world\x01"],
       }),
       true,
@@ -88,7 +88,7 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(
       client.utils.isCtcp({
-        command: "NOTICE",
+        command: "notice",
         params: ["nick", "\x01Hello world\x01"],
       }),
       true,
@@ -96,7 +96,7 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(
       client.utils.isCtcp({
-        command: "JOIN",
+        command: "join",
         params: ["nick", "\x01Hello world\x01"],
       }),
       false,

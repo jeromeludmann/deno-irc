@@ -1,4 +1,12 @@
-import type { AnyIrcCommand, AnyIrcError, AnyIrcReply } from "./protocol.ts";
+import {
+  type AnyCommand,
+  type AnyError,
+  type AnyRawCommand,
+  type AnyRawError,
+  type AnyRawReply,
+  type AnyReply,
+  PROTOCOL,
+} from "./protocol.ts";
 
 export interface Mask {
   /** Username of the user. */
@@ -30,8 +38,10 @@ export interface Message<TParams> {
 }
 
 export type Raw = Message<string[]> & {
-  /** Command of the message. */
-  command: AnyIrcCommand | AnyIrcReply | AnyIrcError;
+  /** Command of the message.
+   *
+   * Translated from raw command to be understandable by human. */
+  command: AnyCommand | AnyReply | AnyError;
 };
 
 export function parseSource(prefix: string): Source {
@@ -78,7 +88,8 @@ function parseMessage(raw: string): Raw {
   end = raw.indexOf(" ", start);
   if (end === -1) end = raw.length;
   const command = raw.slice(start, end);
-  msg.command = command as AnyIrcCommand | AnyIrcReply | AnyIrcError;
+  msg.command =
+    PROTOCOL.ALL[command as AnyRawCommand | AnyRawReply | AnyRawError];
   start = end + 1;
 
   // Parses message parameters.

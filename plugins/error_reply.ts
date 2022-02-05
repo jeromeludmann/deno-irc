@@ -1,14 +1,14 @@
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { type AnyErrorEventName, PROTOCOL } from "../core/protocol.ts";
+import { type AnyError, PROTOCOL } from "../core/protocol.ts";
 
 export interface ErrorReplyEventParams {
-  values: string[];
+  args: string[];
   text?: string;
 }
 
 export type ErrorReplyEvent = Message<ErrorReplyEventParams> & {
-  command: AnyErrorEventName;
+  command: AnyError;
 };
 
 interface ErrorReplyFeatures {
@@ -17,20 +17,23 @@ interface ErrorReplyFeatures {
   };
 }
 
+const ALL_RAW_ERROR_REPLY_EVENTS = Object
+  .values(PROTOCOL.ERRORS)
+  .map((command) => `raw:${command}` as const);
+
 export default createPlugin("error_reply")<ErrorReplyFeatures>((client) => {
-  // Emits 'error_reply' on all error replies.
-  client.on("raw", (msg) => {
-    if (msg.command in PROTOCOL.ERRORS) {
-      const { source, command, params } = msg;
+  // Emits 'error_reply' on **all** error replies.
 
-      const values = params.slice();
-      const text = values.pop();
+  client.on(ALL_RAW_ERROR_REPLY_EVENTS, (msg) => {
+    const { source, command, params } = msg;
 
-      client.emit("error_reply", {
-        source,
-        command: command as AnyErrorEventName,
-        params: { values, text },
-      });
-    }
+    const args = params.slice();
+    const text = args.pop();
+
+    client.emit("error_reply", {
+      source,
+      command: command as AnyError,
+      params: { args, text },
+    });
   });
 });

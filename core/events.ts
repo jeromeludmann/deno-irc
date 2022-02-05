@@ -19,7 +19,7 @@ export interface EventEmitterOptions {
   maxListeners?: number;
 }
 
-const MAX_LISTENERS = 1000;
+const MAX_LISTENERS_PER_EVENT = 1000;
 
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
@@ -27,7 +27,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   private maxListeners: number;
 
   constructor({ maxListeners }: EventEmitterOptions = {}) {
-    this.maxListeners = maxListeners ?? MAX_LISTENERS;
+    this.maxListeners = maxListeners ?? MAX_LISTENERS_PER_EVENT;
   }
 
   /** Calls all the listeners of the `eventName` with the `eventPayload`. */
@@ -85,17 +85,17 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T | T[],
     listener?: Listener<InferredPayload<TEvents, T>>,
   ): void | Promise<InferredPayload<TEvents, T>> {
-    if (listener) {
-      const removeListener = this.on(eventName, (payload) => {
-        removeListener();
-        listener(payload);
-      });
-    } else {
+    if (listener === undefined) {
       return new Promise((resolve) => {
         const removeListener = this.on(eventName, (payload) => {
           removeListener();
           resolve(payload);
         });
+      });
+    } else {
+      const removeListener = this.on(eventName, (payload) => {
+        removeListener();
+        listener(payload);
       });
     }
   }

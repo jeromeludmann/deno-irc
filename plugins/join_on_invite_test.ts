@@ -17,7 +17,7 @@ describe("plugins/join_on_invite", (test) => {
     const { client, server } = await mock({ joinOnInvite: false });
 
     server.send(":someone!user@host INVITE me :#channel");
-    await client.once("raw");
+    await client.once("raw:invite");
     const raw = server.receive();
 
     assertEquals(raw, []);

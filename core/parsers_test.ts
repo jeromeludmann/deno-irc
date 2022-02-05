@@ -17,7 +17,7 @@ describe("core/parsers", (test) => {
     assertEquals(raw2, [
       {
         source: { name: "serverhost" },
-        command: "NOTICE",
+        command: "notice",
         params: ["Auth", "*** Looking up your hostname..."],
       },
     ]);
@@ -28,12 +28,12 @@ describe("core/parsers", (test) => {
     assertEquals(raw3, [
       {
         source: { name: "serverhost" },
-        command: "001",
+        command: "rpl_welcome",
         params: ["nick", "Welcome to the server"],
       },
       {
         source: { name: "nick", mask: { user: "user", host: "host" } },
-        command: "JOIN",
+        command: "join",
         params: ["#channel"],
       },
     ]);
@@ -43,12 +43,12 @@ describe("core/parsers", (test) => {
     ));
     assertEquals(raw4, [
       {
-        command: "PING",
+        command: "ping",
         params: ["serverhost"],
       },
       {
         source: { name: "nick", mask: { user: "user", host: "host" } },
-        command: "PRIVMSG",
+        command: "privmsg",
         params: ["#channel", ":!@ ;"],
       },
     ]);

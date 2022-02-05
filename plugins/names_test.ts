@@ -48,7 +48,7 @@ describe("plugins/names", (test) => {
     server.send(
       ":serverhost 005 nick PREFIX=(qaohv)~&@%+ :are supported by this server",
     );
-    await client.once("raw");
+    await client.once("raw:rpl_isupport");
 
     server.send([
       ":serverhost 353 me = #channel :~@+nick1 &%nick2",

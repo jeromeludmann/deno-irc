@@ -6,8 +6,7 @@ export default createPlugin("throw_on_error")((client) => {
   // It will throw error if there are no error listeners bound to it.
 
   const emitError = (msg: Raw) => {
-    const { command, params } = msg;
-    const message = command + ": " + params.join(": ");
+    const message = "ERROR: " + msg.params.join(": ");
     client.emitError("read", message, emitError);
   };
 
