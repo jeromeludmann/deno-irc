@@ -9,6 +9,25 @@ describe("plugins/registration", (test) => {
     password: "password",
   };
 
+  test("register on connect", async () => {
+    const { client, server } = await mock(
+      options,
+      { withConnection: false },
+    );
+
+    (client.state as { capabilities: typeof client.state.capabilities })
+      .capabilities = [];
+
+    await client.connect("");
+    const raw = server.receive();
+
+    assertEquals(raw, [
+      "PASS password",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+  });
+
   test("send capabilities and register on connect", async () => {
     const { client, server } = await mock(
       options,

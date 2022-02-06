@@ -69,4 +69,20 @@ describe("plugins/isupport", (test) => {
       source: { name: "serverhost" },
     }]);
   });
+
+  test("ignore param starting with '-'", async () => {
+    const { client, server } = await mock();
+
+    let triggered = 0;
+    client.on(
+      "isupport:param" as Parameters<typeof client.on>[0],
+      () => triggered++,
+    );
+    server.send(
+      ":serverhost 005 nick -PARAM :are supported by this server",
+    );
+    await client.once("raw:rpl_isupport");
+
+    assertEquals(triggered, 0);
+  });
 });

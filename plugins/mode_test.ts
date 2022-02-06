@@ -148,13 +148,13 @@ describe("plugins/mode", (test) => {
     }]);
   });
 
-  test("emit 'mode' on MODE #channel +ohk-mv nick1 nick2 secret nick3", async () => {
+  test("emit 'mode' on MODE #channel +olhk-lv nick1 10 nick2 secret nick3", async () => {
     const { client, server } = await mock();
 
     const messages: ModeEvent[] = [];
     client.on("mode", (msg) => messages.push(msg));
     server.send(
-      ":someone!user@host MODE #channel +ohk-mv nick1 nick2 secret nick3",
+      ":someone!user@host MODE #channel +olhk-lv nick1 10 nick2 secret nick3",
     );
     await client.once("mode");
 
@@ -163,13 +163,16 @@ describe("plugins/mode", (test) => {
       params: { target: "#channel", mode: "+o", arg: "nick1" },
     }, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { target: "#channel", mode: "+l", arg: "10" },
+    }, {
+      source: { name: "someone", mask: { user: "user", host: "host" } },
       params: { target: "#channel", mode: "+h", arg: "nick2" },
     }, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
       params: { target: "#channel", mode: "+k", arg: "secret" },
     }, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
-      params: { target: "#channel", mode: "-m" },
+      params: { target: "#channel", mode: "-l" },
     }, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
       params: { target: "#channel", mode: "-v", arg: "nick3" },
@@ -188,15 +191,15 @@ describe("plugins/mode", (test) => {
     });
   });
 
-  test("emit 'mode:channel' on MODE #channel +m", async () => {
+  test("emit 'mode:channel' on MODE #channel +b nick!user@host", async () => {
     const { client, server } = await mock();
 
-    server.send(":someone!user@host MODE #channel +m");
+    server.send(":someone!user@host MODE #channel +b nick!user@host");
     const msg = await client.once("mode:channel");
 
     assertEquals(msg, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
-      params: { target: "#channel", mode: "+m" },
+      params: { target: "#channel", mode: "+b", arg: "nick!user@host" },
     });
   });
 
@@ -236,6 +239,22 @@ describe("plugins/mode", (test) => {
           { mode: "+r" },
         ],
       },
+    });
+  });
+
+  test("emit 'mode' on MODE #channel of an unknown mode", async () => {
+    const { client, server } = await mock();
+
+    // forces 'chanmodes' to not have modes
+    (client.state as { chanmodes: typeof client.state.chanmodes }).chanmodes =
+      {};
+
+    server.send(":someone!user@host MODE #channel +?");
+    const msg = await client.once("mode");
+
+    assertEquals(msg, {
+      source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { target: "#channel", mode: "+?" },
     });
   });
 });

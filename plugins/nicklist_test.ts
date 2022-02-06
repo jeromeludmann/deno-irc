@@ -14,12 +14,11 @@ describe("plugins/nicklist", (test) => {
     const { client, server } = await mock();
 
     server.send([
-      ":serverhost 353 me @ #channel1 :nick1 +nick2 %+nick3",
-      ":serverhost 353 me @ #channel1 :@%+nick4 +nick5",
-      ":serverhost 353 me @ #channel1 :nick6",
+      ":serverhost 353 me @ #channel1 :+nick5 @%+nick4 +nick2",
+      ":serverhost 353 me @ #channel1 :nick6 %+nick3 nick1",
       ":serverhost 366 me #channel1 :End of /NAMES list",
-      ":serverhost 353 me = #channel2 :%+nick1 +nick2 @%+nick3 %nick4",
-      ":serverhost 353 me = #channel2 :+nick5 @+nick6",
+      ":serverhost 353 me = #channel2 :@+nick6 @%+nick3 %+nick1",
+      ":serverhost 353 me = #channel2 :+nick5 %nick4 +nick2",
       ":serverhost 366 me #channel2 :End of /NAMES list",
     ]);
     await client.once("names_reply");

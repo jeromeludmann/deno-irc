@@ -30,11 +30,19 @@ describe("plugins/clientinfo", (test) => {
     server.send(
       ":someone!user@host NOTICE me :\x01CLIENTINFO PING TIME VERSION\x01",
     );
-    const msg = await client.once("ctcp_clientinfo_reply");
 
-    assertEquals(msg, {
+    assertEquals(await client.once("ctcp_clientinfo_reply"), {
       source: { name: "someone", mask: { user: "user", host: "host" } },
       params: { supported: ["PING", "TIME", "VERSION"] },
+    });
+
+    server.send(
+      ":someone!user@host NOTICE me :\x01CLIENTINFO\x01",
+    );
+
+    assertEquals(await client.once("ctcp_clientinfo_reply"), {
+      source: { name: "someone", mask: { user: "user", host: "host" } },
+      params: { supported: [] },
     });
   });
 

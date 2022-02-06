@@ -26,6 +26,7 @@ describe("plugins/list", (test) => {
     const { client, server } = await mock();
 
     server.send([
+      ":serverhost 321 me Channel :Users Name",
       ":serverhost 322 me #chan1 12 :Welcome to #channel",
       ":serverhost 322 me #chan2 23",
       ":serverhost 322 me #chan3 34 :",

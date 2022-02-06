@@ -77,8 +77,6 @@ export default createPlugin(
   });
 
   // Updates 'chanmodes' state.
-  //
-  // CHANMODES=IXbeg,k,Hfjl,ACKMOPRTcimnprstz
 
   client.on("isupport:chanmodes", (msg) => {
     const { params: { value: paramValue } } = msg;
@@ -90,6 +88,7 @@ export default createPlugin(
 
     let modeType = "a".charCodeAt(0);
 
+    // CHANMODES=IXbeg,k,Hfjl,ACKMOPRTcimnprstz
     for (const modeChar of paramValue) {
       const type = { type: String.fromCharCode(modeType) };
       modeChar === "," ? ++modeType : (client.state.chanmodes[modeChar] = type);
@@ -97,8 +96,6 @@ export default createPlugin(
   });
 
   // Updates nick 'prefixes' state.
-  //
-  // PREFIX=(qaohv)~&@%+
 
   client.on("isupport:prefix", (msg) => {
     const { params: { value } } = msg;
@@ -107,7 +104,8 @@ export default createPlugin(
       return;
     }
 
-    const match = value.match(/\((.*?)\)(.*)/);
+    // PREFIX=(qaohv)~&@%+
+    const match = value.match(/^\((.+?)\)(.+)$/);
     if (match === null) {
       return;
     }

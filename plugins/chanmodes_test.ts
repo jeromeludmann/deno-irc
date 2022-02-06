@@ -82,4 +82,21 @@ describe("plugins/chanmodes", (test) => {
       "+": { priority: 4 },
     });
   });
+
+  test("not replace nick prefixes state if bad value is received", async () => {
+    const { client, server } = await mock();
+    const defaults = client.state.prefixes;
+
+    // without value
+
+    server.send(":serverhost 005 nick PREFIX :are supported by this server");
+    await client.once("isupport:prefix");
+    assertEquals(client.state.prefixes, defaults);
+
+    // with bad format
+
+    server.send(":serverhost 005 nick PREFIX=a :are supported by this server");
+    await client.once("isupport:prefix");
+    assertEquals(client.state.prefixes, defaults);
+  });
 });

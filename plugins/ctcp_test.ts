@@ -101,5 +101,21 @@ describe("plugins/ctcp", (test) => {
       }),
       false,
     );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "join",
+        params: ["nick"],
+      }),
+      false,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "join",
+        params: [],
+      }),
+      false,
+    );
   });
 });
