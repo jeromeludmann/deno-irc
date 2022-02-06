@@ -216,14 +216,10 @@ All-in-one command exists for this purpose:
 make
 ```
 
-You also can specifically use one of them:
+Need help?
 
 ```sh
-make lint
-
-make fmt
-
-make test
+make help
 ```
 
 ## License

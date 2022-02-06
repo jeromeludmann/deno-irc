@@ -27,7 +27,7 @@ jobs:
 
       - name: Check format
         if: matrix.os == 'ubuntu-latest'
-        run: make fmt
+        run: make fmt-check
 
       - name: Run tests
-        run: make test
+        run: make test-coverage
