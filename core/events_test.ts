@@ -155,6 +155,21 @@ describe("core/events", (test) => {
     );
   });
 
+  test("update memorized listener count if event has been removed", () => {
+    const emitter = new EventEmitter();
+
+    emitter.once("event", () => {});
+    emitter.once("event", () => {});
+    emitter.once("event", () => {});
+
+    (emitter as unknown as { resetErrorThrowingBehavior: () => void })
+      .resetErrorThrowingBehavior();
+
+    emitter.emit("event", {});
+
+    assertEquals(emitter.count("event"), 0);
+  });
+
   test("throw when reaching max listener count", () => {
     const emitter = new EventEmitter({ maxListeners: 2 });
     const noop = () => {};

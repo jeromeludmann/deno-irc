@@ -40,4 +40,15 @@ describe("core/hooks", (test) => {
 
     assertEquals(results, ["key", "value"]);
   });
+
+  test("add a hook before deleting object key", () => {
+    const results: string[] = [];
+    const target: { object: { key?: string } } = { object: { key: "value" } };
+    const hooks = new Hooks(target);
+
+    hooks.beforeMutate("object", (_, key) => results.push(key));
+    delete target.object.key;
+
+    assertEquals(results, ["key"]);
+  });
 });

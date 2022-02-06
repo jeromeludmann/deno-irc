@@ -124,7 +124,7 @@ export class Parser {
   *parseMessages(chunks: string): Generator<Raw> {
     this.chunk += chunks;
     const batch = this.chunk.split("\r\n");
-    this.chunk = batch.pop() ?? "";
+    this.chunk = batch.pop()!;
 
     for (const raw of batch) {
       yield parseMessage(raw);

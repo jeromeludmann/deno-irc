@@ -3,6 +3,52 @@ import { describe } from "../testing/helpers.ts";
 import { Parser } from "./parsers.ts";
 
 describe("core/parsers", (test) => {
+  test("parse message with server prefix", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages(
+        ":serverhost NOTICE * :*** Looking up your hostname...\r\n",
+      ),
+    );
+
+    assertEquals(msg, [{
+      command: "notice",
+      params: ["*", "*** Looking up your hostname..."],
+      source: { name: "serverhost" },
+    }]);
+  });
+
+  test("parse message with user prefix", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages(":someone!user@host JOIN #channel\r\n"),
+    );
+
+    assertEquals(msg, [{
+      command: "join",
+      params: ["#channel"],
+      source: { mask: { host: "host", user: "user" }, name: "someone" },
+    }]);
+  });
+
+  test("parse message with tags", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages(
+        "@aaa=bbb;ccc;example.com/ddd=eee :someone!user@host JOIN #channel\r\n",
+      ),
+    );
+
+    assertEquals(msg, [{
+      command: "join",
+      params: ["#channel"],
+      source: { mask: { host: "host", user: "user" }, name: "someone" },
+    }]);
+  });
+
   test("parse chunks of raw messages", () => {
     const parser = new Parser();
 

@@ -43,6 +43,19 @@ describe("core/client", (test) => {
     });
   });
 
+  test("connect to server with TLS", async () => {
+    const { client } = mock();
+
+    client.connect("host", 6668, true);
+    const addr = await client.once("connected");
+
+    assertEquals(addr, {
+      hostname: "host",
+      port: 6668,
+      tls: true,
+    });
+  });
+
   test("fail to connect", async () => {
     const { client } = mock();
 
@@ -90,13 +103,29 @@ describe("core/client", (test) => {
     assertEquals(error.type, "write");
   });
 
-  test("throw on send", () => {
+  test("throw on send if missing connection", () => {
     const { client } = mock();
 
     assertRejects(
       () => client.send("PING", "key"),
       Error,
       "Unable to send message",
+    );
+  });
+
+  test("throw on send if error is thrown", async () => {
+    const { client } = mock();
+
+    await client.connect("host");
+
+    client.conn!.write = () => {
+      throw new Error("Error while writing");
+    };
+
+    assertRejects(
+      () => client.send("PING", "key"),
+      Error,
+      "Error while writing",
     );
   });
 
@@ -123,6 +152,22 @@ describe("core/client", (test) => {
         params: ["me", "Welcome to the server"],
       },
     ]);
+  });
+
+  test("fail to receive raw messages from server if error is thrown", async () => {
+    const { client, server } = mock();
+
+    await client.connect("host");
+
+    client.conn!.read = () => {
+      throw new Error("Error while reading");
+    };
+
+    server.send("won't be sent because of reading error");
+    const error = await client.once("error");
+
+    assertEquals(error.name, "Error");
+    assertEquals(error.type, "read");
   });
 
   test("disconnect from server", async () => {
@@ -162,6 +207,22 @@ describe("core/client", (test) => {
     const addr = await client.wait("disconnected", 1);
 
     assertEquals(addr, null);
+  });
+
+  test("throw on disconnect if error is thrown", async () => {
+    const { client } = mock();
+
+    await client.connect("host");
+
+    client.conn!.close = () => {
+      throw new Error("Error while closing");
+    };
+
+    assertThrows(
+      () => client.disconnect(),
+      Error,
+      "Error while closing",
+    );
   });
 
   const plugins = [
@@ -243,5 +304,20 @@ describe("core/client", (test) => {
       params: ["me"],
       source: { mask: { host: "host", user: "user" }, name: "someone" },
     }]);
+  });
+
+  test("swallow some Deno errors silently", () => {
+    const { client } = mock();
+    let triggered = 0;
+
+    client.on("error", () => {
+      triggered++;
+    });
+
+    client.emitError("write", new Error("Boom!")); // +1
+    client.emitError("write", new Deno.errors.BadResource()); // should not throw
+    client.emitError("write", new Deno.errors.Interrupted()); // should not throw
+
+    assertEquals(triggered, 1);
   });
 });

@@ -3,7 +3,7 @@ type Listener<T> = (payload: T) => void;
 
 type Listeners<T> = Record<keyof T, Listener<any>[]>;
 
-type IgnoredListenerCounts<T> = Record<keyof T, number>;
+type MemorizedListenerCounts<T> = Record<keyof T, number>;
 
 type InferredPayload<
   TEvents extends Record<string, unknown>,
@@ -23,7 +23,7 @@ const MAX_LISTENERS_PER_EVENT = 1000;
 
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
-  private ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
+  private memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
   private maxListeners: number;
 
   constructor({ maxListeners }: EventEmitterOptions = {}) {
@@ -125,9 +125,16 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
-    for (const ev of Array.isArray(eventName) ? eventName : [eventName]) {
-      const listeners = this.listeners[ev].filter((fn) => fn !== listener);
-      this.listeners[ev] = listeners;
+    for (const event of Array.isArray(eventName) ? eventName : [eventName]) {
+      const listeners = this.listeners[event].filter((fn) => fn !== listener);
+      this.listeners[event] = listeners;
+
+      if (
+        event in this.memorizedListenerCounts &&
+        this.memorizedListenerCounts[event] > 0
+      ) {
+        --this.memorizedListenerCounts[event];
+      }
     }
   }
 
@@ -138,25 +145,22 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
 
     const listenerCount = this.listeners[eventName].length;
-    const ignoredListenerCount = this.ignoredListenerCounts[eventName] ?? 0;
+    const memorizedListenerCount = this.memorizedListenerCounts[eventName] ?? 0;
 
-    if (listenerCount < ignoredListenerCount) {
-      return 0;
-    }
-
-    return listenerCount - ignoredListenerCount;
+    return listenerCount - memorizedListenerCount;
   }
 
   /** Resets the error throwing behavior based on current listener counts. */
   protected resetErrorThrowingBehavior(): void {
-    this.ignoreCurrentListenerCounts();
+    this.memorizeCurrentListenerCounts();
   }
 
-  private ignoreCurrentListenerCounts(): void {
-    this.ignoredListenerCounts = {} as IgnoredListenerCounts<TEvents>;
+  private memorizeCurrentListenerCounts(): void {
+    this.memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
 
     for (const eventName in this.listeners) {
-      this.ignoredListenerCounts[eventName] = this.listeners[eventName].length;
+      this.memorizedListenerCounts[eventName] =
+        this.listeners[eventName].length;
     }
   }
 }
