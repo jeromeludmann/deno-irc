@@ -45,6 +45,7 @@ interface ModeFeatures {
      * Sets modes:
      *
      *      client.mode("nick", "+w");
+     *      client.mode("#chan", "e");
      *      client.mode("#chan", "+v", "nick");
      *      client.mode("#chan", "+iko", "secret", "nick"); */
     mode(target: string, modes?: string, ...args: string[]): void;
@@ -63,13 +64,35 @@ export default createPlugin(
   "mode",
   [chanmodes, usermodes, chantypes],
 )<ModeFeatures>((client) => {
-  function parseModes(
-    modeChars: string,
-    modeArgs: string[],
-    supportedModes: Modes,
-  ): Mode[] {
+  function parseModes(rawModes: string[], supportedModes: Modes): Mode[] {
     const modes: Mode[] = [];
     let modeSet: "+" | "-" | "" = "";
+    let modeChars = "";
+    const modeArgs = [];
+
+    // from:
+    //   rawModes: ["+o", "nick1", "+v", "nick2", "+m"]
+    //
+    // to:
+    //   modeChars: "+ovm"
+    //   modeArgs: ["nick1", "nick2"]
+
+    for (const rawMode of rawModes) {
+      rawMode.charAt(0) === "+" || rawMode.charAt(0) === "-"
+        ? modeChars += rawMode
+        : modeArgs.push(rawMode);
+    }
+
+    // from:
+    //   modeChars: "+ovm"
+    //   modeArgs: ["nick1", "nick2"]
+    //
+    // to:
+    //   modes: [
+    //     { mode: "+o", arg: "nick1" },
+    //     { mode: "+v", arg: "nick2" }
+    //     { mode: "+m" }
+    //   ]
 
     for (const modeChar of modeChars) {
       if (modeChar === "+" || modeChar === "-") {
@@ -120,7 +143,7 @@ export default createPlugin(
 
   client.on("raw:mode", (msg) => {
     const { source, params } = msg;
-    const [target, modeChars, ...modeArgs] = params;
+    const [target, ...rawModes] = params;
 
     const isChannel = client.utils.isChannel(target);
 
@@ -128,7 +151,7 @@ export default createPlugin(
       ? client.state.chanmodes
       : client.state.usermodes;
 
-    const modes = parseModes(modeChars, modeArgs, supportedModes);
+    const modes = parseModes(rawModes, supportedModes);
 
     for (const { mode, arg } of modes) {
       const payload: ModeEvent = { source, params: { target, mode } };
@@ -143,7 +166,7 @@ export default createPlugin(
 
   client.on(["raw:rpl_umodeis", "raw:rpl_channelmodeis"], (msg) => {
     const { source, params } = msg;
-    const [target, modeChars, ...modeArgs] = params;
+    const [target, ...rawModes] = params;
 
     const isChannel = client.utils.isChannel(target);
 
@@ -151,7 +174,7 @@ export default createPlugin(
       ? client.state.chanmodes
       : client.state.usermodes;
 
-    const modes = parseModes(modeChars, modeArgs, supportedModes);
+    const modes = parseModes(rawModes, supportedModes);
     const payload: ModeReplyEvent = { source, params: { target, modes } };
 
     client.emit("mode_reply", payload);
