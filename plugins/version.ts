@@ -43,9 +43,8 @@ export default createPlugin(
   "version",
   [ctcp],
 )<VersionFeatures>((client, options) => {
-  const version = options.ctcpReplies?.version ?? DEFAULT_VERSION;
-
   // Sends VERSION command.
+
   client.version = (target) => {
     if (target === undefined) {
       client.send("VERSION");
@@ -54,25 +53,23 @@ export default createPlugin(
     }
   };
 
-  // Emits 'ctcp_version' event.
-  client.on("ctcp", (msg) => {
-    if (msg.command === "VERSION") {
-      const { source, params: { type, target, param: version } } = msg;
-      switch (type) {
-        case "query":
-          client.emit("ctcp_version", { source, params: { target } });
-          break;
-        case "reply":
-          if (version !== undefined) {
-            client.emit("ctcp_version_reply", { source, params: { version } });
-          }
-          break;
-      }
-    }
+  // Emits 'ctcp_version' and 'ctcp_version_reply' events.
+
+  client.on("raw_ctcp:version", (msg) => {
+    const { source, params: { target } } = msg;
+    client.emit("ctcp_version", { source, params: { target } });
+  });
+
+  client.on("raw_ctcp:version_reply", (msg) => {
+    const { source, params: { arg: version } } = msg;
+    client.emit("ctcp_version_reply", { source, params: { version } });
   });
 
   // Replies to CTCP VERSION.
+
+  const version = options.ctcpReplies?.version ?? DEFAULT_VERSION;
   if (version === false) return;
+
   client.on("ctcp_version", (msg) => {
     const { source } = msg;
     if (source) {

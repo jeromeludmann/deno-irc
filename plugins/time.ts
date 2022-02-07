@@ -36,9 +36,8 @@ interface TimeFeatures {
 const DEFAULT_TIME_REPLY = true;
 
 export default createPlugin("time", [ctcp])<TimeFeatures>((client, options) => {
-  const replyEnabled = options.ctcpReplies?.time ?? DEFAULT_TIME_REPLY;
-
   // Sends TIME or CTCP TIME command.
+
   client.time = (target) => {
     if (target === undefined) {
       client.send("TIME");
@@ -48,25 +47,22 @@ export default createPlugin("time", [ctcp])<TimeFeatures>((client, options) => {
   };
 
   // Emits 'ctcp_time' and 'ctcp_time_reply' events.
-  client.on("ctcp", (msg) => {
-    if (msg.command === "TIME") {
-      const { source, params: { type, target, param: time } } = msg;
 
-      switch (type) {
-        case "query":
-          client.emit("ctcp_time", { source, params: { target } });
-          break;
-        case "reply":
-          if (time !== undefined) {
-            client.emit("ctcp_time_reply", { source, params: { time } });
-          }
-          break;
-      }
-    }
+  client.on("raw_ctcp:time", (msg) => {
+    const { source, params: { target } } = msg;
+    client.emit("ctcp_time", { source, params: { target } });
+  });
+
+  client.on("raw_ctcp:time_reply", (msg) => {
+    const { source, params: { arg: time } } = msg;
+    client.emit("ctcp_time_reply", { source, params: { time } });
   });
 
   // Replies to CTCP TIME.
+
+  const replyEnabled = options.ctcpReplies?.time ?? DEFAULT_TIME_REPLY;
   if (!replyEnabled) return;
+
   client.on("ctcp_time", (msg) => {
     const { source } = msg;
     if (source) {

@@ -19,43 +19,30 @@ describe("plugins/ctcp", (test) => {
     );
   });
 
-  test("emit 'ctcp' on CTCP", async () => {
+  test("emit 'ctcp:*' on CTCP", async () => {
     const { client, server } = await mock();
     const messages = [];
 
     server.send(
-      ":someone!user@host PRIVMSG #channel :\x01CTCP_COMMAND\x01",
+      ":someone!user@host PRIVMSG me :\x01PING key\x01",
     );
-    messages.push(await client.once("ctcp"));
+    messages.push(await client.once("raw_ctcp:ping"));
 
     server.send(
-      ":someone!user@host NOTICE #channel :\x01CTCP_COMMAND param\x01",
+      ":someone!user@host NOTICE me :\x01PING key\x01",
     );
-    messages.push(await client.once("ctcp"));
+    messages.push(await client.once("raw_ctcp:ping_reply"));
 
     assertEquals(messages, [
       {
-        source: {
-          name: "someone",
-          mask: { user: "user", host: "host" },
-        },
-        command: "CTCP_COMMAND",
-        params: {
-          target: "#channel",
-          type: "query",
-        },
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        command: "ping",
+        params: { target: "me", arg: "key" },
       },
       {
-        source: {
-          name: "someone",
-          mask: { user: "user", host: "host" },
-        },
-        command: "CTCP_COMMAND",
-        params: {
-          target: "#channel",
-          type: "reply",
-          param: "param",
-        },
+        source: { name: "someone", mask: { user: "user", host: "host" } },
+        command: "ping",
+        params: { target: "me", arg: "key" },
       },
     ]);
   });
@@ -64,9 +51,10 @@ describe("plugins/ctcp", (test) => {
     const { client } = await mock();
 
     assertEquals(
-      client.utils.isCtcp(
-        { command: "privmsg", params: ["nick", "Hello world"] },
-      ),
+      client.utils.isCtcp({
+        command: "privmsg",
+        params: ["nick", "Hello world"],
+      }),
       false,
     );
 
@@ -81,30 +69,6 @@ describe("plugins/ctcp", (test) => {
     assertEquals(
       client.utils.isCtcp({
         command: "privmsg",
-        params: ["nick", "\x01Hello world\x01"],
-      }),
-      true,
-    );
-
-    assertEquals(
-      client.utils.isCtcp({
-        command: "notice",
-        params: ["nick", "\x01Hello world\x01"],
-      }),
-      true,
-    );
-
-    assertEquals(
-      client.utils.isCtcp({
-        command: "join",
-        params: ["nick", "\x01Hello world\x01"],
-      }),
-      false,
-    );
-
-    assertEquals(
-      client.utils.isCtcp({
-        command: "join",
         params: ["nick"],
       }),
       false,
@@ -112,10 +76,42 @@ describe("plugins/ctcp", (test) => {
 
     assertEquals(
       client.utils.isCtcp({
-        command: "join",
-        params: [],
+        command: "privmsg",
+        params: ["nick", "\x01COMMAND\x01"],
+      }),
+      true,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "privmsg",
+        params: ["nick", "\x01COMMAND argument\x01"],
+      }),
+      true,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "notice",
+        params: ["nick"],
       }),
       false,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "notice",
+        params: ["nick", "\x01COMMAND\x01"],
+      }),
+      true,
+    );
+
+    assertEquals(
+      client.utils.isCtcp({
+        command: "notice",
+        params: ["nick", "\x01COMMAND argument\x01"],
+      }),
+      true,
     );
   });
 });

@@ -1,27 +1,38 @@
 import { type Message, type Raw } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 
-export type AnyCtcpCommand =
-  | "ACTION"
-  | "CLIENTINFO"
-  | "PING"
-  | "TIME"
-  | "VERSION";
+const CTCP_COMMANDS = {
+  ACTION: "action",
+  CLIENTINFO: "clientinfo",
+  PING: "ping",
+  TIME: "time",
+  VERSION: "version",
+} as const;
 
-export interface CtcpEventParams {
-  /** Target of the CTCP.
+type AnyRawCtcpCommand = keyof typeof CTCP_COMMANDS;
+export type AnyCtcpCommand = typeof CTCP_COMMANDS[AnyRawCtcpCommand];
+
+export interface RawCtcpEventParams {
+  /** Target of the CTCP query.
    *
    * Can be either a channel or a nick. */
   target: string;
 
-  /** Type of the CTCP (`"query"` or `"reply"`). */
-  type: "query" | "reply";
-
-  /** Optional param of the CTCP. */
-  param?: string;
+  /** Optional argument of the CTCP query. */
+  arg?: string;
 }
 
-export type CtcpEvent = Message<CtcpEventParams> & {
+export type RawCtcpEvent = Message<RawCtcpEventParams> & {
+  /** Name of the CTCP command. */
+  command: AnyCtcpCommand;
+};
+
+export interface RawCtcpReplyEventParams {
+  /** Argument of the CTCP reply. */
+  arg: string;
+}
+
+export type RawCtcpReplyEvent = Message<RawCtcpReplyEventParams> & {
   /** Name of the CTCP command. */
   command: AnyCtcpCommand;
 };
@@ -36,14 +47,14 @@ interface CtcpFeatures {
      * - `ping`
      * - `time`
      * - `version` */
-    ctcp(target: string, command: AnyCtcpCommand, param?: string): void;
+    ctcp(target: string, command: AnyRawCtcpCommand, param?: string): void;
   };
-  events: {
-    "ctcp": CtcpEvent;
-  };
+  events:
+    & { [K in `raw_ctcp:${AnyCtcpCommand}`]: RawCtcpEvent }
+    & { [K in `raw_ctcp:${AnyCtcpCommand}_reply`]: RawCtcpReplyEvent };
   utils: {
     isCtcp: (msg: Raw) => boolean;
-    createCtcp: (command: AnyCtcpCommand, param?: string) => string;
+    createCtcp: (command: AnyRawCtcpCommand, param?: string) => string;
   };
 }
 
@@ -55,48 +66,39 @@ export default createPlugin("ctcp", [])<CtcpFeatures>((client) => {
     client.send("PRIVMSG", target, ctcp);
   };
 
-  // Emits 'ctcp' event.
+  // Emits 'raw:ctcp:*' events.
 
   client.on(["raw:privmsg", "raw:notice"], (msg) => {
-    if (!client.utils.isCtcp(msg)) return;
+    if (client.utils.isCtcp(msg)) {
+      const { source, params: [target, rawCtcp] } = msg;
 
-    const { source, params: [target, rawCtcp] } = msg;
+      // Parses raw CTCP
 
-    const i = rawCtcp.indexOf(" ", 1);
-    const command = rawCtcp.slice(1, i) as AnyCtcpCommand;
-    const ctcpParam = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
-    const type = msg.command === "privmsg" ? "query" : "reply";
+      const i = rawCtcp.indexOf(" ", 1);
+      const rawCommand = rawCtcp.slice(1, i) as AnyRawCtcpCommand;
+      const command = CTCP_COMMANDS[rawCommand];
+      const param = i === -1 ? undefined : rawCtcp.slice(i + 1, -1);
 
-    const ctcp: CtcpEvent = { source, command, params: { target, type } };
-    if (ctcpParam) ctcp.params.param = ctcpParam;
+      const type = msg.command === "privmsg" ? "" : "_reply";
 
-    client.emit("ctcp", ctcp);
+      const ctcp: RawCtcpEvent = { source, command, params: { target } };
+      if (param) ctcp.params.arg = param;
+
+      client.emit(`raw_ctcp:${ctcp.command}${type}`, ctcp);
+    }
   });
 
   // Utils.
 
   client.utils.isCtcp = (msg) => {
     const { params } = msg;
-
-    if (params.length !== 2) {
-      return false;
-    }
-
-    if (
-      params[1][0] !== "\x01" ||
-      params[1][params[1].length - 1] !== "\x01"
-    ) {
-      return false;
-    }
-
-    if (
-      msg.command !== "privmsg" &&
-      msg.command !== "notice"
-    ) {
-      return false;
-    }
-
-    return true;
+    return (
+      // should have 2 parameters
+      params.length === 2 &&
+      // should be wrapped with '\x01'
+      params[1].charAt(0) === "\x01" &&
+      params[1].slice(-1) === "\x01"
+    );
   };
 
   client.utils.createCtcp = (command, param) => {

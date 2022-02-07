@@ -42,32 +42,29 @@ export default createPlugin(
   [ctcp],
 )<ClientinfoFeatures>((client, options) => {
   // Sends CTCP CLIENTINFO command.
+
   client.clientinfo = (target) => {
     client.ctcp(target, "CLIENTINFO");
   };
 
   // Emits 'ctcp_clientinfo' and 'ctcp_clientinfo_reply' events.
-  client.on("ctcp", (msg) => {
-    if (msg.command !== "CLIENTINFO") return;
-    const { source, params: { type, target, param } } = msg;
 
-    switch (type) {
-      case "query": {
-        client.emit("ctcp_clientinfo", { source, params: { target } });
-        break;
-      }
-      case "reply": {
-        const supported = (param?.split(" ") ?? []) as AnyCtcpCommand[];
-        client.emit("ctcp_clientinfo_reply", { source, params: { supported } });
-        break;
-      }
-    }
+  client.on("raw_ctcp:clientinfo", (msg) => {
+    const { source, params: { target } } = msg;
+    client.emit("ctcp_clientinfo", { source, params: { target } });
   });
+
+  client.on("raw_ctcp:clientinfo_reply", (msg) => {
+    const { source, params: { arg } } = msg;
+    const supported = (arg?.split(" ") ?? []) as AnyCtcpCommand[];
+    client.emit("ctcp_clientinfo_reply", { source, params: { supported } });
+  });
+
+  // Replies to CTCP CLIENTINFO.
 
   const replyEnabled = options.ctcpReplies?.clientinfo ?? REPLY_ENABLED;
   if (!replyEnabled) return;
 
-  // Replies to CTCP CLIENTINFO.
   client.on("ctcp_clientinfo", (msg) => {
     const { source } = msg;
 

@@ -27,17 +27,16 @@ interface ActionFeatures {
 
 export default createPlugin("action", [ctcp])<ActionFeatures>((client) => {
   // Sends CTCP ACTION command.
+
   client.action = client.me = (target, text) => {
     client.ctcp(target, "ACTION", text);
   };
 
   // Emits 'ctcp_action' event.
-  client.on("ctcp", (msg) => {
-    if (
-      msg.command === "ACTION" &&
-      msg.params.param
-    ) {
-      const { source, params: { target, param: text } } = msg;
+
+  client.on("raw_ctcp:action", (msg) => {
+    const { source, params: { target, arg: text } } = msg;
+    if (text !== undefined) {
       client.emit("ctcp_action", { source, params: { target, text } });
     }
   });

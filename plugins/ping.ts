@@ -60,8 +60,6 @@ interface PingFeatures {
 const CTCP_REPLY_ENABLED = true;
 
 export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
-  const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
-
   // Sends PING command.
 
   client.ping = (target) => {
@@ -86,24 +84,18 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
     client.emit("pong", { source, params: { daemon, key } });
   });
 
-  // Emits 'ctcp_ping' event.
+  // Emits 'ctcp_ping' and 'ctcp_ping_reply' events.
 
-  client.on("ctcp", (msg) => {
-    if (
-      msg.command === "PING" &&
-      msg.params.param !== undefined
-    ) {
-      const { source, params: { type, target, param: key } } = msg;
-
-      switch (type) {
-        case "query":
-          client.emit("ctcp_ping", { source, params: { target, key } });
-          break;
-        case "reply":
-          client.emit("ctcp_ping_reply", { source, params: { key } });
-          break;
-      }
+  client.on("raw_ctcp:ping", (msg) => {
+    const { source, params: { target, arg: key } } = msg;
+    if (key !== undefined) {
+      client.emit("ctcp_ping", { source, params: { target, key } });
     }
+  });
+
+  client.on("raw_ctcp:ping_reply", (msg) => {
+    const { source, params: { arg: key } } = msg;
+    client.emit("ctcp_ping_reply", { source, params: { key } });
   });
 
   // Replies to PING.
@@ -114,7 +106,9 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
 
   // Replies to CTCP PING.
 
+  const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
   if (!ctcpReplyEnabled) return;
+
   client.on("ctcp_ping", (msg) => {
     const { source, params: { key } } = msg;
     if (source) {
