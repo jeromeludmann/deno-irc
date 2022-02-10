@@ -271,13 +271,14 @@ describe("core/client", (test) => {
     );
   });
 
-  test("translate global raw event to granular raw events", async () => {
+  test("subscribe to global 'raw' event", async () => {
     const { client, server } = mock();
     const messages: Raw[] = [];
 
     await client.connect("host");
 
     client.on("raw", (msg) => messages.push(msg));
+    client.on(["raw"], (msg) => messages.push(msg));
 
     server.send([
       "PING key",
@@ -288,22 +289,10 @@ describe("core/client", (test) => {
 
     await client.once("raw:nick");
 
-    assertEquals(messages, [{
-      command: "ping",
-      params: ["key"],
-    }, {
-      command: "rpl_welcome",
-      params: ["me", "Welcome to the server"],
-      source: { name: "serverhost" },
-    }, {
-      command: "join",
-      params: ["#channel"],
-      source: { mask: { host: "host", user: "user" }, name: "someone" },
-    }, {
-      command: "nick",
-      params: ["me"],
-      source: { mask: { host: "host", user: "user" }, name: "someone" },
-    }]);
+    // should have:
+    // - 4 messages for `client.on("raw", fn)`
+    // - 4 messages for `client.on(["raw"], fn)`
+    assertEquals(messages.length, 8);
   });
 
   test("swallow some Deno errors silently", () => {

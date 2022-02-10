@@ -84,8 +84,8 @@ export class CoreClient<
     this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
     this.utils = {};
 
-    // The 'raw' event is never emitted. But when the client uses it,
-    // this event will be translated into ALL available raw events.
+    // The 'raw' event is never emitted. But when the client subscribes to it,
+    // this global event will be translated into ALL available raw events.
 
     this.translateGlobalIntoGranularRawEvents();
 
@@ -100,7 +100,7 @@ export class CoreClient<
 
   private translateGlobalIntoGranularRawEvents() {
     this.hooks.hookCall("on", (on, eventName, listener) => {
-      const eventNames = Array.isArray(eventName) ? eventName : [eventName]
+      const eventNames = (Array.isArray(eventName) ? eventName : [eventName])
         .flatMap((event) => event === "raw" ? ALL_RAW_EVENTS : event);
       return on(eventNames, listener);
     });
