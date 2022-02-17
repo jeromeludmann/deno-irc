@@ -5,9 +5,15 @@ interface Events {
 }
 
 export class MockConn extends EventEmitter<Events> implements Deno.Conn {
-  localAddr: Deno.NetAddr;
+  localAddr: Deno.NetAddr = {
+    hostname: "local_host",
+    port: 12345,
+    transport: "tcp",
+  };
   remoteAddr: Deno.NetAddr;
   rid = -1;
+  readable = new ReadableStream();
+  writable = new WritableStream();
 
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
@@ -16,18 +22,7 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
 
   constructor(hostname: string, port: number) {
     super();
-
-    this.localAddr = {
-      hostname: "local_host",
-      port: 12345,
-      transport: "tcp",
-    };
-
-    this.remoteAddr = {
-      hostname,
-      port,
-      transport: "tcp",
-    };
+    this.remoteAddr = { hostname, port, transport: "tcp" };
   }
 
   async read(buffer: Uint8Array): Promise<number | null> {
