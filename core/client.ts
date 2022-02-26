@@ -11,10 +11,7 @@ import {
   PROTOCOL,
 } from "./protocol.ts";
 
-type AnyRawEventName = `raw:${
-  | AnyCommand
-  | AnyReply
-  | AnyError}`;
+type AnyRawEventName = `raw:${AnyCommand | AnyReply | AnyError}`;
 
 export interface CoreFeatures {
   options: EventEmitterOptions & {
@@ -23,6 +20,7 @@ export interface CoreFeatures {
      * Default to `4096` bytes. */
     bufferSize?: number;
   };
+
   events: {
     "connecting": RemoteAddr;
     "connected": RemoteAddr;
@@ -30,15 +28,28 @@ export interface CoreFeatures {
     "error": ClientError;
     "raw": Raw; // never be emitted, but using it will generate all raw events
   } & { [K in AnyRawEventName]: Raw };
+
   state: {
     remoteAddr: RemoteAddr;
   };
+
   utils: Record<never, never>;
 }
 
-const ALL_RAW_EVENTS = Object
-  .values(PROTOCOL.ALL)
-  .map((command) => `raw:${command}` as const);
+function generateRawEvents<
+  T extends keyof typeof PROTOCOL,
+  U extends typeof PROTOCOL[T],
+  V extends `raw:${U[keyof U] extends string ? U[keyof U] : never}`[],
+>(type: T) {
+  return Object
+    .values(PROTOCOL[type])
+    .map((command) => `raw:${command}`) as V;
+}
+
+export const RAW_EVENTS = {
+  ALL: generateRawEvents("ALL"),
+  ERRORS: generateRawEvents("ERRORS"),
+};
 
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
@@ -85,9 +96,14 @@ export class CoreClient<
     this.utils = {};
 
     // The 'raw' event is never emitted. But when the client subscribes to it,
-    // this global event will be translated into ALL available raw events.
+    // it will be translated into ALL available raw events.
+    // See `RAW_EVENTS` and `generateRawEvents`.
 
-    this.translateGlobalIntoGranularRawEvents();
+    this.hooks.hookCall("on", (on, eventName, listener) => {
+      const eventNames = (Array.isArray(eventName) ? eventName : [eventName])
+        .flatMap((event) => event === "raw" ? RAW_EVENTS.ALL : event);
+      return on(eventNames, listener);
+    });
 
     // When `loadPlugins` is called, plugins can add their own error listeners.
     // In order to keep the default error throwing behavior (at least one error
@@ -96,14 +112,6 @@ export class CoreClient<
 
     loadPlugins(this, options, plugins);
     this.resetErrorThrowingBehavior();
-  }
-
-  private translateGlobalIntoGranularRawEvents() {
-    this.hooks.hookCall("on", (on, eventName, listener) => {
-      const eventNames = (Array.isArray(eventName) ? eventName : [eventName])
-        .flatMap((event) => event === "raw" ? ALL_RAW_EVENTS : event);
-      return on(eventNames, listener);
-    });
   }
 
   /** Connects to a server using a hostname and an optional port.

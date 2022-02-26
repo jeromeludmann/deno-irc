@@ -1,57 +1,32 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
+import { type Message } from "../core/parsers.ts";
 
 describe("plugins/error_reply", (test) => {
-  test("emit 'error_reply' on ERR_NOSUCHCHANNEL", async () => {
+  test("emit 'error_reply' on error replies", async () => {
     const { client, server } = await mock();
 
-    server.send(":serverhost 403 #null :No such channel");
-    const msg = await client.once("error_reply");
+    const messages: Message<unknown>[] = [];
+    client.on("error_reply", (msg) => messages.push(msg));
 
-    assertEquals(msg, {
+    server.send([
+      ":serverhost 001 nick :Welcome to the server",
+      ":serverhost 400 nick :Unknown error",
+      ":serverhost 005 nick PREFIX=(ohv)@%+ :are supported by this server",
+      ":serverhost 421 TEST :Unknown command",
+    ]);
+
+    await client.once("raw");
+
+    assertEquals(messages, [{
       source: { name: "serverhost" },
-      command: "err_nosuchchannel",
-      params: { args: ["#null"], text: "No such channel" },
-    });
-  });
-
-  test("emit 'error_reply' on ERR_UNKNOWNCOMMAND", async () => {
-    const { client, server } = await mock();
-
-    server.send(":serverhost 421 TEST :Unknown command");
-    const msg = await client.once("error_reply");
-
-    assertEquals(msg, {
+      command: "err_unknownerror", // 400
+      params: { args: ["nick"], text: "Unknown error" },
+    }, {
       source: { name: "serverhost" },
-      command: "err_unknowncommand",
+      command: "err_unknowncommand", // 421
       params: { args: ["TEST"], text: "Unknown command" },
-    });
-  });
-
-  test("emit 'error_reply' on ERR_ERRONEUSNICKNAME", async () => {
-    const { client, server } = await mock();
-
-    server.send(":serverhost 432 * 0nick :Erroneous Nickname");
-    const msg = await client.once("error_reply");
-
-    assertEquals(msg, {
-      source: { name: "serverhost" },
-      command: "err_erroneusnickname",
-      params: { args: ["*", "0nick"], text: "Erroneous Nickname" },
-    });
-  });
-
-  test("emit 'error_reply' on ERR_NOTREGISTERED", async () => {
-    const { client, server } = await mock();
-
-    server.send(":serverhost 451 :You have not registered");
-    const msg = await client.once("error_reply");
-
-    assertEquals(msg, {
-      source: { name: "serverhost" },
-      command: "err_notregistered",
-      params: { args: [], text: "You have not registered" },
-    });
+    }]);
   });
 });

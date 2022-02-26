@@ -1,6 +1,7 @@
+import { RAW_EVENTS } from "../core/client.ts";
 import { type Message } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { type AnyError, PROTOCOL } from "../core/protocol.ts";
+import { type AnyError } from "../core/protocol.ts";
 
 export interface ErrorReplyEventParams {
   args: string[];
@@ -17,14 +18,10 @@ interface ErrorReplyFeatures {
   };
 }
 
-const ALL_RAW_ERROR_REPLY_EVENTS = Object
-  .values(PROTOCOL.ERRORS)
-  .map((command) => `raw:${command}` as const);
-
 export default createPlugin("error_reply")<ErrorReplyFeatures>((client) => {
   // Emits 'error_reply' on **all** error replies.
 
-  client.on(ALL_RAW_ERROR_REPLY_EVENTS, (msg) => {
+  client.on(RAW_EVENTS.ERRORS, (msg) => {
     const { source, command, params } = msg;
 
     const args = params.slice();
