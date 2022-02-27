@@ -50,6 +50,7 @@ interface ModeFeatures {
      *      client.mode("#chan", "+iko", "secret", "nick"); */
     mode(target: string, modes?: string, ...args: string[]): void;
   };
+
   events: {
     "mode": ModeEvent;
     "mode:user": ModeEvent;
@@ -135,6 +136,7 @@ export default createPlugin(
   }
 
   // Sends MODE command.
+
   client.mode = (target, modes, ...args) => {
     client.send("MODE", target, modes, ...args);
   };

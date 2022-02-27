@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-empty-interface
+
 import { CoreClient, type CoreFeatures } from "./core/client.ts";
 import { type CombinePluginFeatures } from "./core/plugins.ts";
 
@@ -18,6 +20,7 @@ import kick from "./plugins/kick.ts";
 import kill from "./plugins/kill.ts";
 import list from "./plugins/list.ts";
 import mode from "./plugins/mode.ts";
+import modeAliases from "./plugins/mode_aliases.ts";
 import motd from "./plugins/motd.ts";
 import myinfo from "./plugins/myinfo.ts";
 import names from "./plugins/names.ts";
@@ -60,6 +63,7 @@ const plugins = [
   list,
   motd,
   mode,
+  modeAliases,
   myinfo,
   names,
   nick,
@@ -91,11 +95,8 @@ export type Commands = ClientFeatures["commands"];
 export type Events = ClientFeatures["events"];
 export type Utils = ClientFeatures["utils"];
 
-// deno-lint-ignore no-empty-interface
 export interface ClientOptions extends Options {}
-// deno-lint-ignore no-empty-interface
 export interface ClientState extends States {}
-// deno-lint-ignore no-empty-interface
 export interface ClientUtils extends Utils {}
 
 export interface Client extends Commands {
