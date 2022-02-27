@@ -11,4 +11,17 @@ describe("plugins/oper", (test) => {
 
     assertEquals(raw, ["OPER user pass"]);
   });
+
+  test("update oper state on RPL_YOUREOPER", async () => {
+    const { client, server } = await mock();
+
+    assertEquals(client.state.oper, false);
+
+    server.send(
+      ":serverhost 381 me :You are now an IRC operator",
+    );
+    await client.once("raw:rpl_youreoper");
+
+    assertEquals(client.state.oper, true);
+  });
 });
