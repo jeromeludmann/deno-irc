@@ -19,11 +19,9 @@ export type CtcpVersionReplyEvent = Message<CtcpVersionReplyEventParams>;
 interface VersionFeatures {
   options: {
     ctcpReplies?: {
-      /**
-       * Replies to CTCP VERSION with the given string.
+      /** Replies to CTCP VERSION with the given string.
        *
-       * Default to `"deno-irc"`. `false` to disable.
-       */
+       * Default to `"deno-irc"`. `false` to disable. */
       version?: string | false;
     };
   };

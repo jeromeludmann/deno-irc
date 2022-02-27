@@ -17,8 +17,10 @@ interface JoinFeatures {
   commands: {
     /** Joins `channels` with optional keys.
      *
-     *      client.join("#channel");
-     *      client.join("#channel1", ["#channel2", "key"]); */
+     * ```ts
+     * client.join("#channel");
+     * client.join("#channel1", ["#channel2", "key"]);
+     * ``` */
     join(...params: ChannelDescriptions): void;
   };
   events: {
@@ -28,6 +30,7 @@ interface JoinFeatures {
 
 export default createPlugin("join")<JoinFeatures>((client) => {
   // Sends JOIN command.
+
   client.join = (...channelDescriptions) => {
     const channels = [];
     const keys = [];
@@ -52,6 +55,7 @@ export default createPlugin("join")<JoinFeatures>((client) => {
   };
 
   // Emits 'join' events.
+
   client.on("raw:join", (msg) => {
     const { source, params: [channel] } = msg;
     client.emit("join", { source, params: { channel } });

@@ -37,17 +37,24 @@ interface ModeFeatures {
   commands: {
     /** Manages modes.
      *
-     * Gets modes:
+     * **Gets Modes:**
      *
-     *      client.mode("nick");     // reply with 'mode_reply:user' event
-     *      client.mode("#channel"); // reply with 'mode_reply:channel' event
+     * ```ts
+     * client.mode("nick");
+     * client.mode("#channel");
+     * ```
      *
-     * Sets modes:
+     * Following these commands, server should respectively reply with
+     * `"mode_reply:user"` or `"mode_reply:channel"` events.
      *
-     *      client.mode("nick", "+w");
-     *      client.mode("#chan", "e");
-     *      client.mode("#chan", "+v", "nick");
-     *      client.mode("#chan", "+iko", "secret", "nick"); */
+     * **Sets Modes:**
+     *
+     * ```ts
+     * client.mode("nick", "+w");
+     * client.mode("#chan", "e");
+     * client.mode("#chan", "+v", "nick");
+     * client.mode("#chan", "+iko", "secret", "nick");
+     * ``` */
     mode(target: string, modes?: string, ...args: string[]): void;
   };
 
