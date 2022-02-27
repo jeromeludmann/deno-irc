@@ -1,5 +1,6 @@
 const COMMANDS = {
   "ADMIN": "admin",
+  "AWAY": "away",
   "CAP": "cap",
   "CONNECT": "connect",
   "ERROR": "error",
