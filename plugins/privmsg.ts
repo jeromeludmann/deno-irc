@@ -40,19 +40,21 @@ export default createPlugin(
     client.send("PRIVMSG", target, text);
   };
 
-  // Emits 'privmsg' event.
+  // Emits "privmsg:*" events.
 
   client.on("raw:privmsg", (msg) => {
     if (client.utils.isCtcp(msg)) return;
 
     const { source, params: [target, text] } = msg;
-    const payload: PrivmsgEvent = { source, params: { target, text } };
-
-    client.emit("privmsg", payload);
 
     const targetType = client.utils.isChannel(target) ? "channel" : "private";
     const event = `privmsg:${targetType}` as const;
 
-    client.emit(event, payload);
+    client.emit(event, { source, params: { target, text } });
   });
+
+  client.createMultiEvent(
+    "privmsg",
+    ["privmsg:channel", "privmsg:private"],
+  );
 });

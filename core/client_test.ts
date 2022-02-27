@@ -271,7 +271,7 @@ describe("core/client", (test) => {
     );
   });
 
-  test("subscribe to global 'raw' event", async () => {
+  test("subscribe to 'raw' multi event", async () => {
     const { client, server } = mock();
     const messages: Raw[] = [];
 

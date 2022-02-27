@@ -24,6 +24,7 @@ const MAX_LISTENERS_PER_EVENT = 1000;
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
   private memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
+  private multiEvents = {} as Record<keyof TEvents, (keyof TEvents)[]>;
   private maxListeners: number;
 
   constructor({ maxListeners }: EventEmitterOptions = {}) {
@@ -58,7 +59,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): () => void {
-    for (const ev of Array.isArray(eventName) ? eventName : [eventName]) {
+    for (const ev of this.remapEventNames<T>(eventName)) {
       if (this.count(ev) === this.maxListeners) {
         throw new Error(`Too many listeners for "${ev}" event`);
       }
@@ -125,7 +126,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
-    for (const event of Array.isArray(eventName) ? eventName : [eventName]) {
+    for (const event of this.remapEventNames<T>(eventName)) {
       const listeners = this.listeners[event].filter((fn) => fn !== listener);
       this.listeners[event] = listeners;
 
@@ -162,5 +163,20 @@ export class EventEmitter<TEvents extends Record<string, any>> {
       this.memorizedListenerCounts[eventName] =
         this.listeners[eventName].length;
     }
+  }
+
+  /** Allows to permanently create a `multiEventName` that will be triggered
+   * if one of `relatedEventNames` is emitted. */
+  createMultiEvent<T extends keyof TEvents>(
+    multiEventName: T,
+    relatedEventNames: T[],
+  ): void {
+    this.multiEvents[multiEventName] = relatedEventNames;
+  }
+
+  private remapEventNames<T extends keyof TEvents>(eventNames: T | T[]) {
+    return (Array.isArray(eventNames) ? eventNames : [eventNames])
+      // remaps multi events to their related events
+      .flatMap((ev) => ev in this.multiEvents ? this.multiEvents[ev] : ev);
   }
 }

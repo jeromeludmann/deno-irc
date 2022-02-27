@@ -37,19 +37,21 @@ export default createPlugin(
     client.send("NOTICE", target, text);
   };
 
-  // Emits 'notice' event.
+  // Emits "notice:*" events.
 
   client.on("raw:notice", (msg) => {
     if (client.utils.isCtcp(msg)) return;
 
     const { source, params: [target, text] } = msg;
-    const payload: NoticeEvent = { source, params: { target, text } };
-
-    client.emit("notice", payload);
 
     const targetType = client.utils.isChannel(target) ? "channel" : "private";
     const event = `notice:${targetType}` as const;
 
-    client.emit(event, payload);
+    client.emit(event, { source, params: { target, text } });
   });
+
+  client.createMultiEvent(
+    "notice",
+    ["notice:channel", "notice:private"],
+  );
 });

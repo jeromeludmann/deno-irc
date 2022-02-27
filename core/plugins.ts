@@ -56,7 +56,7 @@ type PluginFn<
 ) => void;
 
 export function loadPlugins(
-  client: CoreClient,
+  client: CoreClient<any>,
   options: CoreFeatures["options"],
   plugins: Plugin[],
 ): void {
@@ -91,6 +91,6 @@ export function createPlugin<P extends Plugin<any, any>[] = []>(
   >(fn: PluginFn<F, P>): Plugin<F, P> => ({
     name: `plugins/${name}`,
     deps,
-    fn: fn as PluginFn,
+    fn: fn as PluginFn<any, any>,
   });
 }

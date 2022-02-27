@@ -231,4 +231,39 @@ describe("core/events", (test) => {
 
     assertEquals(triggered, 1);
   });
+
+  test("create multi events, subscribe to them, emit their related events and remove them", () => {
+    const emitter = new EventEmitter();
+    const triggered1: unknown[] = [];
+    const triggered2: unknown[] = [];
+
+    emitter.createMultiEvent("multi_event1", ["event1", "event2"]);
+    emitter.createMultiEvent("multi_event2", ["event1", "event3"]);
+
+    const off1 = emitter.on(
+      "multi_event1",
+      (payload) => triggered1.push(payload),
+    );
+    const off2 = emitter.on(
+      ["multi_event2"],
+      (payload) => triggered2.push(payload),
+    );
+
+    emitter.emit("event1", { e: "event1" });
+    emitter.emit("event2", { e: "event2" });
+    emitter.emit("event3", { e: "event3" });
+
+    assertEquals(triggered1, [{ e: "event1" }, { e: "event2" }]);
+    assertEquals(triggered2, [{ e: "event1" }, { e: "event3" }]);
+
+    off1();
+    off2();
+
+    emitter.emit("event1", { e: "event1" });
+    emitter.emit("event2", { e: "event2" });
+    emitter.emit("event3", { e: "event3" });
+
+    assertEquals(triggered1.length, 2);
+    assertEquals(triggered2.length, 2);
+  });
 });

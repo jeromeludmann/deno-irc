@@ -36,7 +36,7 @@ export interface CoreFeatures {
   utils: Record<never, never>;
 }
 
-function generateRawEvents<
+export function generateRawEvents<
   T extends keyof typeof PROTOCOL,
   U extends typeof PROTOCOL[T],
   V extends `raw:${U[keyof U] extends string ? U[keyof U] : never}`[],
@@ -45,11 +45,6 @@ function generateRawEvents<
     .values(PROTOCOL[type])
     .map((command) => `raw:${command}`) as V;
 }
-
-export const RAW_EVENTS = {
-  ALL: generateRawEvents("ALL"),
-  ERRORS: generateRawEvents("ERRORS"),
-};
 
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
@@ -97,13 +92,8 @@ export class CoreClient<
 
     // The 'raw' event is never emitted. But when the client subscribes to it,
     // it will be translated into ALL available raw events.
-    // See `RAW_EVENTS` and `generateRawEvents`.
 
-    this.hooks.hookCall("on", (on, eventName, listener) => {
-      const eventNames = (Array.isArray(eventName) ? eventName : [eventName])
-        .flatMap((event) => event === "raw" ? RAW_EVENTS.ALL : event);
-      return on(eventNames, listener);
-    });
+    this.createMultiEvent("raw", generateRawEvents("ALL"));
 
     // When `loadPlugins` is called, plugins can add their own error listeners.
     // In order to keep the default error throwing behavior (at least one error
