@@ -32,6 +32,7 @@ import oper from "./plugins/oper.ts";
 import operOnRegister from "./plugins/oper_on_register.ts";
 import part from "./plugins/part.ts";
 import ping from "./plugins/ping.ts";
+import pingTimeout from "./plugins/ping_timeout.ts";
 import privmsg from "./plugins/privmsg.ts";
 import quit from "./plugins/quit.ts";
 import reconnect from "./plugins/reconnect.ts";
@@ -75,6 +76,7 @@ const plugins = [
   operOnRegister,
   part,
   ping,
+  pingTimeout,
   privmsg,
   quit,
   reconnect,

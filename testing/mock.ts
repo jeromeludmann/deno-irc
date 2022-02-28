@@ -15,7 +15,12 @@ export async function mock(
 
   const console = mockConsole();
 
-  const client = new MockClient({ nick: "me", ...options });
+  const client = new MockClient({
+    nick: "me",
+    pingTimeout: false,
+    ...options,
+  });
+
   const server = new MockServer(client);
 
   if (withConnection) {

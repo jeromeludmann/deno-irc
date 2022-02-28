@@ -46,7 +46,25 @@ interface PingFeatures {
     };
   };
   commands: {
-    /** Pings a `target`. */
+    /** Pings the server or a given client `target`.
+     *
+     * Pings the server:
+     *
+     * ```ts
+     * client.ping();
+     * ```
+     *
+     * Pings (CTCP) all clients from `"#channel"`:
+     *
+     * ```ts
+     * client.ping("#channel");
+     * ```
+     *
+     * Pings (CTCP) a client `"nick"`:
+     *
+     * ```ts
+     * client.ping('nick');
+     * ``` */
     ping(target?: string): void;
   };
   events: {
