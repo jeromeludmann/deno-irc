@@ -1,5 +1,6 @@
 import { RemoteAddr } from "../core/client.ts";
 import { createPlugin } from "../core/plugins.ts";
+import register from "./register.ts";
 
 interface ReconnectFeatures {
   options: {
@@ -31,6 +32,7 @@ const DEFAULT_DELAY = 5;
 
 export default createPlugin(
   "reconnect",
+  [register],
 )<ReconnectFeatures>((client, options) => {
   let config = options.reconnect ?? DEFAULT_RECONNECT;
   if (!config) return;
@@ -83,7 +85,7 @@ export default createPlugin(
 
   // Resets attempts
 
-  client.on("raw:rpl_welcome", () => {
+  client.on("register", () => {
     currentAttempts = 0;
   });
 
