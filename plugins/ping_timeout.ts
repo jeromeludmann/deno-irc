@@ -35,13 +35,13 @@ export default createPlugin(
 
   function pingServer() {
     client.ping();
-    pingTimeoutId = setTimeout(emitPingTimeout, pingTimeout * 1000);
+    pingTimeoutId = setTimeout(emitPingTimeout, pingTimeout);
   }
 
   function startPingTimer() {
     if (started) return;
     started = true;
-    pingServerId = setTimeout(pingServer, pingTimeout * 1000);
+    pingServerId = setTimeout(pingServer, pingTimeout);
   }
 
   function stopPingTimer() {

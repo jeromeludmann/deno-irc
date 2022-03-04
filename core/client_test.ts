@@ -204,7 +204,7 @@ describe("core/client", (test) => {
     const { client } = mock();
 
     client.disconnect();
-    const addr = await client.wait("disconnected", 1);
+    const addr = await client.wait("disconnected", () => true, 1);
 
     assertEquals(addr, null);
   });

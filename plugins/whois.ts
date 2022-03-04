@@ -37,11 +37,13 @@ export type WhoisReplyEvent = Message<WhoisReplyEventParams>;
 
 interface WhoisFeatures {
   commands: {
-    /** Gets the WHOIS informations of a `nick`. */
-    whois(nick: string): void;
+    /** Gets the WHOIS informations of a `nick`.
+     *
+     * Resolves to `WhoisReplyEvent` if able to reply else `null`. */
+    whois(nick: string): Promise<WhoisReplyEvent | null>;
 
     /** Gets the WHOIS informations of a `nick` for a given `server`. */
-    whois(server: string, nick: string): void;
+    whois(server: string, nick: string): Promise<WhoisReplyEvent | null>;
   };
   events: {
     "whois_reply": WhoisReplyEvent;
@@ -55,6 +57,9 @@ export default createPlugin("whois")<WhoisFeatures>((client) => {
 
   client.whois = (...params: string[]) => {
     client.send("WHOIS", ...params);
+
+    const nick = params[params.length - 1];
+    return client.when("whois_reply", ({ params }) => params.nick === nick);
   };
 
   // Emits 'whois_reply' event.

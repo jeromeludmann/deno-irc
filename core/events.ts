@@ -1,6 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 type Listener<T> = (payload: T) => void;
 
+type Predicate<T> = (payload: T) => boolean;
+
 type Listeners<T> = Record<keyof T, Listener<any>[]>;
 
 type MemorizedListenerCounts<T> = Record<keyof T, number>;
@@ -21,11 +23,14 @@ export interface EventEmitterOptions {
 
 const MAX_LISTENERS_PER_EVENT = 1000;
 
+const MAX_WAITING_TIME = 30;
+
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners = {} as Listeners<TEvents>;
   private memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
   private multiEvents = {} as Record<keyof TEvents, (keyof TEvents)[]>;
   private maxListeners: number;
+  listeningDuration = 0;
 
   constructor({ maxListeners }: EventEmitterOptions = {}) {
     this.maxListeners = maxListeners ?? MAX_LISTENERS_PER_EVENT;
@@ -101,24 +106,38 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
-  /** Waits for an `eventName` during `delay` in ms. */
+  /** Waits for an `eventName`
+   * that satisfies a `predicate`
+   * during `timeout` (default to `30` seconds)
+   * and resolves to an event payload or `null`. */
   wait<T extends keyof TEvents>(
     eventName: T | T[],
-    delay: number,
+    predicate: Predicate<InferredPayload<TEvents, T>> = () => true,
+    timeout = MAX_WAITING_TIME,
   ): Promise<InferredPayload<TEvents, T> | null> {
     return new Promise((resolve) => {
       const listener = (payload: InferredPayload<TEvents, T>) => {
-        clearTimeout(timeout);
-        resolve(payload);
+        if (predicate(payload)) {
+          clearTimeout(listenerId);
+          this.off(eventName, listener);
+          resolve(payload);
+        }
       };
 
-      this.once(eventName, listener);
+      this.on(eventName, listener);
 
-      const timeout = setTimeout(() => {
+      const listenerId = setTimeout(() => {
         this.off(eventName, listener);
         resolve(null);
-      }, delay);
+      }, timeout * 1000);
     });
+  }
+
+  when<T extends keyof TEvents>(
+    eventName: T | T[],
+    predicate: Predicate<InferredPayload<TEvents, T>> = () => true,
+  ): Promise<InferredPayload<TEvents, T> | null> {
+    return this.wait(eventName, this.listeningDuration, predicate);
   }
 
   /** Removes the `listener` of the `eventName`. */

@@ -106,14 +106,14 @@ describe("core/events", (test) => {
     const emitter = new EventEmitter();
 
     const [payload] = await Promise.all([
-      emitter.wait("event", 1),
+      emitter.wait("event", (payload) => payload.key === "value", 1),
       emitter.emit("event", { key: "value" }),
     ]);
 
     assertEquals(payload, { key: "value" });
 
     const [never] = await Promise.all([
-      emitter.wait("event", 1),
+      emitter.wait("event", (payload) => payload.key === "value", 1),
       emitter.emit("event2", { key: "value" }),
     ]);
 

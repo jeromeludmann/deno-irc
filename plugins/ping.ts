@@ -91,6 +91,8 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
 
     if (target === undefined) {
       client.send("PING", key);
+      client.wait("pong", ({ params }) => params.key === key);
+      // TODO return Promise<PongReply>
     } else {
       client.ctcp(target, "PING", key);
     }
