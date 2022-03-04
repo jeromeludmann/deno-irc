@@ -4,6 +4,8 @@ import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/ping", (test) => {
+  Date.now = () => 1646397815196;
+
   test("send PING", async () => {
     const { client, server } = await mock();
 
@@ -30,12 +32,12 @@ describe("plugins/ping", (test) => {
   test("emit 'pong' on PONG", async () => {
     const { client, server } = await mock();
 
-    server.send("PONG daemon :key");
+    server.send("PONG daemon :1646397814696");
     const msg = await client.once("pong");
 
     assertEquals(msg, {
       source: undefined,
-      params: { daemon: "daemon", key: "key" },
+      params: { daemon: "daemon", key: "1646397814696", latency: 500 },
     });
   });
 
@@ -54,12 +56,12 @@ describe("plugins/ping", (test) => {
   test("emit 'ctcp_ping_reply' on CTCP PING reply", async () => {
     const { client, server } = await mock();
 
-    server.send(":someone!user@host NOTICE me :\x01PING key\x01");
+    server.send(":someone!user@host NOTICE me :\x01PING 1646397814696\x01");
     const msg = await client.once("ctcp_ping_reply");
 
     assertEquals(msg, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
-      params: { key: "key" },
+      params: { key: "1646397814696", latency: 500 },
     });
   });
 

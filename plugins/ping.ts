@@ -15,6 +15,9 @@ export interface PongEventParams {
 
   /** Key of the PONG. */
   key: string;
+
+  /** Latency (in milliseconds). */
+  latency: number;
 }
 
 export type PongEvent = Message<PongEventParams>;
@@ -34,6 +37,9 @@ export type CtcpPingEvent = Message<CtcpPingEventParams>;
 export interface CtcpPingReplyEventParams {
   /** Key of the CTCP PING reply. */
   key: string;
+
+  /** Latency (in milliseconds). */
+  latency: number;
 }
 
 export type CtcpPingReplyEvent = Message<CtcpPingReplyEventParams>;
@@ -92,6 +98,8 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
 
   // Emits 'ping' and 'pong' events.
 
+  const getLatency = (key: string): number => Date.now() - parseInt(key, 10);
+
   client.on("raw:ping", (msg) => {
     const { source, params: keys } = msg;
     client.emit("ping", { source, params: { keys } });
@@ -99,7 +107,8 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
 
   client.on("raw:pong", (msg) => {
     const { source, params: [daemon, key] } = msg;
-    client.emit("pong", { source, params: { daemon, key } });
+    const latency = getLatency(key);
+    client.emit("pong", { source, params: { daemon, key, latency } });
   });
 
   // Emits 'ctcp_ping' and 'ctcp_ping_reply' events.
@@ -113,7 +122,8 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
 
   client.on("raw_ctcp:ping_reply", (msg) => {
     const { source, params: { arg: key } } = msg;
-    client.emit("ctcp_ping_reply", { source, params: { key } });
+    const latency = getLatency(key);
+    client.emit("ctcp_ping_reply", { source, params: { key, latency } });
   });
 
   // Replies to PING.
