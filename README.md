@@ -94,25 +94,6 @@ client.on("notice:private", ({ source, params }) => {
 });
 ```
 
-There are also other methods related to events which can be useful.
-
-Following only resolves when the message has been received:
-
-```ts
-const msg = await client.once("join");
-```
-
-Following resolves when the message has been received, otherwise resolves after
-the given delay to `null`:
-
-```ts
-const msg = client.wait("join", 2000);
-
-if (msg === null) {
-  console.log("message not received on time");
-}
-```
-
 Subscribing to more than one event is also possible by passing an array of event
 names:
 
@@ -120,6 +101,12 @@ names:
 client.on(["part", "kick"], (msg) => {
   // msg is PartEvent | KickEvent
 });
+```
+
+There are also other methods related to events which can be useful, following only resolves when the message has been received:
+
+```ts
+const msg = await client.once("join");
 ```
 
 ### Commands

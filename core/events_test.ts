@@ -90,24 +90,6 @@ describe("core/events", (test) => {
     assertEquals(payload, { key: "value" });
   });
 
-  test("wait an event for a given time", async () => {
-    const emitter = new EventEmitter();
-
-    const [payload] = await Promise.all([
-      emitter.wait("event", 1),
-      emitter.emit("event", { key: "value" }),
-    ]);
-
-    assertEquals(payload, { key: "value" });
-
-    const [never] = await Promise.all([
-      emitter.wait("event", 1),
-      emitter.emit("event2", { key: "value" }),
-    ]);
-
-    assertEquals(never, null);
-  });
-
   test("throw when emitting errors without bound listener", () => {
     const emitter = new EventEmitter();
 

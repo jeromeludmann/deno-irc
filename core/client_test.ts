@@ -200,13 +200,14 @@ describe("core/client", (test) => {
     });
   });
 
-  test("not disconnect if not connected", async () => {
+  test("not disconnect if not connected", () => {
     const { client } = mock();
 
+    let disconnected = false;
+    client.on("disconnected", () => disconnected = true);
     client.disconnect();
-    const addr = await client.wait("disconnected", 1);
 
-    assertEquals(addr, null);
+    assertEquals(disconnected, false);
   });
 
   test("throw on disconnect if error is thrown", async () => {
