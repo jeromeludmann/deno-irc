@@ -66,29 +66,17 @@ describe("core/events", (test) => {
     assertEquals(triggered2, 0);
   });
 
-  test("add a listener twice and emit an event", () => {
+  test("throw when trying to add a listener twice for a same event", () => {
     const emitter = new EventEmitter();
-    let triggered = 0;
-    const listener = () => triggered++;
+    const listener = () => {};
 
     emitter.on("event", listener);
-    emitter.on("event", listener);
-    emitter.emit("event", {});
 
-    assertEquals(triggered, 2);
-  });
-
-  test("add a listener twice and remove it", () => {
-    const emitter = new EventEmitter();
-    let triggered = 0;
-    const listener = () => triggered++;
-
-    const off = emitter.on("event", listener);
-    emitter.on("event", listener);
-    off();
-    emitter.emit("event", {});
-
-    assertEquals(triggered, 0);
+    assertThrows(
+      () => emitter.on("event", listener),
+      Error,
+      "Given listener already added for 'event' event",
+    );
   });
 
   test("wait an event", async () => {
@@ -140,14 +128,14 @@ describe("core/events", (test) => {
     assertEquals(triggered, 1);
   });
 
-  test("throw when emitting errors after reseting error throwing behavior", () => {
+  test("throw when emitting errors after memorizing current listener counts", () => {
     const emitter = new EventEmitter();
 
     assertThrows(
       () => {
         emitter.on("event", () => {});
-        (emitter as unknown as { resetErrorThrowingBehavior: () => void })
-          .resetErrorThrowingBehavior();
+        (emitter as unknown as { memorizeCurrentListenerCounts: () => void })
+          .memorizeCurrentListenerCounts();
         emitter.emit("event", new Error("Boom!"));
       },
       Error,
@@ -155,15 +143,15 @@ describe("core/events", (test) => {
     );
   });
 
-  test("update memorized listener count if event has been removed", () => {
+  test("update memorized listener counts if an event has been removed", () => {
     const emitter = new EventEmitter();
 
     emitter.once("event", () => {});
     emitter.once("event", () => {});
     emitter.once("event", () => {});
 
-    (emitter as unknown as { resetErrorThrowingBehavior: () => void })
-      .resetErrorThrowingBehavior();
+    (emitter as unknown as { memorizeCurrentListenerCounts: () => void })
+      .memorizeCurrentListenerCounts();
 
     emitter.emit("event", {});
 
@@ -172,15 +160,14 @@ describe("core/events", (test) => {
 
   test("throw when reaching max listener count", () => {
     const emitter = new EventEmitter({ maxListeners: 2 });
-    const noop = () => {};
 
-    emitter.on("event", noop);
-    emitter.on("event", noop);
+    emitter.on("event", () => {});
+    emitter.on("event", () => {});
 
     assertThrows(
-      () => emitter.on("event", noop),
+      () => emitter.on("event", () => {}),
       Error,
-      'Too many listeners for "event" event',
+      "Too many listeners for 'event' event",
     );
   });
 
@@ -230,6 +217,18 @@ describe("core/events", (test) => {
     emitter.emit("event3", { key: "value" }); // should not be triggered
 
     assertEquals(triggered, 1);
+  });
+
+  test("throw when creating multi event that already exists", () => {
+    const emitter = new EventEmitter();
+
+    emitter.createMultiEvent("multi_event", ["event1"]);
+
+    assertThrows(
+      () => emitter.createMultiEvent("multi_event", ["event1", "event2"]),
+      Error,
+      "'multi_event' multi event already exists",
+    );
   });
 
   test("create multi events, subscribe to them, emit their related events and remove them", () => {

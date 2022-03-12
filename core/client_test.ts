@@ -258,16 +258,15 @@ describe("core/client", (test) => {
 
   test("throw if too many registered listeners", () => {
     const { client } = mock();
-    const noop = () => {};
 
     const subscribeForever = () => {
-      for (;;) client.on("connected", noop);
+      for (;;) client.on("connected", () => {});
     };
 
     assertThrows(
       subscribeForever,
       Error,
-      'Too many listeners for "connected" event',
+      "Too many listeners for 'connected' event",
     );
   });
 

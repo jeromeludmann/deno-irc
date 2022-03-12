@@ -97,11 +97,11 @@ export class CoreClient<
 
     // When `loadPlugins` is called, plugins can add their own error listeners.
     // In order to keep the default error throwing behavior (at least one error
-    // listener is required to handle errors), `resetErrorThrowingBehavior`
+    // listener is required to handle errors), `memorizeCurrentListenerCounts`
     // should always be called after to ignore already added error listeners.
 
     loadPlugins(this, options, plugins);
-    this.resetErrorThrowingBehavior();
+    this.memorizeCurrentListenerCounts();
   }
 
   /** Connects to a server using a hostname and an optional port.

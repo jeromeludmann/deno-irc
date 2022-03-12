@@ -1,9 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 type Listener<T> = (payload: T) => void;
 
-type Listeners<T> = Record<keyof T, Listener<any>[]>;
+type EventListeners<T> = Map<keyof T, Set<Listener<any>>>;
 
-type MemorizedListenerCounts<T> = Record<keyof T, number>;
+type MemorizedEventListenerCounts<T> = Map<keyof T, number>;
+
+type MultiEventNames<T> = Map<keyof T, (keyof T)[]>;
 
 type InferredPayload<
   TEvents extends Record<string, unknown>,
@@ -22,13 +24,16 @@ export interface EventEmitterOptions {
 const MAX_LISTENERS_PER_EVENT = 1000;
 
 export class EventEmitter<TEvents extends Record<string, any>> {
-  private listeners = {} as Listeners<TEvents>;
-  private memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
-  private multiEvents = {} as Record<keyof TEvents, (keyof TEvents)[]>;
-  private maxListeners: number;
+  private listeners: EventListeners<TEvents>;
+  private multiEventNames: MultiEventNames<TEvents>;
+  private memorizedListenerCounts: MemorizedEventListenerCounts<TEvents>;
+  private maxListenersCount: number;
 
   constructor({ maxListeners }: EventEmitterOptions = {}) {
-    this.maxListeners = maxListeners ?? MAX_LISTENERS_PER_EVENT;
+    this.listeners = new Map();
+    this.memorizedListenerCounts = new Map();
+    this.multiEventNames = new Map();
+    this.maxListenersCount = maxListeners ?? MAX_LISTENERS_PER_EVENT;
   }
 
   /** Calls all the listeners of the `eventName` with the `eventPayload`. */
@@ -36,20 +41,18 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     eventPayload: InferredPayload<TEvents, T>,
   ): void {
-    const isThrowable = (
+    const shouldBeThrown = (
       (eventPayload as unknown) instanceof Error &&
       this.count(eventName) === 0
     );
-
-    if (isThrowable) {
+    if (shouldBeThrown) {
       throw eventPayload;
     }
 
-    if (!(eventName in this.listeners)) {
-      return;
-    }
+    const listeners = this.listeners.get(eventName);
+    if (listeners === undefined) return;
 
-    for (const listener of this.listeners[eventName]) {
+    for (const listener of listeners) {
       listener(eventPayload);
     }
   }
@@ -59,13 +62,21 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T | T[],
     listener: Listener<InferredPayload<TEvents, T>>,
   ): () => void {
-    for (const ev of this.remapEventNames<T>(eventName)) {
-      if (this.count(ev) === this.maxListeners) {
-        throw new Error(`Too many listeners for "${ev}" event`);
+    for (const event of this.remapEventNames<T>(eventName)) {
+      if (this.count(event) === this.maxListenersCount) {
+        throw new Error(`Too many listeners for '${event}' event`);
       }
 
-      this.listeners[ev] ??= [];
-      this.listeners[ev].push(listener);
+      let listeners = this.listeners.get(event);
+
+      if (listeners === undefined) {
+        listeners = new Set([listener]);
+        this.listeners.set(event, listeners);
+      } else if (listeners.has(listener)) {
+        throw new Error(`Given listener already added for '${event}' event`);
+      }
+
+      listeners.add(listener);
     }
 
     return () => this.off(eventName, listener);
@@ -127,41 +138,32 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     listener: Listener<InferredPayload<TEvents, T>>,
   ): void {
     for (const event of this.remapEventNames<T>(eventName)) {
-      const listeners = this.listeners[event].filter((fn) => fn !== listener);
-      this.listeners[event] = listeners;
+      const listeners = this.listeners.get(event);
+      if (listeners === undefined) continue;
 
-      if (
-        event in this.memorizedListenerCounts &&
-        this.memorizedListenerCounts[event] > 0
-      ) {
-        --this.memorizedListenerCounts[event];
+      if (listeners.delete(listener)) {
+        const count = this.memorizedListenerCounts.get(event);
+        if (count !== undefined && count > 0) {
+          this.memorizedListenerCounts.set(event, count - 1);
+        }
       }
     }
   }
 
   /** Counts the listeners of the `eventName`. */
   count<T extends keyof TEvents>(eventName: T): number {
-    if (!(eventName in this.listeners)) {
-      return 0;
-    }
+    const listeners = this.listeners.get(eventName);
+    if (listeners === undefined) return 0;
 
-    const listenerCount = this.listeners[eventName].length;
-    const memorizedListenerCount = this.memorizedListenerCounts[eventName] ?? 0;
+    const memorizedListenerCount =
+      this.memorizedListenerCounts.get(eventName) ?? 0;
 
-    return listenerCount - memorizedListenerCount;
+    return listeners.size - memorizedListenerCount;
   }
 
-  /** Resets the error throwing behavior based on current listener counts. */
-  protected resetErrorThrowingBehavior(): void {
-    this.memorizeCurrentListenerCounts();
-  }
-
-  private memorizeCurrentListenerCounts(): void {
-    this.memorizedListenerCounts = {} as MemorizedListenerCounts<TEvents>;
-
-    for (const eventName in this.listeners) {
-      this.memorizedListenerCounts[eventName] =
-        this.listeners[eventName].length;
+  protected memorizeCurrentListenerCounts(): void {
+    for (const [eventName, listeners] of this.listeners.entries()) {
+      this.memorizedListenerCounts.set(eventName, listeners.size);
     }
   }
 
@@ -171,12 +173,18 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     multiEventName: T,
     relatedEventNames: T[],
   ): void {
-    this.multiEvents[multiEventName] = relatedEventNames;
+    if (this.multiEventNames.has(multiEventName)) {
+      throw new Error(`'${multiEventName}' multi event already exists`);
+    }
+    this.multiEventNames.set(
+      multiEventName,
+      Array.from(new Set(relatedEventNames)),
+    );
   }
 
   private remapEventNames<T extends keyof TEvents>(eventNames: T | T[]) {
     return (Array.isArray(eventNames) ? eventNames : [eventNames])
       // remaps multi events to their related events
-      .flatMap((ev) => ev in this.multiEvents ? this.multiEvents[ev] : ev);
+      .flatMap((event) => this.multiEventNames.get(event) ?? event);
   }
 }
