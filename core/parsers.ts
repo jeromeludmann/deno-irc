@@ -28,6 +28,8 @@ export interface Source {
 
 /** Helper used to create message shapes. */
 export interface Message<TParams> {
+  tags?: Record<string, string | undefined>;
+
   /** Source of the message.
    *
    * Optional. If undefined, always related to a server. */
@@ -66,11 +68,18 @@ function parseMessage(raw: string): Raw {
   let start = 0;
   let end: number;
 
-  // Parses message tags (ignored for now).
+  // Parses message tags.
 
   if (raw[start] === "@") {
     end = raw.indexOf(" ", ++start);
-    start = end + 1;
+    msg.tags = {};
+    while (start < end) {
+      let pos = raw.indexOf(";", start);
+      if (pos === -1) pos = end;
+      const [key, value] = raw.slice(start, pos).split("=");
+      msg.tags[key] = value;
+      start = pos + 1;
+    }
   }
 
   // Parses message prefix.
@@ -98,13 +107,11 @@ function parseMessage(raw: string): Raw {
   while (start < raw.length && raw[start] !== ":") {
     end = raw.indexOf(" ", start);
     if (end === -1) end = raw.length;
-    const middle = raw.slice(start, end);
-    msg.params.push(middle);
+    msg.params.push(raw.slice(start, end));
     start = end + 1;
   }
   if (start < raw.length) {
-    const trailing = raw.slice(++start).trimEnd();
-    msg.params.push(trailing);
+    msg.params.push(raw.slice(++start).trimEnd());
   }
 
   return msg;

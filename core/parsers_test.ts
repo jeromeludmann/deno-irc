@@ -3,6 +3,17 @@ import { describe } from "../testing/helpers.ts";
 import { Parser } from "./parsers.ts";
 
 describe("core/parsers", (test) => {
+  test("parse message without prefix", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(parser.parseMessages("PING :QimVSbibZg\r\n"));
+
+    assertEquals(msg, [{
+      command: "ping",
+      params: ["QimVSbibZg"],
+    }]);
+  });
+
   test("parse message with server prefix", () => {
     const parser = new Parser();
 
@@ -46,6 +57,7 @@ describe("core/parsers", (test) => {
       command: "join",
       params: ["#channel"],
       source: { mask: { host: "host", user: "user" }, name: "someone" },
+      tags: { "aaa": "bbb", "ccc": undefined, "example.com/ddd": "eee" },
     }]);
   });
 
