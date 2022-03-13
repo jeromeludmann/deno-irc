@@ -20,7 +20,7 @@ describe("plugins/topic", (test) => {
     const { client, server } = await mock();
 
     server.send(":someone!user@host TOPIC #channel :Welcome to #channel");
-    const msg = await client.once("topic_change");
+    const msg = await client.once("topic");
 
     assertEquals(msg, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
@@ -32,7 +32,7 @@ describe("plugins/topic", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 332 me #channel :Welcome to #channel");
-    const msg = await client.once("topic_set");
+    const msg = await client.once("topic_reply");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -44,7 +44,7 @@ describe("plugins/topic", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 331 me #channel :No topic is set");
-    const msg = await client.once("topic_set");
+    const msg = await client.once("topic_reply");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -56,7 +56,7 @@ describe("plugins/topic", (test) => {
     const { client, server } = await mock();
 
     server.send(":serverhost 333 me #channel someone!user@host :1596564019");
-    const msg = await client.once("topic_set_by");
+    const msg = await client.once("topic_who_time_reply");
 
     assertEquals(msg, {
       source: { name: "serverhost" },

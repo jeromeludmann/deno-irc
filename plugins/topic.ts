@@ -1,27 +1,19 @@
 import { type Message, parseSource, type Source } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 
-export interface TopicChangeEventParams {
+export interface TopicEventParams {
   /** Channel where the topic is set. */
   channel: string;
 
   /** New topic of the channel. */
-  topic: string;
+  topic?: string;
 }
 
-export type TopicChangeEvent = Message<TopicChangeEventParams>;
+export type TopicEvent = Message<TopicEventParams>;
 
-export interface TopicSetEventParams {
-  /** Channel where the topic is set. */
-  channel: string;
+export type TopicReplyEvent = Message<TopicEventParams>;
 
-  /** New topic of the channel. */
-  topic: string | undefined;
-}
-
-export type TopicSetEvent = Message<TopicSetEventParams>;
-
-export interface TopicSetByEventParams {
+export interface TopicWhoTimeReplyEventParams {
   /** Channel where the topic is set. */
   channel: string;
 
@@ -32,7 +24,7 @@ export interface TopicSetByEventParams {
   time: Date;
 }
 
-export type TopicSetByEvent = Message<TopicSetByEventParams>;
+export type TopicWhoTimeReplyEvent = Message<TopicWhoTimeReplyEventParams>;
 
 interface TopicFeatures {
   commands: {
@@ -43,9 +35,9 @@ interface TopicFeatures {
     topic(channel: string, topic: string): void;
   };
   events: {
-    "topic_change": TopicChangeEvent;
-    "topic_set": TopicSetEvent;
-    "topic_set_by": TopicSetByEvent;
+    "topic": TopicEvent;
+    "topic_reply": TopicReplyEvent;
+    "topic_who_time_reply": TopicWhoTimeReplyEvent;
   };
 }
 
@@ -56,32 +48,35 @@ export default createPlugin("topic")<TopicFeatures>((client) => {
     client.send("TOPIC", ...params);
   };
 
-  // Emits 'topic_change' event.
+  // Emits 'topic' event.
 
   client.on("raw:topic", (msg) => {
     const { source, params: [channel, topic] } = msg;
-    client.emit("topic_change", { source, params: { channel, topic } });
+    client.emit("topic", { source, params: { channel, topic } });
   });
 
-  // Emits 'topic_set' event.
+  // Emits 'topic_reply' event.
 
   client.on("raw:rpl_topic", (msg) => {
     const { source, params: [, channel, topic] } = msg;
-    client.emit("topic_set", { source, params: { channel, topic } });
+    client.emit("topic_reply", { source, params: { channel, topic } });
   });
 
   client.on("raw:rpl_notopic", (msg) => {
     const { source, params: [, channel] } = msg;
     const topic = undefined;
-    client.emit("topic_set", { source, params: { channel, topic } });
+    client.emit("topic_reply", { source, params: { channel, topic } });
   });
 
-  // Emits 'topic_set_by' event.
+  // Emits 'topic_reply_by' event.
 
   client.on("raw:rpl_topicwhotime", (msg) => {
     const { source, params: [, channel, mask, timestamp] } = msg;
     const time = new Date(parseInt(timestamp, 10) * 1000);
     const who = parseSource(mask);
-    client.emit("topic_set_by", { source, params: { channel, who, time } });
+    client.emit("topic_who_time_reply", {
+      source,
+      params: { channel, who, time },
+    });
   });
 });
