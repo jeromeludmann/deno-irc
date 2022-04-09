@@ -25,6 +25,10 @@ export interface NicklistEventParams {
 export type NicklistEvent = Message<NicklistEventParams>;
 
 interface NicklistFeatures {
+  commands: {
+    /** Gets the nicknames joined to a channel and their prefixes. */
+    nicklist(channels: string | string[]): void;
+  };
   events: {
     "nicklist": NicklistEvent;
   };
@@ -196,4 +200,8 @@ export default createPlugin(
       removeNick(nick, channel);
     }
   });
+
+  // Alias of `client.names`
+
+  client.nicklist = client.names;
 });

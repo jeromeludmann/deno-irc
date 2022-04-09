@@ -303,4 +303,13 @@ describe("plugins/nicklist", (test) => {
       },
     }]);
   });
+
+  test("send NAMES through client.nicklist", async () => {
+    const { client, server } = await mock();
+
+    client.nicklist("#channel");
+    const raw = server.receive();
+
+    assertEquals(raw, ["NAMES #channel"]);
+  });
 });
