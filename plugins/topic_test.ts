@@ -16,7 +16,7 @@ describe("plugins/topic", (test) => {
     ]);
   });
 
-  test("emit 'topic_change' on TOPIC", async () => {
+  test("emit 'topic' on TOPIC", async () => {
     const { client, server } = await mock();
 
     server.send(":someone!user@host TOPIC #channel :Welcome to #channel");
@@ -28,7 +28,7 @@ describe("plugins/topic", (test) => {
     });
   });
 
-  test("emit 'topic_set' on RPL_TOPIC", async () => {
+  test("emit 'topic_reply' on RPL_TOPIC", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 332 me #channel :Welcome to #channel");
@@ -40,7 +40,7 @@ describe("plugins/topic", (test) => {
     });
   });
 
-  test("emit 'topic_set' on RPL_NOTOPIC", async () => {
+  test("emit 'topic_reply' on RPL_NOTOPIC", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 331 me #channel :No topic is set");
@@ -52,7 +52,7 @@ describe("plugins/topic", (test) => {
     });
   });
 
-  test("emit 'topic_set_by' on RPL_TOPICWHOTIME", async () => {
+  test("emit 'topic_who_time_reply' on RPL_TOPICWHOTIME", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 333 me #channel someone!user@host :1596564019");
