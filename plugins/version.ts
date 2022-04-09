@@ -26,7 +26,9 @@ interface VersionFeatures {
     };
   };
   commands: {
-    /** Queries the client version of a `target`. */
+    /** Queries the client version of a `target`.
+     *
+     * Queries the server if `target` is not provided. */
     version(target?: string): void;
   };
   events: {

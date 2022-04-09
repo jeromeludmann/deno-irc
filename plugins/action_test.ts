@@ -7,7 +7,7 @@ describe("plugins/action", (test) => {
     const { client, server } = await mock();
 
     client.action("#channel", "says hello");
-    client.action("someone", "says hello");
+    client.me("someone", "says hello");
     const raw = server.receive();
 
     assertEquals(raw, [

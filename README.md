@@ -2,31 +2,21 @@
 
 ![ci](https://github.com/jeromeludmann/deno-irc/workflows/ci/badge.svg)
 
-IRC client protocol module for [Deno](https://deno.land/).
-
-## Overview
-
-IRC is not dead yet.
-
-This module aims to provide to Deno community an easy way to communicate with
-IRC through an abstraction built on top of the client protocol.
-
-Semantic Versioning will be used but breaking changes are expected on minor
-versions prior to `1.0.0`.
+IRC client protocol module for [Deno](https://deno.land/) which aims to provide
+an easy way to talk with IRC servers.
 
 Any feedback and contributions are welcome.
 
-## Contents
+## Documentation
 
-- [Usage](#usage)
-  - [Events](#events)
-  - [Commands](#commands)
-  - [Errors](#errors)
-- [API](#api)
+- [Getting Started](#getting-started)
+- [API Reference](API.md)
 - [Contributing](#contributing)
-- [License](#license)
 
-## Usage
+## Getting Started
+
+There are only two main concepts to know: [events](#events) and
+[commands](#commands).
 
 Code is better than words:
 
@@ -44,17 +34,14 @@ client.on("join", (msg) => {
   }
 });
 
-// with TLS
+// connects with TLS
 await client.connect("irc.libera.chat", 7000, true);
 
-// no TLS
+// connects without TLS
 await client.connect("irc.libera.chat", 6667);
 ```
 
 Note that this code above requires the `--allow-net` option.
-
-There are only two main concepts to know to use `deno-irc`: [events](#events)
-and [commands](#commands).
 
 ### Events
 
@@ -103,29 +90,30 @@ client.on(["part", "kick"], (msg) => {
 });
 ```
 
-There are also other methods related to events which can be useful, following only resolves when the message has been received:
+There are also other methods related to events which can be useful, following
+only resolves when the message has been received:
 
 ```ts
 const msg = await client.once("join");
 ```
 
+🔎 See [Event API](API.md#events).
+
 ### Commands
 
 Commands are the way to send messages to the server.
 
-They can be sent by calling them:
+They can be sent by just calling them:
 
 ```ts
 client.join("#channel");
 
 client.privmsg("#channel", "Hello world!");
 
-client.nick("new_nick");
-
-client.topic("#channel", "New topic of the channel");
-
 client.quit("Goodbye!");
 ```
+
+🔎 See [Command API](API.md#commands).
 
 ### Errors
 
@@ -135,47 +123,9 @@ program.
 To avoid the client from crashing, **it is required to have at least one event
 listener for the `"error"` event name**.
 
-By listening to the `"error"` event, errors will no longer be thrown:
-
-```ts
-client.on("error", console.error);
-```
-
-Even better, you can handle them by checking `error.type` property:
-
-```ts
-client.on("error", (error) => {
-  switch (error.type) {
-    case "connect": {
-      // errors while connecting
-    }
-    case "read": {
-      // errors while receiving messages from server
-    }
-    case "write": {
-      // errors while sending messages to server
-    }
-    case "close": {
-      // errors while closing connection
-    }
-  }
-});
-```
-
-This behavior is heavily inspired by the
-[Node.js error handling](https://www.joyent.com/node-js/production/design/errors).
-
-An early crash prevents loosing useful informations when the client tries
-something without success.
-
-## API
-
-_Work in progress. You can use for the moment the code completion support from
-your IDE to discover other commands and event names._
+🔎 See [Error Event API](API.md#event-error).
 
 ## Contributing
-
-_This is a first draft of a contributing section._
 
 This module is mainly built around two patterns:
 
@@ -193,22 +143,13 @@ client.
 In most of the cases, it is quite handy to add new features using plugins
 without touching the core.
 
-All added parts (core and plugins) should be [checked](#run-linter),
-[formatted](#run-formatter) and [tested](#run-unit-tests) to ensure they work as
-expected.
+All added parts (core and plugins):
 
-All-in-one command exists for this purpose:
+- should be tested to ensure they work as expected
+- should provide documentation about its options, events, commands
 
-```sh
-make
-```
-
-Need help?
-
-```sh
-make help
-```
+Need help? Type `make help`.
 
 ## License
 
-MIT
+[MIT](LICENSE)

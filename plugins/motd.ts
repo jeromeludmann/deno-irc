@@ -10,7 +10,9 @@ export type MotdEvent = Message<MotdEventParams>;
 
 interface MotdFeatures {
   commands: {
-    /** Gets the message of the day (MOTD) of the server. */
+    /** Gets the message of the day (MOTD) of the server.
+     *
+     * Replies with 'motd_reply' event when ended. */
     motd(): void;
   };
   events: {

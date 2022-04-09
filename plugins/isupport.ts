@@ -2,6 +2,7 @@ import { createPlugin } from "../core/plugins.ts";
 import { type Message } from "../core/parsers.ts";
 
 export interface IsupportEventParams {
+  /** Value of the current ISUPPORT parameter. */
   value?: string;
 }
 

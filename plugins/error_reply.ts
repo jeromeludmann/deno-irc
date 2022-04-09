@@ -4,7 +4,10 @@ import { createPlugin } from "../core/plugins.ts";
 import { type AnyError } from "../core/protocol.ts";
 
 export interface ErrorReplyEventParams {
+  /** Arguments of the error. */
   args: string[];
+
+  /** Description of the error. */
   text?: string;
 }
 

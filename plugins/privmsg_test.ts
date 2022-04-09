@@ -6,7 +6,7 @@ describe("plugins/privmsg", (test) => {
   test("send PRIVMSG", async () => {
     const { client, server } = await mock();
 
-    client.msg("#channel", "Hello world");
+    client.privmsg("#channel", "Hello world");
     client.msg("someone", "Hello world");
     const raw = server.receive();
 

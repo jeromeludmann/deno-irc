@@ -7,8 +7,13 @@ export interface Server {
 }
 
 export interface MyinfoEventParams {
+  /** Server informations. */
   server: Server;
+
+  /** Server user modes. */
   usermodes: string;
+
+  /** Server channel modes. */
   chanmodes: string;
 }
 
