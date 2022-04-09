@@ -14,7 +14,7 @@ interface MotdFeatures {
     motd(): void;
   };
   events: {
-    "motd": MotdEvent;
+    "motd_reply": MotdEvent;
   };
 }
 
@@ -40,12 +40,12 @@ export default createPlugin("motd")<MotdFeatures>((client) => {
 
   client.on("raw:rpl_endofmotd", (msg) => {
     const { source } = msg;
-    client.emit("motd", { source, params: { motd } });
+    client.emit("motd_reply", { source, params: { motd } });
   });
 
   client.on("raw:err_nomotd", (msg) => {
     const { source } = msg;
     const motd = undefined;
-    client.emit("motd", { source, params: { motd } });
+    client.emit("motd_reply", { source, params: { motd } });
   });
 });

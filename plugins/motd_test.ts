@@ -12,7 +12,7 @@ describe("plugins/motd", (test) => {
     assertEquals(raw, ["MOTD"]);
   });
 
-  test("emit 'motd' on RPL_ENDOFMOTD", async () => {
+  test("emit 'motd_reply' on RPL_ENDOFMOTD", async () => {
     const { client, server } = await mock();
 
     const receiveMotd = () =>
@@ -24,10 +24,10 @@ describe("plugins/motd", (test) => {
       ]);
 
     receiveMotd();
-    await client.once("motd");
+    await client.once("motd_reply");
 
     receiveMotd();
-    const msg = await client.once("motd");
+    const msg = await client.once("motd_reply");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -40,11 +40,11 @@ describe("plugins/motd", (test) => {
     });
   });
 
-  test("emit 'motd' on ERR_NOMOTD", async () => {
+  test("emit 'motd_reply' on ERR_NOMOTD", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 422 nick :MOTD File is missing");
-    const msg = await client.once("motd");
+    const msg = await client.once("motd_reply");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
