@@ -107,7 +107,8 @@ export class CoreClient<
   /** Connects to a server using a hostname and an optional port.
    *
    * Default port to `6667`.
-   * If `tls=true`, attempt to connect using a TLS connection.
+   *
+   * If `tls=true`, attempts to connect using a TLS connection.
    *
    * Resolves when connected. */
   async connect(

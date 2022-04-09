@@ -19,7 +19,9 @@ export type CtcpClientinfoReplyEvent = Message<CtcpClientinfoReplyEventParams>;
 interface ClientinfoFeatures {
   options: {
     ctcpReplies?: {
-      /** Replies to CTCP CLIENTINFO. */
+      /** Replies to CTCP CLIENTINFO.
+       *
+       * Default to `true`. */
       clientinfo?: boolean;
     };
   };

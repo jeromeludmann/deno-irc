@@ -19,7 +19,9 @@ export type CtcpTimeReplyEvent = Message<CtcpTimeReplyEventParams>;
 interface TimeFeatures {
   options: {
     ctcpReplies?: {
-      /** Replies to CTCP TIME. */
+      /** Replies to CTCP TIME.
+       *
+       * Default to `true`. */
       time?: boolean;
     };
   };

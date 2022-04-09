@@ -8,7 +8,7 @@ interface ReconnectFeatures {
      *
      * Takes `boolean` or `{ attempts?: number, delay?: number }`.
      *
-     * Default to `false`. */
+     * Default to `false` or `{ attempts: 10, delay: 5 }` if set to `true`. */
     reconnect?: boolean | {
       /** Number of attempts before giving up.
        *

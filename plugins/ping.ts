@@ -47,7 +47,9 @@ export type CtcpPingReplyEvent = Message<CtcpPingReplyEventParams>;
 interface PingFeatures {
   options: {
     ctcpReplies?: {
-      /** Replies to CTCP PING. */
+      /** Replies to CTCP PING.
+       *
+       * Default to `true`. */
       ping?: boolean;
     };
   };
