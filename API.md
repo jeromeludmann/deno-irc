@@ -51,7 +51,6 @@
   - [event: quit](#event-quit)
   - [event: raw](#event-raw)
   - [event: raw_ctcp](#event-raw_ctcp)
-  - [event: raw_ctcp](#event-raw_ctcp)
   - [event: reconnecting](#event-reconnecting)
   - [event: register](#event-register)
   - [event: topic](#event-topic)
@@ -629,14 +628,14 @@ client.on("invite", (msg) => {
 
 Server sends ISUPPORT parameter to the client.
 
-```ts
-// Supported events:
-//
-// - isupport:usermodes
-// - isupport:chanmodes
-// - isupport:prefix
-// - isupport:chantypes
+Supported events:
 
+- `isupport:usermodes`
+- `isupport:chanmodes`
+- `isupport:prefix`
+- `isupport:chantypes`
+
+```ts
 client.on("isupport:chanmodes", (msg) => {
   msg.params.value; // value of the current ISUPPORT parameter
 });
@@ -882,37 +881,58 @@ client.on("raw", (raw) => {
 });
 ```
 
+You can target any raw commands with `"raw:*"` pattern:
+
+```ts
+client.on("raw:join", (msg) => {
+  // JOIN message
+});
+
+// similar to
+client.on("raw", (msg) => {
+  if (msg.command === "join") {
+    // JOIN message
+  }
+});
+```
+
 ### event: raw_ctcp
+
+#### Raw CTCP Query
 
 User sends a CTCP to a target.
 
-```ts
-// Supported events:
-//
-// - raw_ctcp:action
-// - raw_ctcp:clientinfo
-// - raw_ctcp:ping
-// - raw_ctcp:time
-// - raw_ctcp:version
+Supported query events:
 
+- `raw_ctcp:action` (favor [`ctcp_action`](#event-ctcp_action) instead)
+- `raw_ctcp:clientinfo` (favor [`ctcp_clientinfo`](#event-ctcp_clientinfo)
+  instead)
+- `raw_ctcp:ping` (favor [`ctcp_ping`](#event-ctcp_ping) instead)
+- `raw_ctcp:time` (favor [`ctcp_time`](#event-ctcp_time) instead)
+- `raw_ctcp:version` (favor [`ctcp_version`](#event-ctcp_version) instead)
+
+```ts
 client.on("raw_ctcp:ping", (msg) => {
   msg.params.supported; // name of the CTCP command
 });
 ```
 
-### event: raw_ctcp_reply
+#### Raw CTCP Reply
 
 User replies to a CTCP.
 
-```ts
-// Supported events:
-//
-// - raw_ctcp:action_reply
-// - raw_ctcp:clientinfo_reply
-// - raw_ctcp:ping_reply
-// - raw_ctcp:time_reply
-// - raw_ctcp:version_reply
+Supported reply events:
 
+- `raw_ctcp:clientinfo_reply` (favor
+  [`ctcp_clientinfo_reply`](#event-ctcp_clientinfo_reply) instead)
+- `raw_ctcp:ping_reply` (favor [`ctcp_ping_reply`](#event-ctcp_ping_reply)
+  instead)
+- `raw_ctcp:time_reply` (favor [`ctcp_time_reply`](#event-ctcp_time_reply)
+  instead)
+- `raw_ctcp:version_reply` (favor
+  [`ctcp_version_reply`](#event-ctcp_version_reply) instead)
+
+```ts
 client.on("raw_ctcp:ping_reply", (msg) => {
   msg.params.supported; // name of the CTCP command
 });
@@ -1034,7 +1054,7 @@ Same as `client.away()`.
 `back(): void`
 
 ```ts
-client.away(); // to be no longer marked as being away
+client.back(); // to be no longer marked as being away
 ```
 
 ### command: ban

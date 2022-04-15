@@ -9,39 +9,55 @@ Any feedback and contributions are welcome.
 
 ## Documentation
 
-- [Getting Started](#getting-started)
+- [Overview](#overview)
 - [API Reference](API.md)
 - [Contributing](#contributing)
 
-## Getting Started
+## Overview
 
-There are only two main concepts to know: [events](#events) and
-[commands](#commands).
-
-Code is better than words:
+The first thing to do is to import the `Client`:
 
 ```ts
 import { Client } from "https://deno.land/x/irc/mod.ts";
+```
 
+and just instantiate a new client like this:
+
+```ts
 const client = new Client({
   nick: "my_nick",
   channels: ["#my_channel"],
 });
+```
 
+One instance manages one connection. If you want to connect to many servers, use
+many instances.
+
+See [API Reference](API.md#options) to learn more about available options.
+
+Then you can listen to [events](#events) and send [commands](#commands):
+
+```ts
 client.on("join", (msg) => {
   if (msg.params.channel === "#my_channel") {
     client.privmsg("#my_channel", "Hello world!");
   }
 });
-
-// connects with TLS
-await client.connect("irc.libera.chat", 7000, true);
-
-// connects without TLS
-await client.connect("irc.libera.chat", 6667);
 ```
 
-Note that this code above requires the `--allow-net` option.
+Finally you have to establish a connection with the server:
+
+```ts
+await client.connect("irc.libera.chat", 6667);
+
+await client.connect("irc.libera.chat", 7000, true); // with TLS
+```
+
+Note that connecting to servers requires the `--allow-net` option:
+
+```
+deno run --allow-net ./code.ts
+```
 
 ### Events
 
@@ -90,14 +106,7 @@ client.on(["part", "kick"], (msg) => {
 });
 ```
 
-There are also other methods related to events which can be useful, following
-only resolves when the message has been received:
-
-```ts
-const msg = await client.once("join");
-```
-
-🔎 See [Event API](API.md#events).
+See [API Reference](API.md#events) to learn more about events.
 
 ### Commands
 
@@ -113,7 +122,7 @@ client.privmsg("#channel", "Hello world!");
 client.quit("Goodbye!");
 ```
 
-🔎 See [Command API](API.md#commands).
+See [API Reference](API.md#commands) to learn more about commands.
 
 ### Errors
 
@@ -123,7 +132,7 @@ program.
 To avoid the client from crashing, **it is required to have at least one event
 listener for the `"error"` event name**.
 
-🔎 See [Error Event API](API.md#event-error).
+See [API Reference](API.md#event-error) to learn more about errors.
 
 ## Contributing
 
@@ -132,9 +141,8 @@ This module is mainly built around two patterns:
 - event driven architecture
 - internal plugins
 
-It involves keeping the client as minimal as possible (the _core_) and delegates
-implementation of features to highly cohesive decoupled parts (which are called
-_plugins_).
+It involves keeping the _core_ client as minimal as possible and delegates
+feature implementations to decoupled _plugins_ parts.
 
 The core contains some internal parts related to IRC protocol, TCP sockets and
 event system. Plugins contain all the extra features built on top of the core
