@@ -17,4 +17,26 @@ describe("plugins/cap", (test) => {
 
     assertEquals(raw, ["CAP REQ capability"]);
   });
+
+  test("send capabilities", async () => {
+    const { client, server } = await mock();
+
+    client.state.capabilities.push("cap1");
+    client.utils.sendCapabilities();
+
+    assertEquals(server.receive(), [
+      "CAP REQ multi-prefix", // already provided by plugins/names
+      "CAP REQ cap1", // provided by previous capabilities.push()
+      "CAP END",
+    ]);
+
+    client.utils.sendCapabilities("cap2");
+
+    assertEquals(server.receive(), [
+      "CAP REQ multi-prefix",
+      "CAP REQ cap1",
+      "CAP REQ cap2", // provided by sendCapabilities()
+      "CAP END",
+    ]);
+  });
 });

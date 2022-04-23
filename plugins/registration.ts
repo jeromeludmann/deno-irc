@@ -35,20 +35,6 @@ export default createPlugin(
   const { nick, username = nick, realname = nick, password } = options;
   client.state.user = { nick, username, realname };
 
-  const sendCapabilities = () => {
-    const { capabilities } = client.state;
-
-    if (capabilities.length === 0) {
-      return;
-    }
-
-    for (const capability of capabilities) {
-      client.cap("REQ", capability);
-    }
-
-    client.cap("END");
-  };
-
   const sendRegistration = () => {
     if (password !== undefined) {
       client.pass(password);
@@ -60,7 +46,7 @@ export default createPlugin(
   // Sends capabilities and registers once connected.
 
   client.on("connected", () => {
-    sendCapabilities();
+    client.utils.sendCapabilities();
     sendRegistration();
   });
 
