@@ -24,4 +24,36 @@ describe("plugins/oper", (test) => {
 
     assertEquals(client.state.oper, true);
   });
+
+  test("reset oper state on disconnect", async () => {
+    const { client, server } = await mock();
+
+    server.send(
+      ":serverhost 381 me :You are now an IRC operator",
+    );
+    await client.once("raw:rpl_youreoper");
+
+    assertEquals(client.state.oper, true);
+
+    server.shutdown();
+    await client.once("disconnected");
+
+    assertEquals(client.state.oper, false);
+  });
+
+  test("reset oper state on error", async () => {
+    const { client, server } = await mock();
+
+    server.send(
+      ":serverhost 381 me :You are now an IRC operator",
+    );
+    await client.once("raw:rpl_youreoper");
+
+    assertEquals(client.state.oper, true);
+
+    server.send("ERROR :Closing link: (user@host) [Client exited]");
+    await client.once("error");
+
+    assertEquals(client.state.oper, false);
+  });
 });

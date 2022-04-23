@@ -25,4 +25,10 @@ export default createPlugin("oper")<OperFeatures>((client) => {
   client.on("raw:rpl_youreoper", () => {
     client.state.oper = true;
   });
+
+  // Resets 'oper' state.
+
+  client.on(["disconnected", "error"], () => {
+    client.state.oper = false;
+  });
 });
