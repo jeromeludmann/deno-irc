@@ -60,7 +60,8 @@ export default createPlugin(
 
       // adds prefixes to nick entry
 
-      buffers[channel][nick] = [];
+      const currentPrefixesLength = Object.keys(client.state.prefixes).length;
+      buffers[channel][nick] = Array(currentPrefixesLength).fill("");
 
       for (const prefix of prefixes) {
         const index = client.state.prefixes[prefix].priority;

@@ -31,12 +31,12 @@ describe("plugins/names", (test) => {
       params: {
         channel: "#channel",
         names: {
-          "nick1": [, "%"],
-          "nick2": ["@", , "+"],
-          "nick4": [, , "+"],
-          "nick3": [, , "+"],
+          "nick1": ["", "%", ""],
+          "nick2": ["@", "", "+"],
+          "nick4": ["", "", "+"],
+          "nick3": ["", "", "+"],
           "nick5": ["@", "%", "+"],
-          "nick6": [],
+          "nick6": ["", "", ""],
         },
       },
     });
@@ -61,8 +61,8 @@ describe("plugins/names", (test) => {
       params: {
         channel: "#channel",
         names: {
-          "nick1": ["~", , "@", , "+"],
-          "nick2": [, "&", , "%"],
+          "nick1": ["~", "", "@", "", "+"],
+          "nick2": ["", "&", "", "%", ""],
         },
       },
     });
