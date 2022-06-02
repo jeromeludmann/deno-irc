@@ -11,7 +11,7 @@ export type CtcpClientinfoEvent = Message<CtcpClientinfoEventParams>;
 
 export interface CtcpClientinfoReplyEventParams {
   /** Array of supported commands by the user. */
-  supported: AnyCtcpCommand[];
+  supported: Uppercase<AnyCtcpCommand>[];
 }
 
 export type CtcpClientinfoReplyEvent = Message<CtcpClientinfoReplyEventParams>;
@@ -58,7 +58,7 @@ export default createPlugin(
 
   client.on("raw_ctcp:clientinfo_reply", (msg) => {
     const { source, params: { arg } } = msg;
-    const supported = (arg?.split(" ") ?? []) as AnyCtcpCommand[];
+    const supported = (arg?.split(" ") ?? []) as Uppercase<AnyCtcpCommand>[];
     client.emit("ctcp_clientinfo_reply", { source, params: { supported } });
   });
 

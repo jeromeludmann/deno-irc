@@ -1,13 +1,13 @@
 import { assertEquals } from "../deps.ts";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
-import { type Message } from "../core/parsers.ts";
+import { type ErrorReplyEvent } from "./error_reply.ts";
 
 describe("plugins/error_reply", (test) => {
   test("emit 'error_reply' on error replies", async () => {
     const { client, server } = await mock();
 
-    const messages: Message<unknown>[] = [];
+    const messages: ErrorReplyEvent[] = [];
     client.on("error_reply", (msg) => messages.push(msg));
 
     server.send([
