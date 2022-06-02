@@ -91,7 +91,7 @@ describe("plugins/reconnect", (test) => {
     );
 
     assertRejects(
-      () => client.connect(""),
+      async () => await client.connect(""),
       Error,
       "plugins/reconnect requires an error listener",
     );
