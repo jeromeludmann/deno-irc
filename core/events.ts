@@ -64,7 +64,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
   ): () => void {
     for (const event of this.remapEventNames<T>(eventName)) {
       if (this.count(event) === this.maxListenersCount) {
-        throw new Error(`Too many listeners for '${event}' event`);
+        throw new Error(`Too many listeners for '${String(event)}' event`);
       }
 
       let listeners = this.listeners.get(event);
@@ -73,7 +73,9 @@ export class EventEmitter<TEvents extends Record<string, any>> {
         listeners = new Set([listener]);
         this.listeners.set(event, listeners);
       } else if (listeners.has(listener)) {
-        throw new Error(`Given listener already added for '${event}' event`);
+        throw new Error(
+          `Given listener already added for '${String(event)}' event`,
+        );
       }
 
       listeners.add(listener);
@@ -154,7 +156,7 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     relatedEventNames: T[],
   ): void {
     if (this.multiEventNames.has(multiEventName)) {
-      throw new Error(`'${multiEventName}' multi event already exists`);
+      throw new Error(`'${String(multiEventName)}' multi event already exists`);
     }
     this.multiEventNames.set(
       multiEventName,
