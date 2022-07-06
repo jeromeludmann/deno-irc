@@ -9,11 +9,10 @@ Any feedback and contributions are welcome.
 
 ## Documentation
 
-- [Overview](#overview)
-- [API Reference](API.md)
-- [Contributing](#contributing)
+- [Getting Started](#getting-started)
+- [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md)
 
-## Overview
+## Getting Started
 
 The first thing to do is to import the `Client`:
 
