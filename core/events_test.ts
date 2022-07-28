@@ -39,6 +39,30 @@ describe("core/events", (test) => {
     assertEquals(triggered, 0);
   });
 
+  test("add one listener and remove it", () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+    const listener = () => triggered++;
+
+    emitter.on("event", listener);
+    emitter.off("event", listener);
+    emitter.emit("event", {});
+
+    assertEquals(triggered, 0);
+  });
+
+  test("add one listener and do not remove it", () => {
+    const emitter = new EventEmitter();
+    let triggered = 0;
+    const listener = () => triggered++;
+
+    emitter.on("event", listener);
+    emitter.off("event2", listener);
+    emitter.emit("event", {});
+
+    assertEquals(triggered, 1);
+  });
+
   test("add two listeners and remove one of them", () => {
     const emitter = new EventEmitter();
     let triggered = 0;
