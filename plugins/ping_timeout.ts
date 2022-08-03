@@ -39,9 +39,10 @@ export default createPlugin(
   }
 
   function startPingTimer() {
-    if (started) return;
-    started = true;
-    pingServerId = setTimeout(pingServer, pingTimeout * 1000);
+    if (!started) {
+      started = true;
+      pingServerId = setTimeout(pingServer, pingTimeout * 1000);
+    }
   }
 
   function stopPingTimer() {
@@ -56,9 +57,10 @@ export default createPlugin(
   });
 
   client.on("raw", () => {
-    if (!started) return;
-    stopPingTimer();
-    startPingTimer();
+    if (started) {
+      stopPingTimer();
+      startPingTimer();
+    }
   });
 
   client.on(["disconnected", "error"], () => {

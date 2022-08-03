@@ -117,15 +117,17 @@ export default createPlugin(
         case "a":
         case "b": { // MUST always have a parameter
           const arg = modeArgs.shift();
-          if (arg === undefined) break;
-          modes.push({ mode, arg });
+          if (arg !== undefined) {
+            modes.push({ mode, arg });
+          }
           break;
         }
         case "c": { // MUST have a parameter only when being set
           if (modeSet === "+") {
             const arg = modeArgs.shift();
-            if (arg === undefined) break;
-            modes.push({ mode, arg });
+            if (arg !== undefined) {
+              modes.push({ mode, arg });
+            }
           } else {
             modes.push({ mode });
           }

@@ -37,6 +37,23 @@ describe("plugins/chanmodes", (test) => {
     });
   });
 
+  test("do not override channel modes state if bad value is received", async () => {
+    const { client, server } = await mock();
+    const defaults = client.state.chanmodes;
+
+    server.send(
+      ":serverhost 005 nick CHANMODES :are supported by this server",
+    );
+    await client.once("isupport:chanmodes");
+    assertEquals(client.state.chanmodes, defaults);
+
+    server.send(
+      ":serverhost 005 nick CHANMODES=a :are supported by this server",
+    );
+    await client.once("isupport:chanmodes");
+    assertEquals(client.state.chanmodes, defaults);
+  });
+
   test("override channel modes state with PREFIX on RPL_ISUPPORT", async () => {
     const { client, server } = await mock();
     const defaults = client.state.chanmodes;
@@ -83,7 +100,7 @@ describe("plugins/chanmodes", (test) => {
     });
   });
 
-  test("not replace nick prefixes state if bad value is received", async () => {
+  test("do not replace nick prefixes state if bad value is received", async () => {
     const { client, server } = await mock();
     const defaults = client.state.prefixes;
 

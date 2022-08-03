@@ -33,8 +33,9 @@ export default createPlugin(
   // Prints sent messages.
 
   client.hooks.afterCall("send", (raw) => {
-    if (raw === null) return;
-    console.info(dim("send"), dim(bold("raw")), dim(JSON.stringify(raw)));
+    if (raw !== null) {
+      console.info(dim("send"), dim(bold("raw")), dim(JSON.stringify(raw)));
+    }
   });
 
   // Prints sent commands.

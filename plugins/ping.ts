@@ -137,13 +137,14 @@ export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
   // Replies to CTCP PING.
 
   const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
-  if (!ctcpReplyEnabled) return;
 
-  client.on("ctcp_ping", (msg) => {
-    const { source, params: { key } } = msg;
-    if (source) {
-      const ctcp = client.utils.createCtcp("PING", key);
-      client.send("NOTICE", source.name, ctcp);
-    }
-  });
+  if (ctcpReplyEnabled) {
+    client.on("ctcp_ping", (msg) => {
+      const { source, params: { key } } = msg;
+      if (source) {
+        const ctcp = client.utils.createCtcp("PING", key);
+        client.send("NOTICE", source.name, ctcp);
+      }
+    });
+  }
 });

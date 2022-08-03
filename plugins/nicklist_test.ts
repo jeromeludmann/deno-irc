@@ -89,6 +89,17 @@ describe("plugins/nicklist", (test) => {
     });
   });
 
+  test("do no emit 'nicklist' on JOIN from empty sources", async () => {
+    const { client, server } = await mock();
+    let triggered = 0;
+
+    client.on("nicklist", () => triggered++);
+
+    server.send("JOIN #channel");
+
+    assertEquals(triggered, 0);
+  });
+
   test("emit 'nicklist' on NICK", async () => {
     const { client, server } = await mock();
     const messages: NicklistEvent[] = [];
@@ -125,6 +136,17 @@ describe("plugins/nicklist", (test) => {
         ],
       },
     }]);
+  });
+
+  test("do no emit 'nicklist' on NICK from empty sources", async () => {
+    const { client, server } = await mock();
+    let triggered = 0;
+
+    client.on("nicklist", () => triggered++);
+
+    server.send("NICK nick");
+
+    assertEquals(triggered, 0);
   });
 
   test("emit 'nicklist' on MODE", async () => {
