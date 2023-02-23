@@ -57,4 +57,8 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
   close(): void {
     this.emit("read", null);
   }
+
+  ref(): void {}
+
+  unref(): void {}
 }
