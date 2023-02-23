@@ -41,10 +41,8 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     eventName: T,
     eventPayload: InferredPayload<TEvents, T>,
   ): void {
-    const shouldBeThrown = (
-      (eventPayload as unknown) instanceof Error &&
-      this.count(eventName) === 0
-    );
+    const shouldBeThrown = (eventPayload as unknown) instanceof Error &&
+      this.count(eventName) === 0;
     if (shouldBeThrown) {
       throw eventPayload;
     }

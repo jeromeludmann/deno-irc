@@ -235,10 +235,8 @@ export class CoreClient<
   /** Emits properly an error. */
   emitError(...args: ErrorArgs): void {
     const [, error] = args;
-    const isSilentError = (
-      error instanceof Deno.errors.BadResource ||
-      error instanceof Deno.errors.Interrupted
-    );
+    const isSilentError = error instanceof Deno.errors.BadResource ||
+      error instanceof Deno.errors.Interrupted;
     if (isSilentError) {
       return;
     }
