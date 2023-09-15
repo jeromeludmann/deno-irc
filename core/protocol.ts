@@ -1,5 +1,6 @@
 const COMMANDS = {
   "ADMIN": "admin",
+  "AUTHENTICATE": "authenticate",
   "AWAY": "away",
   "CAP": "cap",
   "CONNECT": "connect",
@@ -166,6 +167,9 @@ const REPLIES = {
   "394": "rpl_endofusers",
   "395": "rpl_nousers",
   "396": "rpl_hosthidden",
+  "900": "rpl_loggedin",
+  "901": "rpl_loggedout",
+  "903": "rpl_saslsuccess"
 } as const;
 
 const ERRORS = {
@@ -262,6 +266,11 @@ const ERRORS = {
   "550": "err_badhostmask",
   "551": "err_hostunavail",
   "552": "err_usingsline",
+  "902": "err_nicklocked",
+  "904": "err_saslfail",
+  "905": "err_sasltoolong",
+  "906": "err_saslaborted",
+  "907": "err_saslalready"
 } as const;
 
 export const PROTOCOL = {

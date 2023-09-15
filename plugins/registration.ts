@@ -1,3 +1,4 @@
+import { Raw } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 import nick from "./nick.ts";
@@ -22,6 +23,14 @@ interface RegistrationFeatures {
 
     /** The password used to connect the client to the server. */
     password?: string;
+
+    /** Whether we should use SASL to authenticate or not. */
+    useSasl?: boolean;
+
+    /** SASL authentication mechanism to use. If unspecified, defaults to "PLAIN". 
+     * Currently, only PLAIN is supported.
+    */
+    saslType?: "PLAIN";
   };
   state: {
     user: User;
@@ -43,11 +52,48 @@ export default createPlugin(
     client.user(username, realname);
   };
 
+  // Resolves or rejects to denote if authenticating via sasl worked.
+  const trySasl = () => {
+    return new Promise((resolve: (_: void) => void, reject: (_: void) => void) => {
+      if (password === undefined) {
+        reject();
+      }
+      client.nick(nick);
+      client.user(username, realname);
+      const capListener = (payload: Raw) => {
+        if (payload.params[2] === 'sasl') {
+          client.send("AUTHENTICATE", options.saslType || "PLAIN");
+          client.off("raw:cap", capListener);
+        }
+      }
+
+      client.on("raw:cap", capListener);
+
+      client.once("raw:authenticate", (payload) => {
+        if (payload.params[0] === "+") {
+          client.send("AUTHENTICATE", btoa(`${username}\x00${username}\x00${password}`));
+          client.once("raw:rpl_saslsuccess", () => {
+            resolve();
+          })
+        }
+      })
+    })
+  }
+
   // Sends capabilities and registers once connected.
 
   client.on("connected", () => {
-    client.utils.sendCapabilities();
-    sendRegistration();
+    if (options.useSasl) {
+      client.utils.sendCapabilities("sasl");
+      trySasl().then(_ => { }).catch(_ => {
+        // fall back to SASL gracefully
+        sendRegistration();
+      })
+    }
+    else {
+      client.utils.sendCapabilities();
+      sendRegistration();
+    }
   });
 
   // Registers if receives ERR_NOTREGISTERED message
