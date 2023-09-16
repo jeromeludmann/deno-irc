@@ -80,13 +80,15 @@ export default createPlugin(
     })
   }
 
-  // Sends capabilities and registers once connected.
-
+  // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     if (options.useSasl) {
-      client.utils.sendCapabilities("sasl");
-      trySasl().then(_ => { }).catch(_ => {
-        // fall back to SASL gracefully
+      client.cap("REQ", "sasl");
+      trySasl().then(_ => {
+        client.cap("END");
+        client.utils.sendCapabilities();
+      }).catch(_ => {
+        client.utils.sendCapabilities();
         sendRegistration();
       })
     }
