@@ -29,7 +29,7 @@ interface RegistrationFeatures {
 
     /** SASL authentication mechanism to use. If unspecified, defaults to "PLAIN".
      * Currently, only PLAIN is supported.
-    */
+     */
     saslType?: "PLAIN";
   };
   state: {
@@ -54,34 +54,38 @@ export default createPlugin(
 
   // Resolves or rejects to denote if authenticating via sasl worked.
   const trySasl = () => {
-    return new Promise((resolve: (_: void) => void, reject: (_: void) => void) => {
-      if (password === undefined) reject();
-      client.nick(nick);
-      client.user(username, realname);
+    return new Promise(
+      (resolve: (_: void) => void, reject: (_: void) => void) => {
+        if (password === undefined) reject();
+        client.nick(nick);
+        client.user(username, realname);
 
-      const capListener = (payload: Raw) => {
-        if (payload.params[2] !== 'sasl') return;
-        client.send("AUTHENTICATE", options.saslType || "PLAIN");
-        client.off("raw:cap", capListener);
-      }
+        const capListener = (payload: Raw) => {
+          if (payload.params[2] !== "sasl") return;
+          client.send("AUTHENTICATE", options.saslType || "PLAIN");
+          client.off("raw:cap", capListener);
+        };
 
-      client.on("raw:cap", capListener);
-      client.once("raw:authenticate", (payload) => {
-        if (payload.params[0] === "+") {
-          client.send("AUTHENTICATE", btoa(`${username}\x00${username}\x00${password}`));
-          client.once("raw:rpl_saslsuccess", () => resolve());
-        }
-      })
-    })
-  }
+        client.on("raw:cap", capListener);
+        client.once("raw:authenticate", (payload) => {
+          if (payload.params[0] === "+") {
+            client.send(
+              "AUTHENTICATE",
+              btoa(`${username}\x00${username}\x00${password}`),
+            );
+            client.once("raw:rpl_saslsuccess", () => resolve());
+          }
+        });
+      },
+    );
+  };
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     if (options.useSasl) {
       client.utils.sendCapabilities("sasl");
-      trySasl().catch(_ => sendRegistration());
-    }
-    else {
+      trySasl().catch((_) => sendRegistration());
+    } else {
       client.utils.sendCapabilities();
       sendRegistration();
     }
