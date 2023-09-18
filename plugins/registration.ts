@@ -27,7 +27,7 @@ interface RegistrationFeatures {
     /** Whether we should use SASL to authenticate or not. */
     useSasl?: boolean;
 
-    /** SASL authentication mechanism to use. If unspecified, defaults to "PLAIN". 
+    /** SASL authentication mechanism to use. If unspecified, defaults to "PLAIN".
      * Currently, only PLAIN is supported.
     */
     saslType?: "PLAIN";
@@ -77,12 +77,12 @@ export default createPlugin(
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
-    client.utils.sendCapabilities();
     if (options.useSasl) {
-      client.cap("REQ", "sasl");
-      trySasl().then(_ => client.cap("END")).catch(_ => sendRegistration());
+      client.utils.sendCapabilities("sasl");
+      trySasl().catch(_ => sendRegistration());
     }
     else {
+      client.utils.sendCapabilities();
       sendRegistration();
     }
   });
