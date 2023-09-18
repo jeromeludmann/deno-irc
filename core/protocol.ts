@@ -169,7 +169,7 @@ const REPLIES = {
   "396": "rpl_hosthidden",
   "900": "rpl_loggedin",
   "901": "rpl_loggedout",
-  "903": "rpl_saslsuccess",
+  "903": "rpl_saslsuccess"
 } as const;
 
 const ERRORS = {
@@ -270,7 +270,7 @@ const ERRORS = {
   "904": "err_saslfail",
   "905": "err_sasltoolong",
   "906": "err_saslaborted",
-  "907": "err_saslalready",
+  "907": "err_saslalready"
 } as const;
 
 export const PROTOCOL = {
