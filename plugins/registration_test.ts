@@ -46,6 +46,45 @@ describe("plugins/registration", (test) => {
     ]);
   });
 
+  test("send sasl capability sequence", async () => {
+    const { client, server } = await mock(
+      { ...options, useSasl: true },
+      { withConnection: false },
+    );
+
+    await client.connect("");
+    const raw = server.receive();
+
+    assertEquals(raw, [
+      "CAP REQ multi-prefix",
+      "CAP REQ sasl",
+      "CAP END",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+
+    server.send(":serverhost CAP me ACK :sasl");
+    await client.once("raw:cap");
+
+    assertEquals(server.receive(), [
+      "AUTHENTICATE PLAIN",
+    ]);
+
+    server.send("AUTHENTICATE +");
+    await client.once("raw:authenticate");
+
+    assertEquals(server.receive(), [
+      "AUTHENTICATE dXNlcgB1c2VyAHBhc3N3b3Jk",
+    ]);
+
+    server.send([
+      ":serverhost 900 me me!user@host me :You are now logged in as me",
+      ":serverhost 903 me :SASL authentication successful",
+    ]);
+
+    await client.once("raw:rpl_saslsuccess");
+  });
+
   test("register on ERR_NOTREGISTERED", async () => {
     const { client, server } = await mock(options);
     server.receive();
