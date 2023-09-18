@@ -57,8 +57,8 @@ describe("plugins/registration", (test) => {
 
     assertEquals(raw, [
       "CAP REQ multi-prefix",
-      "CAP REQ sasl",
       "CAP END",
+      "CAP REQ sasl",
       "NICK me",
       "USER user 0 * :real name",
     ]);
