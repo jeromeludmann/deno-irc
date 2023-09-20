@@ -74,7 +74,7 @@ describe("plugins/registration", (test) => {
     await client.once("raw:authenticate");
 
     assertEquals(server.receive(), [
-      "AUTHENTICATE dXNlcgB1c2VyAHBhc3N3b3Jk",
+      "AUTHENTICATE AHVzZXIAcGFzc3dvcmQ=",
     ]);
 
     server.send([
