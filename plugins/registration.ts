@@ -26,11 +26,6 @@ interface RegistrationFeatures {
 
     /** Whether we should use SASL to authenticate or not. */
     useSasl?: boolean;
-
-    /** SASL authentication mechanism to use. If unspecified, defaults to "PLAIN".
-     * Currently, only PLAIN is supported.
-     */
-    saslType?: "PLAIN";
   };
   state: {
     user: User;
@@ -44,48 +39,55 @@ export default createPlugin(
   const { nick, username = nick, realname = nick, password } = options;
   client.state.user = { nick, username, realname };
 
-  const sendRegistration = () => {
-    if (password !== undefined) {
+  const sendRegistration = (sendPass = true) => {
+    if (password !== undefined && sendPass) {
       client.pass(password);
     }
     client.nick(nick);
     client.user(username, realname);
   };
 
+  function* chunks<T>(str: string, n: number): Generator<string, void> {
+    for (let i = 0; i < str.length; i += n) {
+      yield str.slice(i, i + n);
+    }
+  }
+
   // Resolves or rejects to denote if authenticating via sasl worked.
   const trySasl = () => {
-    return new Promise(
-      (resolve: (_: void) => void, reject: (_: void) => void) => {
-        if (password === undefined) reject();
-        client.nick(nick);
-        client.user(username, realname);
+    sendRegistration(false);
 
-        const capListener = (payload: Raw) => {
-          if (payload.params[2] !== "sasl") return;
-          client.send("AUTHENTICATE", options.saslType || "PLAIN");
-          client.off("raw:cap", capListener);
-        };
+    const capListener = (payload: Raw) => {
+      if (payload.params[2] !== "sasl") return;
+      client.send("AUTHENTICATE", "PLAIN");
+      client.off("raw:cap", capListener);
+    };
 
-        client.on("raw:cap", capListener);
-        client.once("raw:authenticate", (payload) => {
-          if (payload.params[0] === "+") {
-            client.send(
-              "AUTHENTICATE",
-              btoa(`${username}\x00${username}\x00${password}`),
-            );
-            client.once("raw:rpl_saslsuccess", () => resolve());
+    client.on("raw:cap", capListener);
+
+    client.once("raw:authenticate", (payload) => {
+      if (payload.params[0] === "+") {
+        const chunked = [...chunks(btoa(`\x00${username}\x00${password}`), 400)];
+        for (let i = 0; i < chunked.length; i++) {
+          const chunk = chunked[i];
+          client.send("AUTHENTICATE", chunk);
+          if (i === chunked.length - 1 && chunk.length === 400) {
+            client.send("AUTHENTICATE", "+");
           }
-        });
-      },
-    );
-  };
+        }
+      }
+    });
+  }
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     client.utils.sendCapabilities();
-    if (options.useSasl) {
+    if (options.useSasl && !!password) {
       client.cap("REQ", "sasl");
-      trySasl().then((_) => client.cap("END")).catch((_) => sendRegistration());
+      trySasl();
+      client.once("raw:rpl_saslsuccess", () => client.cap("END"));
+      client.once("raw:err_saslfail", () => sendRegistration());
+      client.once("raw:err_saslaborted", () => sendRegistration());
     } else {
       sendRegistration();
     }
