@@ -47,7 +47,7 @@ export default createPlugin(
     client.user(username, realname);
   };
 
-  function* chunks<T>(str: string, n: number): Generator<string, void> {
+  function* chunks(str: string, n: number): Generator<string, void> {
     for (let i = 0; i < str.length; i += n) {
       yield str.slice(i, i + n);
     }
