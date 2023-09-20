@@ -84,19 +84,17 @@ export default createPlugin(
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     client.utils.sendCapabilities();
-    if (options.useSasl && !!password) {
-      client.cap("REQ", "sasl");
-      trySasl();
-      client.once("raw:rpl_saslsuccess", () => client.cap("END"));
-      client.once("raw:err_saslfail", () => sendRegistration());
-      client.once("raw:err_saslaborted", () => sendRegistration());
-    } else {
+    if (!options.useSasl || !password) {
       sendRegistration();
+      return;
     }
+
+    client.cap("REQ", "sasl");
+    trySasl();
+    client.once("raw:rpl_saslsuccess", () => client.cap("END"));
   });
 
   // Registers if receives ERR_NOTREGISTERED message
-
   client.on("raw:err_notregistered", () => {
     sendRegistration();
   });
