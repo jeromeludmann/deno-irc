@@ -53,7 +53,6 @@ export default createPlugin(
     }
   }
 
-  // Resolves or rejects to denote if authenticating via sasl worked.
   const trySasl = () => {
     sendRegistration(false);
 
