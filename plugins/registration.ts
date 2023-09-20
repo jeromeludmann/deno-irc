@@ -67,7 +67,9 @@ export default createPlugin(
 
     client.once("raw:authenticate", (payload) => {
       if (payload.params[0] === "+") {
-        const chunked = [...chunks(btoa(`\x00${username}\x00${password}`), 400)];
+        const chunked = [
+          ...chunks(btoa(`\x00${username}\x00${password}`), 400),
+        ];
         for (let i = 0; i < chunked.length; i++) {
           const chunk = chunked[i];
           client.send("AUTHENTICATE", chunk);
@@ -77,7 +79,7 @@ export default createPlugin(
         }
       }
     });
-  }
+  };
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
