@@ -1,6 +1,7 @@
 # API Reference
 
 - [Options](#options)
+  - [option: authMethod](#option-authmethod)
   - [option: bufferSize](#option-buffersize)
   - [option: channels](#option-channels)
   - [option: ctcpReplies](#option-ctcpreplies)
@@ -110,6 +111,33 @@ instance:
 const options = {/* available options are described below */};
 
 const client = new Client(options);
+```
+
+### option: authMethod
+
+The auth method to use with a supplied username and password. Defaults to
+NickServ if omitted.
+
+The authentication method to use.
+
+- `NickServ` - Non-standard nickserv authentication.
+- `sasl` - SASL PLAIN auth. Errors out if SASL fails.
+- `saslThenNickServ` - Try SASL PLAIN, but fallback to NickServ if it fails.
+
+```ts
+const client = new Client({
+  nick: "user", // will be used as username
+  password: "password",
+});
+```
+
+```ts
+const client = new Client({
+  nick: "user",
+  username: "SaslUser",
+  password: "password",
+  authMethod: "sasl",
+});
 ```
 
 ### option: bufferSize
@@ -235,7 +263,8 @@ const client = new Client({
 
 ### option: nick
 
-The nick used to register the client to the server.
+The nick used to register the client to the server. Will be reused as username
+for auth if no username is supplied.
 
 ```ts
 const client = new Client({
@@ -258,7 +287,7 @@ const client = new Client({
 
 ### option: password
 
-The password used to connect the client to the server.
+The password for the user account associated with the username field.
 
 ```ts
 const client = new Client({
@@ -324,6 +353,16 @@ const client = new Client({
   resolveInvalidNames: true,
 });
 ```
+
+### option: serverPassword
+
+```ts
+const client = new Client({
+  serverPassword: "password",
+});
+```
+
+An optional server password that will be sent via the PASS command.
 
 ### option: username
 

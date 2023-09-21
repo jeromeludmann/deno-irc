@@ -27,7 +27,7 @@ interface RegistrationFeatures {
     /** Optional server password. */
     serverPassword?: string;
 
-    /** The authentication method to use.
+    /** The authentication method to use. Defaults to NickServ if omitted.
      * * `NickServ` - Non-standard nickserv authentication.
      * * `sasl` - SASL PLAIN auth. Errors out if SASL fails.
      * * `saslThenNickServ` - Try SASL PLAIN, but fallback to NickServ if it fails.
