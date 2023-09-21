@@ -27,7 +27,7 @@ interface RegistrationFeatures {
     /** Optional server password. */
     serverPassword?: string;
 
-    authMethod?: "NickServ" | "sasl" | "saslThenNickServ"
+    authMethod?: "NickServ" | "sasl" | "saslThenNickServ";
   };
   state: {
     user: User;
@@ -52,7 +52,7 @@ export default createPlugin(
     password,
   } = options;
 
-  const authMethod = options.authMethod || 'NickServ';
+  const authMethod = options.authMethod || "NickServ";
   client.state.user = { nick, username, realname };
 
   const sendRegistration = () => {
@@ -63,7 +63,7 @@ export default createPlugin(
 
   const tryNickServ = () => {
     client.send("PRIVMSG", "NickServ", `identify ${username} ${password}`);
-  }
+  };
 
   const trySasl = () => {
     const capListener = (payload: Raw) => {
@@ -94,10 +94,11 @@ export default createPlugin(
   client.on("connected", () => {
     sendRegistration();
     client.utils.sendCapabilities();
-    if (authMethod === 'NickServ') {
+
+    if (!password) return;
+    if (authMethod === "NickServ") {
       tryNickServ();
-    }
-    else {
+    } else {
       client.cap("REQ", "sasl");
       trySasl();
       client.once("raw:rpl_saslsuccess", () => client.cap("END"));
@@ -114,7 +115,7 @@ export default createPlugin(
 
   const onSaslFail = (_: Raw) => {
     client.cap("END");
-    if (authMethod === 'saslThenNickServ') tryNickServ();
+    if (authMethod === "saslThenNickServ") tryNickServ();
     else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
   };
 
