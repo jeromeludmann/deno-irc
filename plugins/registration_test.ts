@@ -6,12 +6,29 @@ describe("plugins/registration", (test) => {
   const options = {
     username: "user",
     realname: "real name",
-    password: "password",
   };
 
   test("register on connect", async () => {
     const { client, server } = await mock(
       options,
+      { withConnection: false },
+    );
+
+    (client.state as { capabilities: typeof client.state.capabilities })
+      .capabilities = [];
+
+    await client.connect("");
+    const raw = server.receive();
+
+    assertEquals(raw, [
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+  });
+
+  test("send server password if supplied", async () => {
+    const { client, server } = await mock(
+      { ...options, serverPassword: "password" },
       { withConnection: false },
     );
 
@@ -38,17 +55,32 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "CAP REQ multi-prefix",
-      "CAP END",
-      "PASS password",
       "NICK me",
       "USER user 0 * :real name",
+      "CAP REQ multi-prefix",
+      "CAP END",
     ]);
   });
 
-  test("send sasl capability sequence", async () => {
+  test("use nickserv auth when password supplied", async () => {
     const { client, server } = await mock(
-      { ...options, useSasl: true },
+      { ...options, password: "password" },
+    );
+
+    await client.connect("");
+    const raw = server.receive();
+    assertEquals(raw, [
+      "NICK me",
+      "USER user 0 * :real name",
+      "CAP REQ multi-prefix",
+      "CAP END",
+      "PRIVMSG NickServ :identify user password",
+    ]);
+  });
+
+  test("send sasl capability sequence if password supplied and authMethod is sasl", async () => {
+    const { client, server } = await mock(
+      { ...options, password: "password", authMethod: "sasl" },
       { withConnection: false },
     );
 
@@ -56,11 +88,11 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "CAP REQ multi-prefix",
-      "CAP REQ sasl",
-      "CAP END",
       "NICK me",
       "USER user 0 * :real name",
+      "CAP REQ multi-prefix",
+      "CAP END",
+      "CAP REQ sasl",
     ]);
 
     server.send(":serverhost CAP me ACK :sasl");
@@ -94,7 +126,6 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "PASS password",
       "NICK me",
       "USER user 0 * :real name",
     ]);
