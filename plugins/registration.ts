@@ -97,8 +97,7 @@ export default createPlugin(
   client.on("connected", () => {
     client.utils.sendCapabilities();
     if (!useSasl || !password) {
-      sendRegistration();
-      return;
+      return sendRegistration();
     }
 
     client.cap("REQ", "sasl");
@@ -115,8 +114,10 @@ export default createPlugin(
   });
 
   const onSaslFail = (_: Raw) => {
-    if (tryPassOnSaslFail) sendRegistration();
-    else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
+    client.cap("END");
+    if (tryPassOnSaslFail && password) {
+      client.pass(password);
+    } else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
   };
   client.on(["raw:err_saslfail", "raw:err_saslaborted"], onSaslFail);
 
