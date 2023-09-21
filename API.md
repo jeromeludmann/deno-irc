@@ -14,6 +14,7 @@
   - [option: realname](#option-realname)
   - [option: reconnect](#option-reconnect)
   - [option: resolveInvalidNames](#option-resolveinvalidnames)
+  - [option: serverPassword](#option-serverpassword)
   - [option: username](#option-username)
   - [option: verbose](#option-verbose)
 - [Events](#events)
