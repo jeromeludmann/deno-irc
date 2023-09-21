@@ -2,6 +2,7 @@ import { Raw } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 import nick from "./nick.ts";
+import privmsg from "./privmsg.ts";
 import register from "./register.ts";
 
 export interface User {
@@ -39,15 +40,18 @@ interface RegistrationFeatures {
   };
 }
 
-function* chunks(str: string, n: number): Generator<string, void> {
+function chunks(str: string, n: number): string[] {
+  const result = [];
   for (let i = 0; i < str.length; i += n) {
-    yield str.slice(i, i + n);
+    result.push(str.slice(i, i + n));
   }
+
+  return result;
 }
 
 export default createPlugin(
   "registration",
-  [cap, nick, register],
+  [cap, nick, register, privmsg],
 )<RegistrationFeatures>((client, options) => {
   const {
     nick,
@@ -67,7 +71,7 @@ export default createPlugin(
   };
 
   const tryNickServ = () => {
-    client.send("PRIVMSG", "NickServ", `identify ${username} ${password}`);
+    client.privmsg("NickServ", `identify ${username} ${password}`);
   };
 
   const trySasl = () => {
@@ -81,9 +85,7 @@ export default createPlugin(
 
     client.once("raw:authenticate", (payload) => {
       if (payload.params[0] === "+") {
-        const chunked = [
-          ...chunks(btoa(`\x00${username}\x00${password}`), 400),
-        ];
+        const chunked = chunks(btoa(`\x00${username}\x00${password}`), 400);
         for (let i = 0; i < chunked.length; i++) {
           const chunk = chunked[i];
           client.send("AUTHENTICATE", chunk);
