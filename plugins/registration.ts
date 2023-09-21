@@ -26,6 +26,12 @@ interface RegistrationFeatures {
 
     /** Whether we should use SASL to authenticate or not. */
     useSasl?: boolean;
+
+    /**
+     * Whether we should fallback to password authentication if SASL fails.
+     * False by default.
+     */
+    tryPassOnSaslFail?: boolean;
   };
   state: {
     user: User;
@@ -36,7 +42,14 @@ export default createPlugin(
   "registration",
   [cap, nick, register],
 )<RegistrationFeatures>((client, options) => {
-  const { nick, username = nick, realname = nick, password } = options;
+  const {
+    nick,
+    username = nick,
+    realname = nick,
+    password,
+    useSasl,
+    tryPassOnSaslFail,
+  } = options;
   client.state.user = { nick, username, realname };
 
   const sendRegistration = (sendPass = true) => {
@@ -83,7 +96,7 @@ export default createPlugin(
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     client.utils.sendCapabilities();
-    if (!options.useSasl || !password) {
+    if (!useSasl || !password) {
       sendRegistration();
       return;
     }
@@ -94,18 +107,20 @@ export default createPlugin(
   });
 
   // Registers if receives ERR_NOTREGISTERED message
-  client.on("raw:err_notregistered", () => {
-    sendRegistration();
-  });
+  client.on("raw:err_notregistered", () => sendRegistration());
 
   // Initializes 'nick' state.
-
   client.on("register", (msg) => {
     client.state.user.nick = msg.params.nick;
   });
 
-  // Updates 'nick' state.
+  const onSaslFail = (_: Raw) => {
+    if (tryPassOnSaslFail) sendRegistration();
+    else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
+  };
+  client.on(["raw:err_saslfail", "raw:err_saslaborted"], onSaslFail);
 
+  // Updates 'nick' state.
   client.on("nick", (msg) => {
     const { source, params } = msg;
     const { user } = client.state;
