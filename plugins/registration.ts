@@ -18,24 +18,26 @@ interface RegistrationFeatures {
     /** The username used to register the client to the server. */
     username?: string;
 
+    /** The password for the user account associated with the username field. */
+    password?: string;
+
     /** The realname used to register the client to the server. */
     realname?: string;
 
-    /** The password used to connect the client to the server. */
-    password?: string;
+    /** Optional server password. */
+    serverPassword?: string;
 
-    /** Whether we should use SASL to authenticate or not. */
-    useSasl?: boolean;
-
-    /**
-     * Whether we should fallback to password authentication if SASL fails.
-     * False by default.
-     */
-    tryPassOnSaslFail?: boolean;
+    authMethod?: "NickServ" | "sasl" | "saslThenNickServ"
   };
   state: {
     user: User;
   };
+}
+
+function* chunks(str: string, n: number): Generator<string, void> {
+  for (let i = 0; i < str.length; i += n) {
+    yield str.slice(i, i + n);
+  }
 }
 
 export default createPlugin(
@@ -46,29 +48,24 @@ export default createPlugin(
     nick,
     username = nick,
     realname = nick,
+    serverPassword,
     password,
-    useSasl,
-    tryPassOnSaslFail,
   } = options;
+
+  const authMethod = options.authMethod || 'NickServ';
   client.state.user = { nick, username, realname };
 
-  const sendRegistration = (sendPass = true) => {
-    if (password !== undefined && sendPass) {
-      client.pass(password);
-    }
+  const sendRegistration = () => {
+    if (serverPassword) client.pass(serverPassword);
     client.nick(nick);
     client.user(username, realname);
   };
 
-  function* chunks(str: string, n: number): Generator<string, void> {
-    for (let i = 0; i < str.length; i += n) {
-      yield str.slice(i, i + n);
-    }
+  const tryNickServ = () => {
+    client.send("PRIVMSG", "NickServ", `identify ${username} ${password}`);
   }
 
   const trySasl = () => {
-    sendRegistration(false);
-
     const capListener = (payload: Raw) => {
       if (payload.params[2] !== "sasl") return;
       client.send("AUTHENTICATE", "PLAIN");
@@ -95,14 +92,16 @@ export default createPlugin(
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
+    sendRegistration();
     client.utils.sendCapabilities();
-    if (!useSasl || !password) {
-      return sendRegistration();
+    if (authMethod === 'NickServ') {
+      tryNickServ();
     }
-
-    client.cap("REQ", "sasl");
-    trySasl();
-    client.once("raw:rpl_saslsuccess", () => client.cap("END"));
+    else {
+      client.cap("REQ", "sasl");
+      trySasl();
+      client.once("raw:rpl_saslsuccess", () => client.cap("END"));
+    }
   });
 
   // Registers if receives ERR_NOTREGISTERED message
@@ -115,10 +114,10 @@ export default createPlugin(
 
   const onSaslFail = (_: Raw) => {
     client.cap("END");
-    if (tryPassOnSaslFail && password) {
-      client.pass(password);
-    } else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
+    if (authMethod === 'saslThenNickServ') tryNickServ();
+    else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
   };
+
   client.on(["raw:err_saslfail", "raw:err_saslaborted"], onSaslFail);
 
   // Updates 'nick' state.
