@@ -61,7 +61,7 @@ export default createPlugin(
     password,
   } = options;
 
-  const authMethod = options.authMethod || "NickServ";
+  const authMethod = options.authMethod ?? "NickServ";
   client.state.user = { nick, username, realname };
 
   const sendRegistration = () => {
