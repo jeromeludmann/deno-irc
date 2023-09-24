@@ -99,16 +99,17 @@ export default createPlugin(
 
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
-    sendRegistration();
     if (!password) {
+      sendRegistration();
       return client.utils.negotiateCapabilities({ completeImmediately: true });
     }
-
-    if (authMethod === "NickServ") {
+    else if (authMethod === "NickServ") {
       client.utils.negotiateCapabilities({ completeImmediately: true });
+      sendRegistration();
       tryNickServ();
     } else {
       client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
+      sendRegistration();
       trySasl();
       client.once(
         "raw:rpl_saslsuccess",
