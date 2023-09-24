@@ -102,18 +102,19 @@ export default createPlugin(
     if (!password) {
       sendRegistration();
       return client.utils.negotiateCapabilities({ completeImmediately: true });
-    }
-    else if (authMethod === "NickServ") {
+    } else if (authMethod === "NickServ") {
       client.utils.negotiateCapabilities({ completeImmediately: true });
       sendRegistration();
       tryNickServ();
     } else {
       client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
-      sendRegistration();
       trySasl();
       client.once(
         "raw:rpl_saslsuccess",
-        () => client.utils.completeCapNegotiation(),
+        () => {
+          client.utils.completeCapNegotiation();
+          sendRegistration();
+        },
       );
     }
   });
