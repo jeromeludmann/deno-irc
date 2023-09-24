@@ -55,10 +55,10 @@ export default createPlugin("cap")<CapFeatures>((client) => {
     }
 
     if (completeImmediately) client.cap("END");
-  }
+  };
 
   client.utils.completeCapNegotiation = (): void => {
     if (requestedCaps.length === 0) return;
     client.cap("END");
-  }
+  };
 });
