@@ -70,10 +70,10 @@ describe("plugins/registration", (test) => {
     await client.connect("");
     const raw = server.receive();
     assertEquals(raw, [
-      "NICK me",
-      "USER user 0 * :real name",
       "CAP REQ multi-prefix",
       "CAP END",
+      "NICK me",
+      "USER user 0 * :real name",
       "PRIVMSG NickServ :identify user password",
     ]);
   });
@@ -90,11 +90,11 @@ describe("plugins/registration", (test) => {
     const raw = server.receive();
 
     assertEquals(raw, [
-      "NICK me",
-      "USER user 0 * :real name",
       "CAP REQ multi-prefix",
       "CAP REQ sasl",
       "CAP END",
+      "NICK me",
+      "USER user 0 * :real name",
     ]);
 
     server.send(":serverhost CAP me ACK :sasl");
