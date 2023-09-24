@@ -85,14 +85,16 @@ describe("plugins/registration", (test) => {
     );
 
     await client.connect("");
+    server.send(":serverhost 903 user :SASL authentication successful");
+    await client.once("raw:rpl_saslsuccess");
     const raw = server.receive();
 
     assertEquals(raw, [
       "NICK me",
       "USER user 0 * :real name",
       "CAP REQ multi-prefix",
-      "CAP END",
       "CAP REQ sasl",
+      "CAP END"
     ]);
 
     server.send(":serverhost CAP me ACK :sasl");

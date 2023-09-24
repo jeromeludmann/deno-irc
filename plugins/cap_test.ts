@@ -22,7 +22,7 @@ describe("plugins/cap", (test) => {
     const { client, server } = await mock();
 
     client.state.capabilities.push("cap1");
-    client.utils.sendCapabilities();
+    client.utils.negotiateCapabilities({ completeImmediately: true });
 
     assertEquals(server.receive(), [
       "CAP REQ multi-prefix", // already provided by plugins/names
@@ -30,7 +30,10 @@ describe("plugins/cap", (test) => {
       "CAP END",
     ]);
 
-    client.utils.sendCapabilities("cap2");
+    client.utils.negotiateCapabilities({
+      extraCaps: ["cap2"],
+      completeImmediately: true
+    });
 
     assertEquals(server.receive(), [
       "CAP REQ multi-prefix",
