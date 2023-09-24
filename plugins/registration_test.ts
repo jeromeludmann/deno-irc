@@ -94,7 +94,7 @@ describe("plugins/registration", (test) => {
       "USER user 0 * :real name",
       "CAP REQ multi-prefix",
       "CAP REQ sasl",
-      "CAP END"
+      "CAP END",
     ]);
 
     server.send(":serverhost CAP me ACK :sasl");

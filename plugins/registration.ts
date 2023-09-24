@@ -110,7 +110,10 @@ export default createPlugin(
     } else {
       client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
       trySasl();
-      client.once("raw:rpl_saslsuccess", () => client.utils.completeCapNegotiation());
+      client.once(
+        "raw:rpl_saslsuccess",
+        () => client.utils.completeCapNegotiation(),
+      );
     }
   });
 

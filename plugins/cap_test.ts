@@ -32,7 +32,7 @@ describe("plugins/cap", (test) => {
 
     client.utils.negotiateCapabilities({
       extraCaps: ["cap2"],
-      completeImmediately: true
+      completeImmediately: true,
     });
 
     assertEquals(server.receive(), [
