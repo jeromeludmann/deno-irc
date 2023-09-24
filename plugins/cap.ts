@@ -22,8 +22,14 @@ interface CapFeatures {
     /** Sends CAP sequence with existing capabilities.
      *
      * Optionaly, takes additional capabilities in argument. */
-    sendCapabilities: (...capabilities: string[]) => void;
+    negotiateCapabilities: (options?: CapNegotiationOptions) => void;
+    completeCapNegotiation: () => void;
   };
+}
+
+interface CapNegotiationOptions {
+  completeImmediately?: boolean;
+  extraCaps?: string[];
 }
 
 export default createPlugin("cap")<CapFeatures>((client) => {
@@ -37,18 +43,22 @@ export default createPlugin("cap")<CapFeatures>((client) => {
 
   // Provides util to send capabilities
   // (currently triggered by plugins/registration)
+  let requestedCaps: string[] = [];
 
-  client.utils.sendCapabilities = (...capabilities: string[]): void => {
-    const caps = [...client.state.capabilities, ...capabilities];
+  client.utils.negotiateCapabilities = (options?: CapNegotiationOptions) => {
+    const { completeImmediately = false, extraCaps = [] } = options || {};
+    requestedCaps = [...client.state.capabilities, ...extraCaps];
+    if (requestedCaps.length === 0) return;
 
-    if (caps.length === 0) {
-      return;
-    }
-
-    for (const cap of caps) {
+    for (const cap of requestedCaps) {
       client.cap("REQ", cap);
     }
 
+    if (completeImmediately) client.cap("END");
+  }
+
+  client.utils.completeCapNegotiation = (): void => {
+    if (requestedCaps.length === 0) return;
     client.cap("END");
-  };
+  }
 });

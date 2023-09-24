@@ -74,7 +74,7 @@ export default createPlugin(
     client.privmsg("NickServ", `identify ${username} ${password}`);
   };
 
-  const trySasl = () => {
+  const trySasl = function () {
     const capListener = (payload: Raw) => {
       if (payload.params[2] !== "sasl") return;
       client.send("AUTHENTICATE", "PLAIN");
@@ -100,15 +100,17 @@ export default createPlugin(
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
     sendRegistration();
-    client.utils.sendCapabilities();
+    if (!password) {
+      return client.utils.negotiateCapabilities({ completeImmediately: true });
+    }
 
-    if (!password) return;
     if (authMethod === "NickServ") {
+      client.utils.negotiateCapabilities({ completeImmediately: true });
       tryNickServ();
     } else {
-      client.cap("REQ", "sasl");
+      client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
       trySasl();
-      client.once("raw:rpl_saslsuccess", () => client.cap("END"));
+      client.once("raw:rpl_saslsuccess", () => client.utils.completeCapNegotiation());
     }
   });
 
@@ -121,7 +123,7 @@ export default createPlugin(
   });
 
   const onSaslFail = (_: Raw) => {
-    client.cap("END");
+    client.utils.completeCapNegotiation();
     if (authMethod === "saslThenNickServ") tryNickServ();
     else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
   };
