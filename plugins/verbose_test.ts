@@ -3,10 +3,8 @@ import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/verbose", (test) => {
-  const options = { verbose: true };
-
   test("print received raw messages", async () => {
-    const { client, server, console } = await mock(options);
+    const { client, server, console } = await mock({ verbose: "raw" });
 
     server.send(":someone!user@host JOIN #channel");
     await client.once("join");
@@ -17,7 +15,7 @@ describe("plugins/verbose", (test) => {
   });
 
   test("print sent raw messages", async () => {
-    const { client, console } = await mock(options);
+    const { client, console } = await mock({ verbose: "raw" });
 
     await client.send("JOIN", "#channel");
 
@@ -27,7 +25,7 @@ describe("plugins/verbose", (test) => {
   });
 
   test("print invoked commands", async () => {
-    const { client, console } = await mock(options);
+    const { client, console } = await mock({ verbose: "formatted" });
 
     await client.send("JOIN", "#channel");
 
@@ -38,7 +36,7 @@ describe("plugins/verbose", (test) => {
 
   test("print emitted events", async () => {
     const { client, server, console } = await mock(
-      options,
+      { verbose: "formatted" },
       { withConnection: false },
     );
 
@@ -67,9 +65,10 @@ describe("plugins/verbose", (test) => {
   });
 
   test("print state changes", async () => {
-    const { client, server, console } = await mock(
-      { ...options, nick: "current_nick" },
-    );
+    const { client, server, console } = await mock({
+      verbose: "formatted",
+      nick: "current_nick",
+    });
 
     server.send(":current_nick!user@host NICK new_nick");
     await client.once("nick");
@@ -82,7 +81,7 @@ describe("plugins/verbose", (test) => {
 
   test("print nothing if disabled", async () => {
     const { client, server, console } = await mock(
-      { verbose: false, nick: "me" },
+      { verbose: undefined, nick: "me" },
       { withConnection: false },
     );
 
@@ -93,5 +92,42 @@ describe("plugins/verbose", (test) => {
     await client.once("join");
 
     assertEquals(console.stdout, []);
+  });
+
+  test("use a custom logger implementation", async () => {
+    const { client, server, console: mockConsole } = await mock({
+      verbose: (payload) => {
+        switch (payload.type) {
+          case "raw_input":
+            console.info("[input]", payload.msg);
+            break;
+          case "raw_output":
+            console.info("[output]", payload.msg);
+            break;
+          case "command":
+            console.info("[command]", payload.command, payload.params);
+            break;
+          case "event":
+            console.info("[event]", payload.event);
+            break;
+          case "state":
+            console.info("[state]", payload.key);
+            break;
+        }
+      },
+    });
+
+    server.send(":someone!user@host JOIN #channel");
+    await client.once("join");
+
+    await client.send("JOIN", "#channel");
+
+    assertArrayIncludes(mockConsole.stdout, [
+      ["[input]", ":someone!user@host JOIN #channel\r\n"],
+      ["[command]", "JOIN", ["#channel"]],
+      ["[output]", "JOIN #channel\r\n"],
+      ["[event]", "nicklist"],
+      ["[state]", "remoteAddr"],
+    ]);
   });
 });
