@@ -379,9 +379,32 @@ const client = new Client({
 
 Prints informations to output.
 
+Prints received and sent raw IRC messages:
+
 ```ts
 const client = new Client({
-  verbose: true,
+  verbose: "raw",
+});
+```
+
+Prints formatted events, commands and state changes:
+
+```ts
+const client = new Client({
+  verbose: "formatted",
+});
+```
+
+Uses a custom logger implementation:
+
+```ts
+const client = new Client({
+  verbose: (payload) => {
+    // use payload type for inference
+    if (payload.type === "raw_input") {
+      console.log(payload.msg);
+    }
+  }
 });
 ```
 
