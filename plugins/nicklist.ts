@@ -62,7 +62,7 @@ export default createPlugin(
     // group nicks by prefix
 
     for (const nick in names) {
-      const [prefix = ""] = names[nick].join("");
+      const [prefix = ""] = (names[nick] ?? []).join("");
       nicks[prefix] ??= [];
       nicks[prefix].push(nick);
     }
