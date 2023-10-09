@@ -30,4 +30,19 @@ describe("core/plugins", (test) => {
 
     assertEquals(loaded, ["p1", "p2", "p3"]);
   });
+
+  test("do not load the same plugin twice", () => {
+    const loaded: string[] = [];
+
+    const fakePlugin = (name: string, deps: Plugin<any, any>[] = []) =>
+      createPlugin(name, deps)(() => loaded.push(name));
+
+    const p1 = fakePlugin("p1");
+    const p2 = fakePlugin("p2");
+
+    const plugins: Plugin<any, any>[] = [p1, p1, p2];
+    loadPlugins(null as unknown as CoreClient, {}, plugins);
+
+    assertEquals(loaded, ["p1", "p2"]);
+  });
 });
