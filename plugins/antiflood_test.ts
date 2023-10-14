@@ -25,3 +25,19 @@ describe("plugins/antiflood", (test) => {
     ]);
   });
 });
+
+describe("plugins/antiflood", (test) => {
+  test("disabled when delay not set", async () => {
+    const { client, server } = await mock();
+
+    client.privmsg("#channel", "Hello world");
+    client.privmsg("#channel", "Hello world, again");
+    let raw = server.receive();
+
+    // Should get both messages
+    assertEquals(raw, [
+      "PRIVMSG #channel :Hello world",
+      "PRIVMSG #channel :Hello world, again",
+    ]);
+  });
+});
