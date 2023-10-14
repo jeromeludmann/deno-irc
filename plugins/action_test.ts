@@ -1,5 +1,5 @@
 import { assertEquals } from "../deps.ts";
-import { describe, delay} from "../testing/helpers.ts";
+import { delay, describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/action", (test) => {
