@@ -218,7 +218,6 @@ export class CoreClient<
     const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
     const bytes = this.encoder.encode(raw);
 
-    // Implement flood protection with a queue on privMsg dispatch
     try {
       await this.conn.write(bytes);
       return raw;

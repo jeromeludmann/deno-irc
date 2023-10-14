@@ -9,7 +9,3 @@ export function describe(name: string, fn: (test: Test) => void): void {
 function prettify(describeName: string, testName: string) {
   return bold(describeName) + dim(" > ") + testName;
 }
-
-export function delay(ms = 10) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

@@ -65,7 +65,6 @@ describe("plugins/registration", (test) => {
   test("use nickserv auth when password supplied", async () => {
     const { client, server } = await mock(
       { ...options, password: "password" },
-      { withConnection: true },
     );
 
     await client.connect("");
