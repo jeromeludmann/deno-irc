@@ -10,7 +10,6 @@ import {
   type AnyReply,
   PROTOCOL,
 } from "./protocol.ts";
-import { Queue } from "../deps.ts";
 
 type AnyRawEventName = `raw:${AnyCommand | AnyReply | AnyError}`;
 
@@ -20,10 +19,6 @@ export interface CoreFeatures {
      *
      * Default to `4096` bytes. */
     bufferSize?: number;
-    /** Milliseconds to wait between dispatching private messages.
-     *
-     * Defaults to 0 milliseconds */
-    floodDelay?: number;
   };
 
   events: {
@@ -53,8 +48,6 @@ export function generateRawEvents<
 
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
-const FLOOD_DELAY = 0;
-const delay = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface RemoteAddr {
   hostname: string;
@@ -86,9 +79,6 @@ export class CoreClient<
   private parser = new Parser();
   private buffer: Uint8Array;
 
-  private privMsgQueue: Queue;
-  private floodDelay: number;
-
   constructor(
     // deno-lint-ignore no-explicit-any
     plugins: Plugin<any, any>[],
@@ -99,8 +89,6 @@ export class CoreClient<
     this.buffer = new Uint8Array(options.bufferSize ?? BUFFER_SIZE);
     this.state = { remoteAddr: { hostname: "", port: 0, tls: false } };
     this.utils = {};
-    this.privMsgQueue = new Queue();
-    this.floodDelay = options.floodDelay ?? FLOOD_DELAY;
 
     // The 'raw' event is never emitted. But when the client subscribes to it,
     // it will be translated into ALL available raw events.
@@ -232,18 +220,8 @@ export class CoreClient<
 
     // Implement flood protection with a queue on privMsg dispatch
     try {
-      if (command == "PRIVMSG") {
-        const conn = this.conn;
-        const floodDelay = this.floodDelay;
-        return await this.privMsgQueue.push(async () => {
-          await conn.write(bytes);
-          await delay(floodDelay);
-          return raw;
-        });
-      } else {
-        await this.conn.write(bytes);
-        return raw;
-      }
+      await this.conn.write(bytes);
+      return raw;
     } catch (error) {
       this.emitError("write", error);
       return null;

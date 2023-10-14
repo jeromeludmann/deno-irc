@@ -4,6 +4,7 @@ import { CoreClient, type CoreFeatures } from "./core/client.ts";
 import { type CombinePluginFeatures } from "./core/plugins.ts";
 
 import action from "./plugins/action.ts";
+import antiflood from "./plugins/antiflood.ts";
 import away from "./plugins/away.ts";
 import cap from "./plugins/cap.ts";
 import chanmodes from "./plugins/chanmodes.ts";
@@ -48,6 +49,7 @@ import whois from "./plugins/whois.ts";
 
 const plugins = [
   action,
+  antiflood,
   away,
   cap,
   chanmodes,

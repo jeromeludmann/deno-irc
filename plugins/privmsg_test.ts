@@ -1,5 +1,5 @@
 import { assertEquals } from "../deps.ts";
-import { delay, describe } from "../testing/helpers.ts";
+import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/privmsg", (test) => {
@@ -8,8 +8,6 @@ describe("plugins/privmsg", (test) => {
 
     client.privmsg("#channel", "Hello world");
     client.msg("someone", "Hello world");
-    // Allow queue to dispatch messages
-    await delay();
     const raw = server.receive();
 
     assertEquals(raw, [

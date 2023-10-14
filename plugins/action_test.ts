@@ -1,5 +1,5 @@
 import { assertEquals } from "../deps.ts";
-import { delay, describe } from "../testing/helpers.ts";
+import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/action", (test) => {
@@ -8,8 +8,6 @@ describe("plugins/action", (test) => {
 
     client.action("#channel", "says hello");
     client.me("someone", "says hello");
-    // Allow queue to dispatch messages
-    await delay();
     const raw = server.receive();
 
     assertEquals(raw, [
