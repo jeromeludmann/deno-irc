@@ -1,5 +1,5 @@
 import { assertEquals } from "../deps.ts";
-import { describe } from "../testing/helpers.ts";
+import { delay, describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
 describe("plugins/registration", (test) => {
@@ -65,8 +65,11 @@ describe("plugins/registration", (test) => {
   test("use nickserv auth when password supplied", async () => {
     const { client, server } = await mock(
       { ...options, password: "password" },
+      { withConnection: true },
     );
 
+    // Allow queue to dispatch messages
+    await delay();
     await client.connect("");
     const raw = server.receive();
     assertEquals(raw, [
