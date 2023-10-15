@@ -28,7 +28,7 @@ export default createPlugin("antiflood", [])<AntiFloodFeatures>(
           return raw;
         });
       } else {
-        return send(command, ...params);
+        return await send(command, ...params);
       }
     });
   },
