@@ -5,6 +5,7 @@
   - [option: bufferSize](#option-buffersize)
   - [option: channels](#option-channels)
   - [option: ctcpReplies](#option-ctcpreplies)
+  - [option: floodDelay](#option-flooddelay)
   - [option: joinOnInvite](#option-joinoninvite)
   - [option: maxListeners](#option-maxlisteners)
   - [option: nick](#option-nick)
@@ -235,6 +236,18 @@ const client = new Client({
   ctcpReplies: {
     version: "custom version name",
   },
+});
+```
+
+### option: floodDelay
+
+Milliseconds to wait between dispatching private messages.
+
+Defaults to 0 milliseconds (no delay).
+
+```ts
+const client = new Client({
+  floodDelay: 2000,
 });
 ```
 
