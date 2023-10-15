@@ -32,7 +32,7 @@ describe("plugins/antiflood", (test) => {
 
     client.privmsg("#channel", "Hello world");
     client.privmsg("#channel", "Hello world, again");
-    let raw = server.receive();
+    const raw = server.receive();
 
     // Should get both messages
     assertEquals(raw, [
