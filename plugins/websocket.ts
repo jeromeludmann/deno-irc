@@ -32,7 +32,7 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       client.emitError("read", new Error(event.toString()));
     };
 
-    client.hooks.hookCall("connect", async (_, serverAndPath, port, tls) => {
+    client.hooks.hookCall("connect", (_, serverAndPath, port, tls) => {
       port = port ?? PORT;
       const websocketPrefix = tls ? "wss://" : "ws://";
       const websocketUrl = `${websocketPrefix}${serverAndPath}:${port}`;
