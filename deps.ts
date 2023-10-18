@@ -14,3 +14,8 @@ export { assertRejects } from "https://deno.land/std@0.203.0/assert/assert_rejec
 export { assertThrows } from "https://deno.land/std@0.203.0/assert/assert_throws.ts";
 
 export { Queue } from "https://deno.land/x/queue@1.2.0/mod.ts";
+
+export type { WebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+export { StandardWebSocketClient } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+
+
