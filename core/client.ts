@@ -47,7 +47,7 @@ export function generateRawEvents<
 }
 
 const BUFFER_SIZE = 4096;
-const PORT = 6667;
+export const PORT = 6667;
 
 export interface RemoteAddr {
   hostname: string;
@@ -75,8 +75,8 @@ export class CoreClient<
   protected hooks = new Hooks<CoreClient<TEvents>>(this);
 
   private decoder = new TextDecoder();
-  private encoder = new TextEncoder();
-  private parser = new Parser();
+  readonly encoder = new TextEncoder();
+  readonly parser = new Parser();
   private buffer: Uint8Array;
 
   constructor(
