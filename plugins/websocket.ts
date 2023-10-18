@@ -1,7 +1,5 @@
-import { PORT } from "../core/client.ts";
 import { parseMessage } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
-import { StandardWebSocketClient, WebSocketClient } from "../deps.ts";
 
 interface WebsocketFeatures {
   options: {
@@ -9,11 +7,13 @@ interface WebsocketFeatures {
   };
 }
 
+const PORT = 8067;
+
 export default createPlugin("websocket", [])<WebsocketFeatures>(
   (client, options) => {
     if (!options.websocket) return;
 
-    let websocket: WebSocketClient | null = null;
+    let websocket: WebSocket | null = null;
 
     const openHandler = () => {
       client.emit("connected", client.state.remoteAddr);
@@ -28,27 +28,27 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       }
     };
 
-    const errorHandler = (error: string | symbol) => {
-      client.emitError("read", new Error(error.toString()));
+    const errorHandler = (event: Event) => {
+      client.emitError("read", new Error(event.toString()));
     };
 
-    client.hooks.hookCall("connect", async (_, hostname, port, tls) => {
+    client.hooks.hookCall("connect", async (_, serverAndPath, port, tls) => {
       port = port ?? PORT;
       const websocketPrefix = tls ? "wss://" : "ws://";
-      const websocketUrl = `${websocketPrefix}${hostname}:${port}`;
+      const websocketUrl = `${websocketPrefix}${serverAndPath}:${port}`;
       if (websocket !== null) {
-        await websocket.close(0);
+        websocket.close(1000);
       }
 
-      client.state.remoteAddr = { hostname, port, tls };
+      client.state.remoteAddr = { hostname: serverAndPath, port, tls };
       const { remoteAddr } = client.state;
       client.emit("connecting", remoteAddr);
 
       try {
-        websocket = new StandardWebSocketClient(websocketUrl);
-        websocket.on("error", errorHandler);
-        websocket.on("open", openHandler);
-        websocket.on("message", messageHandler);
+        websocket = new WebSocket(websocketUrl);
+        websocket.addEventListener("error", errorHandler);
+        websocket.addEventListener("open", openHandler);
+        websocket.addEventListener("message", messageHandler);
       } catch (error) {
         client.emitError("connect", error);
         return null;
@@ -89,9 +89,9 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       }
     });
 
-    client.hooks.hookCall("disconnect", async () => {
+    client.hooks.hookCall("disconnect", () => {
       try {
-        await websocket?.close(0);
+        websocket?.close(1000);
         client.emit("disconnected", client.state.remoteAddr);
       } catch (error) {
         client.emitError("close", error);
