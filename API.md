@@ -18,6 +18,7 @@
   - [option: serverPassword](#option-serverpassword)
   - [option: username](#option-username)
   - [option: verbose](#option-verbose)
+  - [option: websocket](#option-websocket)
 - [Events](#events)
   - [event: away_reply](#event-away_reply)
   - [event: connecting](#event-connecting)
@@ -420,6 +421,18 @@ const client = new Client({
   }
 });
 ```
+
+### option: websocket
+
+Enables alternate WebSocket transport per IRCv3 spec.
+
+```ts
+const client = new Client({
+  websocket: true,
+});
+```
+
+Default to `false` (use TCP)
 
 ## Events
 
