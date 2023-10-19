@@ -7,7 +7,8 @@ interface WebsocketFeatures {
   };
 }
 
-const PORT = 8067;
+const INSECURE_PORT = 80;
+const TLS_PORT = 443;
 
 export default createPlugin("websocket", [])<WebsocketFeatures>(
   (client, options) => {
@@ -33,14 +34,21 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
     };
 
     client.hooks.hookCall("connect", (_, serverAndPath, port, tls) => {
-      port = port ?? PORT;
+      port = port ?? tls ? TLS_PORT : INSECURE_PORT;
       const websocketPrefix = tls ? "wss://" : "ws://";
-      const websocketUrl = `${websocketPrefix}${serverAndPath}:${port}`;
+      const websocketUrl = new URL(
+        `${websocketPrefix}${serverAndPath}:${port}`,
+      );
       if (websocket !== null) {
         websocket.close(1000);
       }
 
-      client.state.remoteAddr = { hostname: serverAndPath, port, tls };
+      client.state.remoteAddr = {
+        hostname: websocketUrl.hostname,
+        port,
+        tls,
+        path: websocketUrl.pathname,
+      };
       const { remoteAddr } = client.state;
       client.emit("connecting", remoteAddr);
 

@@ -53,6 +53,7 @@ export interface RemoteAddr {
   hostname: string;
   port: number;
   tls?: boolean;
+  path?: string;
 }
 
 /** How to connect to a server */
