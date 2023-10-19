@@ -36,8 +36,10 @@ export function encodeRawMessage(
   command: string,
   params: (string | undefined)[],
   encoder: TextEncoder,
+  skipSuffix?: boolean,
 ) {
-  const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
+  const raw = (command + " " + params.join(" ")).trimEnd() +
+    (skipSuffix ? "" : "\r\n");
   const bytes = encoder.encode(raw);
   const tuple: [raw: string, bytes: Uint8Array] = [raw, bytes];
   return tuple;
@@ -105,7 +107,7 @@ export class CoreClient<
   protected conn: Deno.Conn | null = null;
   protected hooks = new Hooks<CoreClient<TEvents>>(this);
 
-  private decoder = new TextDecoder();
+  readonly decoder = new TextDecoder();
   readonly encoder = new TextEncoder();
   readonly parser = new Parser();
   private buffer: Uint8Array;
