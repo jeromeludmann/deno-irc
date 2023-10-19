@@ -13,8 +13,7 @@ describe("plugins/websocket", (test) => {
     ];
     const serverMessage = ":localhost 001 me :Hello from the server, me";
     const fakeHost = "localhost";
-    const fakePort = 8067;
-    const fakeUrl = `ws://${fakeHost}:${fakePort}`;
+    const fakeUrl = `ws://${fakeHost}`;
     const decoder = new TextDecoder();
     let messageCounter = 0;
 
@@ -35,7 +34,7 @@ describe("plugins/websocket", (test) => {
       });
     });
 
-    await client.connect(fakeHost, fakePort);
+    await client.connect(fakeHost);
     // Required to execute websocket micro tasks
     await delay(50);
 
