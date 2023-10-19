@@ -47,7 +47,7 @@ export function generateRawEvents<
 }
 
 const BUFFER_SIZE = 4096;
-export const PORT = 6667;
+const PORT = 6667;
 
 export interface RemoteAddr {
   hostname: string;
