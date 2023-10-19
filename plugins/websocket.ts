@@ -1,3 +1,8 @@
+import {
+  encodeRawMessage,
+  prefixTrailingParameter,
+  removeUndefinedParameters,
+} from "../core/client.ts";
 import { parseMessage } from "../core/parsers.ts";
 import { createPlugin } from "../core/plugins.ts";
 
@@ -70,23 +75,12 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
         client.emitError("write", "Unable to send message", client.send);
         return null;
       }
-      // Removes undefined trailing parameters.
-      for (let i = params.length - 1; i >= 0; --i) {
-        params[i] === undefined ? params.pop() : i = 0;
-      }
 
-      // Prefixes trailing parameter with ':'.
-      const last = params.length - 1;
-      if (
-        params.length > 0 &&
-        (params[last]?.[0] === ":" || params[last]?.includes(" ", 1))
-      ) {
-        params[last] = ":" + params[last];
-      }
+      removeUndefinedParameters(params);
 
-      // Prepares and encodes raw message.
-      const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
-      const bytes = client.encoder.encode(raw);
+      prefixTrailingParameter(params);
+
+      const [raw, bytes] = encodeRawMessage(command, params, client.encoder);
 
       try {
         websocket.send(bytes);
