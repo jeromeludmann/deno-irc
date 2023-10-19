@@ -6,10 +6,10 @@ import { delay, describe } from "../testing/helpers.ts";
 describe("plugins/websocket", (test) => {
   test("Connects to server and attempts to register", async () => {
     const clientMessages = [
-      "NICK me\r\n",
-      "USER me 0 * me\r\n",
-      "CAP REQ multi-prefix\r\n",
-      "CAP END\r\n",
+      "NICK me",
+      "USER me 0 * me",
+      "CAP REQ multi-prefix",
+      "CAP END",
     ];
     const serverMessage = ":localhost 001 me :Hello from the server, me";
     const fakeHost = "localhost";

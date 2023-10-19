@@ -14,6 +14,8 @@ interface WebsocketFeatures {
 
 const INSECURE_PORT = 80;
 const TLS_PORT = 443;
+const TEXT_PROTOCOL = "text.ircv3.net";
+const BINARY_PROTOCOL = "binary.ircv3.net";
 
 export default createPlugin("websocket", [])<WebsocketFeatures>(
   (client, options) => {
@@ -27,7 +29,11 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
 
     const messageHandler = (message: MessageEvent) => {
       try {
-        const msg = parseMessage(message.data);
+        const msg = parseMessage(
+          websocket?.protocol === BINARY_PROTOCOL
+            ? client.decoder.decode(new Uint8Array(message.data))
+            : message.data,
+        );
         client.emit(`raw:${msg.command}`, msg);
       } catch (error) {
         client.emitError("read", error);
@@ -39,7 +45,7 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
     };
 
     client.hooks.hookCall("connect", (_, serverAndPath, port, tls) => {
-      port = port ?? tls ? TLS_PORT : INSECURE_PORT;
+      port = port ?? (tls ? TLS_PORT : INSECURE_PORT);
       const websocketPrefix = tls ? "wss://" : "ws://";
       const websocketUrl = new URL(
         `${websocketPrefix}${serverAndPath}:${port}`,
@@ -58,7 +64,11 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       client.emit("connecting", remoteAddr);
 
       try {
-        websocket = new WebSocket(websocketUrl);
+        websocket = new WebSocket(websocketUrl, [
+          BINARY_PROTOCOL,
+          TEXT_PROTOCOL,
+        ]);
+        websocket.binaryType = "arraybuffer";
         websocket.addEventListener("error", errorHandler);
         websocket.addEventListener("open", openHandler);
         websocket.addEventListener("message", messageHandler);
@@ -80,10 +90,19 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
 
       prefixTrailingParameter(params);
 
-      const [raw, bytes] = encodeRawMessage(command, params, client.encoder);
+      const [raw, bytes] = encodeRawMessage(
+        command,
+        params,
+        client.encoder,
+        true,
+      );
 
       try {
-        websocket.send(bytes);
+        if (websocket.protocol === BINARY_PROTOCOL) {
+          websocket.send(bytes);
+        } else {
+          websocket.send(raw);
+        }
         return raw;
       } catch (error) {
         client.emitError("write", error);
