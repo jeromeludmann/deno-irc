@@ -1203,6 +1203,8 @@ client.connect("host", 6667);
 client.connect("host", 7000, true); // with TLS
 ```
 
+When `websocket` feature enabled defaults to port 80, or 443 if `tls=true`.
+
 ### command: ctcp
 
 Sends a CTCP message to a `target` with a `command` and a `param`.
