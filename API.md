@@ -18,6 +18,7 @@
   - [option: serverPassword](#option-serverpassword)
   - [option: username](#option-username)
   - [option: verbose](#option-verbose)
+  - [option: websocket](#option-websocket)
 - [Events](#events)
   - [event: away_reply](#event-away_reply)
   - [event: connecting](#event-connecting)
@@ -420,6 +421,18 @@ const client = new Client({
   }
 });
 ```
+
+### option: websocket
+
+Enables alternate WebSocket transport per IRCv3 spec.
+
+```ts
+const client = new Client({
+  websocket: true,
+});
+```
+
+Default to `false` (use TCP)
 
 ## Events
 
@@ -1182,12 +1195,25 @@ If `tls=true`, attempts to connect using a TLS connection.
 
 Resolves when connected.
 
-`async connect(hostname: string, port: number, tls?: boolean): Promise<Deno.Conn | null>`
+`async connect(hostname: string, port: number, tls?: boolean, path?: string): Promise<Deno.Conn | null>`
+
+Note: `path` parameter is ignored when websocket feature not enabled.
 
 ```ts
 client.connect("host", 6667);
 
 client.connect("host", 7000, true); // with TLS
+```
+
+When `websocket` feature enabled defaults to port 80, or 443 if `tls=true`.
+
+When `websocket` feature enabled, also accepts `path` parameter as string.
+
+```ts
+// Example remote endpoint URL
+const remoteUrl = "wss://irc.example.org:8097/pathTo/Irc";
+// Passing said endpoint URL to connect
+client.connect("irc.example.org", 8097, true, "pathTo/Irc");
 ```
 
 ### command: ctcp

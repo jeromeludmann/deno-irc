@@ -60,7 +60,7 @@ export function parseSource(prefix: string): Source {
 
 // The following is called on each received raw message
 // and must favor performance over readability.
-function parseMessage(raw: string): Raw {
+export function parseMessage(raw: string): Raw {
   const msg = {} as Raw;
 
   // Indexes used to move through the raw string

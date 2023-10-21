@@ -45,6 +45,7 @@ import topic from "./plugins/topic.ts";
 import usermodes from "./plugins/usermodes.ts";
 import verbose from "./plugins/verbose.ts";
 import version from "./plugins/version.ts";
+import websocket from "./plugins/websocket.ts";
 import whois from "./plugins/whois.ts";
 
 const plugins = [
@@ -90,6 +91,7 @@ const plugins = [
   usermodes,
   verbose,
   version,
+  websocket,
   whois,
 ];
 

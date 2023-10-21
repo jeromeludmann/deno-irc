@@ -13,6 +13,38 @@ import {
 
 type AnyRawEventName = `raw:${AnyCommand | AnyReply | AnyError}`;
 
+/** Removes undefined trailing parameters from send() input. */
+export function removeUndefinedParameters(params: (string | undefined)[]) {
+  for (let i = params.length - 1; i >= 0; --i) {
+    params[i] === undefined ? params.pop() : i = 0;
+  }
+}
+
+/** Prefixes trailing parameter with ':'. */
+export function prefixTrailingParameter(params: (string | undefined)[]) {
+  const last = params.length - 1;
+  if (
+    params.length > 0 &&
+    (params[last]?.[0] === ":" || params[last]?.includes(" ", 1))
+  ) {
+    params[last] = ":" + params[last];
+  }
+}
+
+/** Prepares and encodes raw message. */
+export function encodeRawMessage(
+  command: string,
+  params: (string | undefined)[],
+  encoder: TextEncoder,
+  skipSuffix?: boolean,
+) {
+  const raw = (command + " " + params.join(" ")).trimEnd() +
+    (skipSuffix ? "" : "\r\n");
+  const bytes = encoder.encode(raw);
+  const tuple: [raw: string, bytes: Uint8Array] = [raw, bytes];
+  return tuple;
+}
+
 export interface CoreFeatures {
   options: EventEmitterOptions & {
     /** Size of the buffer that receives data from server.
@@ -53,6 +85,7 @@ export interface RemoteAddr {
   hostname: string;
   port: number;
   tls?: boolean;
+  path?: string;
 }
 
 /** How to connect to a server */
@@ -74,9 +107,9 @@ export class CoreClient<
   protected conn: Deno.Conn | null = null;
   protected hooks = new Hooks<CoreClient<TEvents>>(this);
 
-  private decoder = new TextDecoder();
-  private encoder = new TextEncoder();
-  private parser = new Parser();
+  readonly decoder = new TextDecoder();
+  readonly encoder = new TextEncoder();
+  readonly parser = new Parser();
   private buffer: Uint8Array;
 
   constructor(
@@ -115,6 +148,7 @@ export class CoreClient<
     hostname: string,
     port = PORT,
     tls = false,
+    _path?: string,
   ): Promise<Deno.Conn | null> {
     this.state.remoteAddr = { hostname, port, tls };
 
@@ -200,24 +234,13 @@ export class CoreClient<
       return null;
     }
 
-    // Removes undefined trailing parameters.
-    for (let i = params.length - 1; i >= 0; --i) {
-      params[i] === undefined ? params.pop() : i = 0;
-    }
+    removeUndefinedParameters(params);
 
-    // Prefixes trailing parameter with ':'.
-    const last = params.length - 1;
-    if (
-      params.length > 0 &&
-      (params[last]?.[0] === ":" || params[last]?.includes(" ", 1))
-    ) {
-      params[last] = ":" + params[last];
-    }
+    prefixTrailingParameter(params);
+
+    const [raw, bytes] = encodeRawMessage(command, params, this.encoder);
 
     // Prepares and encodes raw message.
-    const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
-    const bytes = this.encoder.encode(raw);
-
     try {
       await this.conn.write(bytes);
       return raw;
