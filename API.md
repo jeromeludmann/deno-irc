@@ -1207,7 +1207,9 @@ If `tls=true`, attempts to connect using a TLS connection.
 
 Resolves when connected.
 
-`async connect(hostname: string, port: number, tls?: boolean): Promise<Deno.Conn | null>`
+`async connect(hostname: string, port: number, tls?: boolean, path?: string): Promise<Deno.Conn | null>`
+
+Note: `path` parameter is ignored when websocket feature not enabled.
 
 ```ts
 client.connect("host", 6667);
@@ -1223,7 +1225,7 @@ When `websocket` feature enabled, also accepts `path` parameter as string.
 // Example remote endpoint URL
 const remoteUrl = "wss://irc.example.org:8097/pathTo/Irc";
 // Passing said endpoint URL to connect
-const client.connect("irc.example.org", 8097, true, "pathTo/Irc");
+client.connect("irc.example.org", 8097, true, "pathTo/Irc");
 ```
 
 ### command: ctcp
