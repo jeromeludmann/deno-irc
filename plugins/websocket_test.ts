@@ -5,7 +5,8 @@ import { delay, describe } from "../testing/helpers.ts";
 
 describe("plugins/websocket", (test) => {
   const fakeHost = "localhost";
-  const fakeUrl = `ws://${fakeHost}`;
+  const fakePath = "irc";
+  const fakeUrl = `ws://${fakeHost}/${fakePath}`;
   const clientMessages = [
     "NICK me",
     "USER me 0 * me",
@@ -34,7 +35,7 @@ describe("plugins/websocket", (test) => {
       });
     });
 
-    await client.connect(fakeHost);
+    await client.connect(fakeHost, undefined, undefined, fakePath);
     // Required to execute websocket micro tasks
     await delay(50);
 

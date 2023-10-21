@@ -148,6 +148,7 @@ export class CoreClient<
     hostname: string,
     port = PORT,
     tls = false,
+    _path?: string,
   ): Promise<Deno.Conn | null> {
     this.state.remoteAddr = { hostname, port, tls };
 

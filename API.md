@@ -1205,6 +1205,15 @@ client.connect("host", 7000, true); // with TLS
 
 When `websocket` feature enabled defaults to port 80, or 443 if `tls=true`.
 
+When `websocket` feature enabled, also accepts `path` parameter as string.
+
+```ts
+// Example remote endpoint URL
+const remoteUrl = "wss://irc.example.org:8097/pathTo/Irc";
+// Passing said endpoint URL to connect
+const client.connect("irc.example.org", 8097, true, "pathTo/Irc");
+```
+
 ### command: ctcp
 
 Sends a CTCP message to a `target` with a `command` and a `param`.

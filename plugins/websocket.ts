@@ -44,11 +44,11 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       client.emitError("read", new Error(event.toString()));
     };
 
-    client.hooks.hookCall("connect", (_, serverAndPath, port, tls) => {
+    client.hooks.hookCall("connect", (_, hostname, port, tls, path) => {
       port = port ?? (tls ? TLS_PORT : INSECURE_PORT);
       const websocketPrefix = tls ? "wss://" : "ws://";
       const websocketUrl = new URL(
-        `${websocketPrefix}${serverAndPath}:${port}`,
+        `${websocketPrefix}${hostname}:${port}${path ? "/" + path : ""}`,
       );
       if (websocket !== null) {
         websocket.close(1000);
