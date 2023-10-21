@@ -84,7 +84,7 @@ describe("plugins/websocket", (test) => {
       nick: "me",
       websocket: true,
     });
-    const server = new MockWebSocketServer(fakeUrl);
+    let server = new MockWebSocketServer(fakeUrl);
     // Ensure error events are passed
     const errorMessage = "failed!";
     const errorTest = (error: Error) => {
@@ -104,6 +104,14 @@ describe("plugins/websocket", (test) => {
     server.close();
     await client.connect(fakeHost);
     await delay(25);
+    client.disconnect();
+    // Ensure double connect works
+    server = new MockWebSocketServer(fakeUrl);
+    await client.connect(fakeHost);
+    await delay(25);
+    await client.connect(fakeHost);
+    await delay(25);
+    server.close();
     client.disconnect();
   });
 });
