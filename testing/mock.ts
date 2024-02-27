@@ -24,7 +24,7 @@ export async function mock(
   const server = new MockServer(client);
 
   if (withConnection) {
-    await client.connect("");
+    await client.connect("", 6667);
     server.receive();
   }
 

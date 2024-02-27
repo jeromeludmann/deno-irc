@@ -46,7 +46,7 @@ describe("core/client", (test) => {
   test("connect to server with TLS", async () => {
     const { client } = mock();
 
-    client.connect("host", 6668, true);
+    client.connect("host", 6668, { tls: true });
     const addr = await client.once("connected");
 
     assertEquals(addr, {
@@ -59,7 +59,7 @@ describe("core/client", (test) => {
   test("fail to connect", async () => {
     const { client } = mock();
 
-    client.connect("bad_remote_host");
+    client.connect("bad_remote_host", 6667);
     const error = await client.once("error");
 
     assertEquals(error.name, "Error");
@@ -70,7 +70,7 @@ describe("core/client", (test) => {
     const { client } = mock();
 
     assertRejects(
-      () => client.connect("bad_remote_host"),
+      () => client.connect("bad_remote_host", 6667),
       Error,
       "Connection refused",
     );
@@ -79,7 +79,7 @@ describe("core/client", (test) => {
   test("send raw message to server", async () => {
     const { client, server } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     client.send("PING", "key");
     client.send("JOIN", "#channel", undefined);
@@ -116,7 +116,7 @@ describe("core/client", (test) => {
   test("throw on send if error is thrown", async () => {
     const { client } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     client.conn!.write = () => {
       throw new Error("Error while writing");
@@ -133,7 +133,7 @@ describe("core/client", (test) => {
     const { client, server } = mock();
     const messages = [];
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     server.send("PING key");
     messages.push(await client.once("raw:ping"));
@@ -157,7 +157,7 @@ describe("core/client", (test) => {
   test("fail to receive raw messages from server if error is thrown", async () => {
     const { client, server } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     client.conn!.read = () => {
       throw new Error("Error while reading");
@@ -173,7 +173,7 @@ describe("core/client", (test) => {
   test("disconnect from server", async () => {
     const { client } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
     const [addr] = await Promise.all([
       client.once("disconnected"),
       client.disconnect(),
@@ -189,7 +189,7 @@ describe("core/client", (test) => {
   test("be disconnected by server", async () => {
     const { client, server } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
     server.shutdown();
     const msg = await client.once("disconnected");
 
@@ -213,7 +213,7 @@ describe("core/client", (test) => {
   test("throw on disconnect if error is thrown", async () => {
     const { client } = mock();
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     client.conn!.close = () => {
       throw new Error("Error while closing");
@@ -241,7 +241,7 @@ describe("core/client", (test) => {
     const { client } = mock({}, plugins);
 
     assertRejects(
-      () => client.connect(""),
+      () => client.connect("host", 6667),
       Error,
       "Boom!",
     );
@@ -250,7 +250,7 @@ describe("core/client", (test) => {
   test("not throw if listeners bound to 'error'", async () => {
     const { client } = mock({}, plugins);
 
-    client.connect("");
+    client.connect("host", 6667);
     const error = await client.once("error");
 
     assertEquals(error.name, "Error");
@@ -275,7 +275,7 @@ describe("core/client", (test) => {
     const { client, server } = mock();
     const messages: Raw[] = [];
 
-    await client.connect("host");
+    await client.connect("host", 6667);
 
     client.on("raw", (msg) => messages.push(msg));
     client.on(["raw"], (msg) => messages.push(msg));

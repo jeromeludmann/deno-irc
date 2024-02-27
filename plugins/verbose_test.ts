@@ -40,7 +40,7 @@ describe("plugins/verbose", (test) => {
       { withConnection: false },
     );
 
-    client.connect("host");
+    client.connect("host", 6667);
     await client.once("connected");
     server.send("ERROR :Closing link: (user@host) [Client exited]");
     await client.once("error");
@@ -85,7 +85,7 @@ describe("plugins/verbose", (test) => {
       { withConnection: false },
     );
 
-    client.connect("");
+    client.connect("", 6667);
     await client.once("connected");
     client.send("JOIN", "#channel");
     server.send(":me!user@host JOIN #channel");

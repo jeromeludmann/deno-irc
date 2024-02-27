@@ -9,7 +9,7 @@ describe("plugins/quit", (test) => {
     const raw = [];
     const connections = [];
 
-    await client.connect("");
+    await client.connect("", 6667);
     raw.push(
       ...(await Promise.all([
         client.quit(),
@@ -18,7 +18,7 @@ describe("plugins/quit", (test) => {
     );
     connections.push(client.conn);
 
-    await client.connect("");
+    await client.connect("", 6667);
     raw.push(
       ...(await Promise.all([
         client.quit("Goodbye!"),

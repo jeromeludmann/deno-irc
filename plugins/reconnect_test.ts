@@ -15,7 +15,7 @@ describe("plugins/reconnect", (test) => {
     client.on("reconnecting", () => reconnecting++);
     client.on("error", noop);
 
-    client.connect("bad_remote_host");
+    client.connect("bad_remote_host", 6667);
     await client.once("reconnecting");
 
     assertEquals(reconnecting, 1);
@@ -33,7 +33,7 @@ describe("plugins/reconnect", (test) => {
     client.on("reconnecting", () => reconnecting++);
     client.on("error", noop);
 
-    await client.connect("");
+    await client.connect("", 6667);
     server.send("ERROR :Closing link: (user@host) [Client exited]");
     await client.once("reconnecting");
 
@@ -52,7 +52,7 @@ describe("plugins/reconnect", (test) => {
     client.on("reconnecting", () => reconnecting++);
     client.on("error", noop);
 
-    await client.connect("");
+    await client.connect("", 6667);
 
     // attempt 1
     server.send("ERROR :Closing link: (user@host) [Client exited]");
@@ -85,7 +85,7 @@ describe("plugins/reconnect", (test) => {
     client.on("reconnecting", () => reconnecting++);
     client.on("error", noop);
 
-    client.connect("bad_remote_host");
+    client.connect("bad_remote_host", 6667);
 
     assertEquals(reconnecting, 0);
   });
@@ -97,7 +97,7 @@ describe("plugins/reconnect", (test) => {
     );
 
     assertRejects(
-      async () => await client.connect(""),
+      async () => await client.connect("", 6667),
       Error,
       "plugins/reconnect requires an error listener",
     );

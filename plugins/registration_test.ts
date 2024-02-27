@@ -17,7 +17,7 @@ describe("plugins/registration", (test) => {
     (client.state as { capabilities: typeof client.state.capabilities })
       .capabilities = [];
 
-    await client.connect("");
+    await client.connect("", 6667);
     const raw = server.receive();
 
     assertEquals(raw, [
@@ -35,7 +35,7 @@ describe("plugins/registration", (test) => {
     (client.state as { capabilities: typeof client.state.capabilities })
       .capabilities = [];
 
-    await client.connect("");
+    await client.connect("", 6667);
     const raw = server.receive();
 
     assertEquals(raw, [
@@ -51,7 +51,7 @@ describe("plugins/registration", (test) => {
       { withConnection: false },
     );
 
-    await client.connect("");
+    await client.connect("", 6667);
     const raw = server.receive();
 
     assertEquals(raw, [
@@ -67,7 +67,7 @@ describe("plugins/registration", (test) => {
       { ...options, password: "password" },
     );
 
-    await client.connect("");
+    await client.connect("", 6667);
     const raw = server.receive();
     assertEquals(raw, [
       "CAP REQ multi-prefix",
@@ -84,7 +84,7 @@ describe("plugins/registration", (test) => {
       { withConnection: false },
     );
 
-    await client.connect("");
+    await client.connect("", 6667);
     server.send(":serverhost 903 user :SASL authentication successful");
     await client.once("raw:rpl_saslsuccess");
     const raw = server.receive();
