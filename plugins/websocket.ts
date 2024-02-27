@@ -1,4 +1,5 @@
 import {
+  ConnectOptions,
   encodeRawMessage,
   prefixTrailingParameter,
   removeUndefinedParameters,
@@ -8,6 +9,7 @@ import { createPlugin } from "../core/plugins.ts";
 
 interface WebsocketFeatures {
   options: {
+    /** Enables websocket. */
     websocket?: boolean;
   };
 }
@@ -44,41 +46,45 @@ export default createPlugin("websocket", [])<WebsocketFeatures>(
       client.emitError("read", new Error(event.toString()));
     };
 
-    client.hooks.hookCall("connect", (_, hostname, port, tls, path) => {
-      port = port ?? (tls ? TLS_PORT : INSECURE_PORT);
-      const websocketPrefix = tls ? "wss://" : "ws://";
-      const websocketUrl = new URL(
-        `${websocketPrefix}${hostname}:${port}${path ? "/" + path : ""}`,
-      );
-      if (websocket !== null) {
-        websocket.close(1000);
-      }
+    client.hooks.hookCall(
+      "connect",
+      (_, hostname: string, port: number, options?: ConnectOptions) => {
+        const { tls, path } = options ?? {};
+        port = port ?? (tls ? TLS_PORT : INSECURE_PORT);
+        const websocketPrefix = tls ? "wss://" : "ws://";
+        const websocketUrl = new URL(
+          `${websocketPrefix}${hostname}:${port}${path ? "/" + path : ""}`,
+        );
+        if (websocket !== null) {
+          websocket.close(1000);
+        }
 
-      client.state.remoteAddr = {
-        hostname: websocketUrl.hostname,
-        port,
-        tls,
-        path: websocketUrl.pathname,
-      };
-      const { remoteAddr } = client.state;
-      client.emit("connecting", remoteAddr);
+        client.state.remoteAddr = {
+          hostname: websocketUrl.hostname,
+          port,
+          tls,
+          path: websocketUrl.pathname,
+        };
+        const { remoteAddr } = client.state;
+        client.emit("connecting", remoteAddr);
 
-      try {
-        websocket = new WebSocket(websocketUrl, [
-          BINARY_PROTOCOL,
-          TEXT_PROTOCOL,
-        ]);
-        websocket.binaryType = "arraybuffer";
-        websocket.addEventListener("error", errorHandler);
-        websocket.addEventListener("open", openHandler);
-        websocket.addEventListener("message", messageHandler);
-      } catch (error) {
-        client.emitError("connect", error);
+        try {
+          websocket = new WebSocket(websocketUrl, [
+            BINARY_PROTOCOL,
+            TEXT_PROTOCOL,
+          ]);
+          websocket.binaryType = "arraybuffer";
+          websocket.addEventListener("error", errorHandler);
+          websocket.addEventListener("open", openHandler);
+          websocket.addEventListener("message", messageHandler);
+        } catch (error) {
+          client.emitError("connect", error);
+          return null;
+        }
+
         return null;
-      }
-
-      return null;
-    });
+      },
+    );
 
     client.hooks.hookCall("send", (_, command, ...params) => {
       if (websocket === null) {

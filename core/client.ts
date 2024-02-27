@@ -68,6 +68,11 @@ export interface CoreFeatures {
   utils: Record<never, never>;
 }
 
+export type ConnectOptions = {
+  tls?: boolean;
+  path?: string;
+};
+
 export function generateRawEvents<
   T extends keyof typeof PROTOCOL,
   U extends typeof PROTOCOL[T],
@@ -79,7 +84,6 @@ export function generateRawEvents<
 }
 
 const BUFFER_SIZE = 4096;
-const PORT = 6667;
 
 export interface RemoteAddr {
   hostname: string;
@@ -137,19 +141,19 @@ export class CoreClient<
     this.memorizeCurrentListenerCounts();
   }
 
-  /** Connects to a server using a hostname and an optional port.
-   *
-   * Default port to `6667`.
+  /** Connects to a server using an hostname and a port.
    *
    * If `tls=true`, attempts to connect using a TLS connection.
+   *
+   * `path` is only used when client is instantiated with `websocket: true`.
    *
    * Resolves when connected. */
   async connect(
     hostname: string,
-    port = PORT,
-    tls = false,
-    _path?: string,
+    port: number,
+    options?: ConnectOptions,
   ): Promise<Deno.Conn | null> {
+    const { tls = false } = options ?? {};
     this.state.remoteAddr = { hostname, port, tls };
 
     if (this.conn !== null) {

@@ -15,6 +15,7 @@ describe("plugins/websocket", (test) => {
   ];
   const serverMessage = ":localhost 001 me :Hello from the server, me";
   const decoder = new TextDecoder();
+
   test("Connects to server and attempts to register", async () => {
     const client = new MockClient({
       nick: "me",
@@ -35,7 +36,10 @@ describe("plugins/websocket", (test) => {
       });
     });
 
-    await client.connect(fakeHost, undefined, undefined, fakePath);
+    await client.connect(fakeHost, 80, {
+      tls: false,
+      path: fakePath,
+    });
     // Required to execute websocket micro tasks
     await delay(50);
 
@@ -66,14 +70,8 @@ describe("plugins/websocket", (test) => {
       });
     });
 
-    // Test undefined port codepath
-    await client.connect(secureHost, undefined, true);
-    // Required to execute websocket micro tasks
-    await delay(50);
-    client.disconnect();
-
     // Test manual port codepath
-    await client.connect(secureHost, 443, true);
+    await client.connect(secureHost, 443, { tls: true });
     await delay(50);
 
     server.close();
@@ -103,14 +101,14 @@ describe("plugins/websocket", (test) => {
     };
     client.on("error", connectErrorTest);
     server.close();
-    await client.connect(fakeHost);
+    await client.connect(fakeHost, 80);
     await delay(25);
     client.disconnect();
     // Ensure double connect works
     server = new MockWebSocketServer(fakeUrl);
-    await client.connect(fakeHost);
+    await client.connect(fakeHost, 80);
     await delay(25);
-    await client.connect(fakeHost);
+    await client.connect(fakeHost, 80);
     await delay(25);
     server.close();
     client.disconnect();

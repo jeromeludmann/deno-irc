@@ -430,7 +430,7 @@ const client = new Client({
     if (payload.type === "raw_input") {
       console.log(payload.msg);
     }
-  }
+  },
 });
 ```
 
@@ -1199,22 +1199,22 @@ client.clientinfo("#channel");
 
 ### command: connect
 
-Connects to a server using a hostname and an optional port.
-
-Default port to `6667`.
+Connects to a server using an hostname and a port.
 
 If `tls=true`, attempts to connect using a TLS connection.
 
+`path` is only used when client is instantiated with `websocket: true`.
+
 Resolves when connected.
 
-`async connect(hostname: string, port: number, tls?: boolean, path?: string): Promise<Deno.Conn | null>`
+`async connect(hostname: string, port: number, options?: { tls?: boolean, path?: string }): Promise<Deno.Conn | null>`
 
-Note: `path` parameter is ignored when websocket feature not enabled.
+Note: `path` parameter is ignored when websocket feature is not enabled.
 
 ```ts
 client.connect("host", 6667);
 
-client.connect("host", 7000, true); // with TLS
+client.connect("host", 7000, { tls: true }); // with TLS
 ```
 
 When `websocket` feature enabled defaults to port 80, or 443 if `tls=true`.
@@ -1224,8 +1224,12 @@ When `websocket` feature enabled, also accepts `path` parameter as string.
 ```ts
 // Example remote endpoint URL
 const remoteUrl = "wss://irc.example.org:8097/pathTo/Irc";
+
 // Passing said endpoint URL to connect
-client.connect("irc.example.org", 8097, true, "pathTo/Irc");
+client.connect("irc.example.org", 8097, {
+  tls: true,
+  path: "pathTo/Irc",
+});
 ```
 
 ### command: ctcp
