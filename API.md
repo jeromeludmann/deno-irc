@@ -335,7 +335,7 @@ const client = new Client({
 
 Enables auto reconnect.
 
-Takes boolean or `{ attempts?: number, delay?: number }`.
+Takes a boolean or `{ attempts?: number, delay?: number, exponentialBackoff?: boolean }`.
 
 Default to `false` or `{ attempts: 10, delay: 5 }` if set to `true`.
 
@@ -354,6 +354,18 @@ const client = new Client({
   reconnect: {
     attempts: 3,
     delay: 10,
+  },
+});
+```
+
+Tries to reconnect `5` times with an initial delay of `3` seconds with an exponential backoff:
+
+```ts
+const client = new Client({
+  reconnect: {
+    attempts: 5,
+    delay: 3,
+    exponentialBackoff: true,
   },
 });
 ```

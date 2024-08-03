@@ -6,7 +6,7 @@ interface ReconnectFeatures {
   options: {
     /** Enables auto reconnect.
      *
-     * Takes `boolean` or `{ attempts?: number, delay?: number }`.
+     * Takes a boolean or `{ attempts?: number, delay?: number, exponentialBackoff?: boolean }`.
      *
      * Default to `false` or `{ attempts: 10, delay: 5 }` if set to `true`. */
     reconnect?: boolean | {
@@ -19,16 +19,22 @@ interface ReconnectFeatures {
        *
        * Default to `5` seconds. */
       delay?: number;
+
+      /** Enables exponential backoff.
+       *
+       * Default to `false`. */
+      exponentialBackoff?: boolean;
     };
   };
   events: {
-    "reconnecting": RemoteAddr;
+    reconnecting: RemoteAddr;
   };
 }
 
 const DEFAULT_RECONNECT = false;
 const DEFAULT_ATTEMPTS = 10;
 const DEFAULT_DELAY = 5;
+const DEFAULT_BACKOFF_FACTOR = { STATIC: 1, EXPONENTIAL: 2 };
 
 export default createPlugin(
   "reconnect",
@@ -44,10 +50,15 @@ export default createPlugin(
   const {
     attempts = DEFAULT_ATTEMPTS,
     delay = DEFAULT_DELAY,
+    exponentialBackoff,
   } = config;
 
   let currentAttempts = 0;
   let timeout: number | undefined;
+
+  const backoffFactor = exponentialBackoff
+    ? DEFAULT_BACKOFF_FACTOR.EXPONENTIAL
+    : DEFAULT_BACKOFF_FACTOR.STATIC;
 
   const delayReconnect = () => {
     clearTimeout(timeout);
@@ -59,7 +70,7 @@ export default createPlugin(
     const { hostname, port, tls } = remoteAddr;
     timeout = setTimeout(
       async () => await client.connect(hostname, port, tls),
-      delay * 1000,
+      delay * 1000 * Math.pow(backoffFactor, currentAttempts - 1),
     );
   };
 

@@ -19,6 +19,8 @@ describe("plugins/reconnect", (test) => {
     await client.once("reconnecting");
 
     assertEquals(reconnecting, 1);
+
+    await client.once("error"); // wait for timeout clearing
   });
 
   test("reconnect on server error", async () => {
@@ -36,6 +38,8 @@ describe("plugins/reconnect", (test) => {
     await client.once("reconnecting");
 
     assertEquals(reconnecting, 1);
+
+    await client.once("connecting"); // wait for timeout clearing
   });
 
   test("reset attemps when RPL_WELCOME is received", async () => {
@@ -67,6 +71,8 @@ describe("plugins/reconnect", (test) => {
     await client.once("reconnecting");
 
     assertEquals(reconnecting, 3);
+
+    await client.once("connecting"); // wait for timeout clearing
   });
 
   test("not reconnect if disabled", async () => {

@@ -61,4 +61,6 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
   ref(): void {}
 
   unref(): void {}
+
+  [Symbol.dispose](): void {}
 }
