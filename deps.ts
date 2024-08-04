@@ -8,6 +8,7 @@ export {
 
 export { assertArrayIncludes } from "https://deno.land/std@0.224.0/assert/assert_array_includes.ts";
 export { assertEquals } from "https://deno.land/std@0.224.0/assert/assert_equals.ts";
+export { assertNotEquals } from "https://deno.land/std@0.224.0/assert/assert_not_equals.ts";
 export { assertExists } from "https://deno.land/std@0.224.0/assert/assert_exists.ts";
 export { assertMatch } from "https://deno.land/std@0.224.0/assert/assert_match.ts";
 export { assertRejects } from "https://deno.land/std@0.224.0/assert/assert_rejects.ts";
