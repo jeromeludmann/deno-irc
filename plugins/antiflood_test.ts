@@ -4,7 +4,7 @@ import { mock } from "../testing/mock.ts";
 
 describe("plugins/antiflood", (test) => {
   test("send two PRIVMSG with delay", async () => {
-    const { client, server } = await mock({ floodDelay: 250 });
+    const { client, server } = await mock({ floodDelay: 10 });
 
     client.privmsg("#channel", "Hello world");
     client.privmsg("#channel", "Hello world, again");
@@ -16,7 +16,7 @@ describe("plugins/antiflood", (test) => {
     ]);
 
     // Wait for second message to make it through
-    await delay(1000);
+    await delay(100);
     raw = server.receive();
 
     // Second message now dispatched to server
