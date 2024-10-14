@@ -13,17 +13,17 @@ export function mockConnect<T extends Deno.ConnectOptions>(options: T) {
 }
 
 export class MockCoreClient extends CoreClient {
-  protected connectImpl = {
+  protected override connectImpl = {
     withTls: mockConnect,
     noTls: mockConnect,
   };
-  readonly conn: MockConn | null = null;
+  override readonly conn: MockConn | null = null;
 }
 
 export class MockClient extends Client {
-  protected connectImpl = {
+  protected override connectImpl = {
     withTls: mockConnect,
     noTls: mockConnect,
   };
-  readonly conn: MockConn | null = null;
+  override readonly conn: MockConn | null = null;
 }
