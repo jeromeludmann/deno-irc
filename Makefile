@@ -15,11 +15,11 @@ fmt-check:
 	deno fmt --check $(all_sources)
 
 test:
-	deno test --failfast $(test_sources)
+	deno test --failfast $(test_sources) --parallel
 
 test-coverage:
 	make clean
-	deno test --coverage=coverage/cov_profile $(test_sources)
+	deno test --parallel --coverage=coverage/cov_profile $(test_sources)
 	deno coverage $(exclude_from_coverage) coverage/cov_profile
 
 test-coverage-html:
