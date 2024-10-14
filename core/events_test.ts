@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "../deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { EventEmitter } from "./events.ts";
 

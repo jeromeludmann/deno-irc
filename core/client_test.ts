@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects, assertThrows } from "../deps.ts";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { mockConsole } from "../testing/console.ts";
 import { MockServer } from "../testing/server.ts";

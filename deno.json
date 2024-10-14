@@ -1,0 +1,42 @@
+{
+  "name": "@irc/client",
+  "version": "0.17.0",
+  "exports": "./mod.ts",
+  "license": "MIT",
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 80,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve",
+    "include": [
+      "core/",
+      "plugins/",
+      "testing/"
+    ]
+  },
+  "lint": {
+    "include": [
+      "core",
+      "plugins",
+      "testing"
+    ],
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    }
+  },
+  "tasks": {
+    "lint": "deno lint **/*.ts",
+    "fmt": "deno fmt **/*.ts",
+    "test": "deno test --failfast core/*_test.ts plugins/*_test.ts --parallel",
+    "coverage": "rm -rf coverage && deno test --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\""
+  },
+  "imports": {
+    "@henrygd/queue": "jsr:@henrygd/queue@^1.0.6",
+    "@std/assert": "jsr:@std/assert@^1.0.6",
+    "@std/fmt": "jsr:@std/fmt@^1.0.2"
+  }
+}

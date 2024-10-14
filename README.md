@@ -7,6 +7,8 @@ an easy way to talk with IRC servers.
 
 Any feedback and contributions are welcome.
 
+Now available on [JSR](https://jsr.io/@irc/client).
+
 ## Documentation
 
 - [Getting Started](#getting-started)
@@ -155,7 +157,7 @@ All added parts (core and plugins):
 - should be tested to ensure they work as expected
 - should provide documentation about its options, events, commands
 
-Need help? Type `make help`.
+Need help? Type `deno task`.
 
 ## License
 

@@ -1,5 +1,5 @@
 import { createPlugin } from "../core/plugins.ts";
-import { Queue } from "../deps.ts";
+import { newQueue } from "@henrygd/queue";
 
 interface AntiFloodFeatures {
   options: {
@@ -14,14 +14,14 @@ export default createPlugin("antiflood", [])<AntiFloodFeatures>(
   (client, options) => {
     if (!options.floodDelay || options.floodDelay <= 0) return;
     // Queue object and delay structure for anti-flood protection
-    const queue = new Queue();
+    const queue = newQueue(1);
     const delay = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // Queues up limiter for outgoing messages with before and after send hooks
 
     client.hooks.hookCall("send", async (send, command, ...params) => {
       if (command === "PRIVMSG") {
-        return queue.push(async () => {
+        return queue.add(async () => {
           const raw = await send(command, ...params);
           if (raw) {
             await delay(options.floodDelay);

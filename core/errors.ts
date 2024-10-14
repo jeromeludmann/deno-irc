@@ -6,7 +6,7 @@ export interface ClientError extends Error {
 
 export type ErrorArgs = [
   type: ClientErrorType,
-  error: Error,
+  error: Error | unknown,
 ] | [
   type: ClientErrorType,
   error: string,
@@ -19,7 +19,7 @@ export function toClientError(
 ): ClientError {
   if (typeof error === "string") {
     error = new Error(error);
-    Error.captureStackTrace(error, callSite);
+    Error.captureStackTrace(error as Error, callSite);
   }
 
   (error as ClientError).type = type;

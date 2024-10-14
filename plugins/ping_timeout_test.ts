@@ -1,4 +1,4 @@
-import { assertEquals, assertMatch } from "../deps.ts";
+import { assertEquals, assertMatch } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { mock } from "../testing/mock.ts";
 
