@@ -1,4 +1,4 @@
-import { bold, dim } from "../deps.ts";
+import { bold, dim } from "@std/fmt/colors";
 
 export type Test = (name: string, fn: () => void | Promise<void>) => void;
 

@@ -2,7 +2,7 @@
 import { type ClientError } from "../core/errors.ts";
 import { createPlugin } from "../core/plugins.ts";
 import { type AnyRawCommand } from "../core/protocol.ts";
-import { bold, dim, green, red } from "../deps.ts";
+import { bold, dim, green, red } from "@std/fmt/colors";
 
 interface RawLogPayload {
   type: "raw_input" | "raw_output";

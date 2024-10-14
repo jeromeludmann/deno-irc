@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "../deps.ts";
+import { assertEquals } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { CoreClient } from "./client.ts";
 import { createPlugin, loadPlugins, type Plugin } from "./plugins.ts";

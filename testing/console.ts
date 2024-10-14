@@ -1,4 +1,4 @@
-import { stripColor } from "../deps.ts";
+import { stripAnsiCode } from "@std/fmt/colors";
 
 export interface MockConsoleOutput {
   stdout: unknown[][];
@@ -18,7 +18,7 @@ export function mockConsole(): MockConsoleOutput {
 function mock(output: unknown[][]) {
   return (...args: string[]) => {
     output.push(
-      args.map((arg) => typeof arg === "string" ? stripColor(arg) : arg),
+      args.map((arg) => typeof arg === "string" ? stripAnsiCode(arg) : arg),
     );
   };
 }

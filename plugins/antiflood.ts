@@ -1,5 +1,5 @@
 import { createPlugin } from "../core/plugins.ts";
-import { Queue } from "../deps.ts";
+import { Queue } from "@queue";
 
 interface AntiFloodFeatures {
   options: {

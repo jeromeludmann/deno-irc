@@ -1,4 +1,4 @@
-import { assertEquals } from "../deps.ts";
+import { assertEquals } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { toClientError } from "./errors.ts";
 
