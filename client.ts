@@ -1,5 +1,3 @@
-// deno-lint-ignore-file no-empty-interface
-
 import { CoreClient, type CoreFeatures } from "./core/client.ts";
 import { type CombinePluginFeatures } from "./core/plugins.ts";
 

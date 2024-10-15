@@ -16,7 +16,12 @@
     "include": ["core", "plugins", "testing"],
     "rules": { "tags": ["recommended"] }
   },
-  "tasks": {},
+  "tasks": {
+    "lint": "deno lint **/*.ts",
+    "fmt": "deno fmt **/*.ts",
+    "test": "deno test --failfast core/*_test.ts plugins/*_test.ts --parallel",
+    "coverage": "rm -rf coverage && deno test --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\""
+  },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.6",
     "@std/fmt": "jsr:@std/fmt@^1.0.2",
