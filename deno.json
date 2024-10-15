@@ -1,4 +1,22 @@
 {
+  "name": "@irc/client",
+  "version": "0.17.0",
+  "exports": "./mod.ts",
+  "license": "MIT",
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 80,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve",
+    "include": ["core/", "plugins/", "testing/"]
+  },
+  "lint": {
+    "include": ["core", "plugins", "testing"],
+    "rules": { "tags": ["recommended"] }
+  },
+  "tasks": {},
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.6",
     "@std/fmt": "jsr:@std/fmt@^1.0.2",
