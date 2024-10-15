@@ -1,6 +1,6 @@
 {
   "name": "@irc/client",
-  "version": "0.17.0",
+  "version": "0.17.2",
   "exports": "./mod.ts",
   "license": "MIT",
   "fmt": {
