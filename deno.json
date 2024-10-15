@@ -10,22 +10,12 @@
     "semiColons": true,
     "singleQuote": false,
     "proseWrap": "preserve",
-    "include": [
-      "core/",
-      "plugins/",
-      "testing/"
-    ]
+    "include": ["core/", "plugins/", "testing/"]
   },
   "lint": {
-    "include": [
-      "core",
-      "plugins",
-      "testing"
-    ],
+    "include": ["core", "plugins", "testing"],
     "rules": {
-      "tags": [
-        "recommended"
-      ]
+      "tags": ["recommended"]
     }
   },
   "tasks": {
@@ -33,6 +23,19 @@
     "fmt": "deno fmt **/*.ts",
     "test": "deno test --failfast core/*_test.ts plugins/*_test.ts --parallel",
     "coverage": "rm -rf coverage && deno test --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\""
+  },
+  "publish": {
+    "include": [
+      "core",
+      "plugins",
+      "README.md",
+      "API.md",
+      "deno.json",
+      "deno.lock",
+      "LICENSE",
+      "client.ts",
+      "mod.ts"
+    ]
   },
   "imports": {
     "@henrygd/queue": "jsr:@henrygd/queue@^1.0.6",

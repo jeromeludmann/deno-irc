@@ -29,11 +29,7 @@ jobs:
 
       - name: Lint sources
         if: matrix.os == 'ubuntu-latest'
-        run: make lint
-
-      - name: Check format
-        if: matrix.os == 'ubuntu-latest'
-        run: make fmt-check
+        run: deno task lint
 
       - name: Run tests
-        run: make test-coverage
+        run: deno task test
