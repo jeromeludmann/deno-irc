@@ -31,7 +31,7 @@
   - [event: ctcp_ping_reply](#event-ctcp_ping_reply)
   - [event: ctcp_version](#event-ctcp_version)
   - [event: ctcp_version_reply](#event-ctcp_version_reply)
-  - [event: dcc_accept](#event-dcc_acceot)
+  - [event: dcc_accept](#event-dcc_accept)
   - [event: dcc_accept_reply](#event-dcc_accept_reply)
   - [event: dcc_chat](#event-dcc_chat)
   - [event: dcc_chat_reply](#event-dcc_chat_reply)
