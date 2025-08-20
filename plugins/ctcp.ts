@@ -3,6 +3,7 @@ import { createPlugin } from "../core/plugins.ts";
 
 const CTCP_COMMANDS = {
   ACTION: "action",
+  DCC: "dcc",
   CLIENTINFO: "clientinfo",
   PING: "ping",
   TIME: "time",
@@ -33,8 +34,13 @@ export interface RawCtcpReplyEventParams {
 }
 
 export type RawCtcpReplyEvent = Message<RawCtcpReplyEventParams> & {
-  /** Name of the CTCP command. */
-  command: AnyCtcpCommand;
+  /**
+   * Name of the CTCP command.
+   *
+   * @remarks `dcc` is excluded because it has no reply form
+   * (only sent via PRIVMSG).
+   */
+  command: Exclude<AnyCtcpCommand, "dcc">;
 };
 
 interface CtcpFeatures {
@@ -44,6 +50,7 @@ interface CtcpFeatures {
      * For easier use, see also other CTCP-derived methods:
      * - `action`
      * - `clientinfo`
+     * - `dcc`
      * - `ping`
      * - `time`
      * - `version` */
@@ -51,7 +58,7 @@ interface CtcpFeatures {
   };
   events:
     & { [K in `raw_ctcp:${AnyCtcpCommand}`]: RawCtcpEvent }
-    & { [K in `raw_ctcp:${AnyCtcpCommand}_reply`]: RawCtcpReplyEvent };
+    & { [K in `raw_ctcp:${Exclude<AnyCtcpCommand, 'dcc'>}_reply`]: RawCtcpReplyEvent };
   utils: {
     isCtcp: (msg: Raw) => boolean;
     createCtcp: (command: AnyRawCtcpCommand, param?: string) => string;
@@ -84,7 +91,8 @@ export default createPlugin("ctcp", [])<CtcpFeatures>((client) => {
       const ctcp: RawCtcpEvent = { source, command, params: { target } };
       if (param) ctcp.params.arg = param;
 
-      client.emit(`raw_ctcp:${ctcp.command}${type}`, ctcp);
+      if (ctcp.command === "dcc") client.emit(`raw_ctcp:${ctcp.command}`, ctcp);
+      else client.emit(`raw_ctcp:${ctcp.command}${type}`, ctcp);
     }
   });
 
