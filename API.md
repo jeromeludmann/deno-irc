@@ -31,6 +31,14 @@
   - [event: ctcp_ping_reply](#event-ctcp_ping_reply)
   - [event: ctcp_version](#event-ctcp_version)
   - [event: ctcp_version_reply](#event-ctcp_version_reply)
+  - [event: dcc_accept](#event-dcc_acceot)
+  - [event: dcc_accept_reply](#event-dcc_accept_reply)
+  - [event: dcc_chat](#event-dcc_chat)
+  - [event: dcc_chat_reply](#event-dcc_chat_reply)
+  - [event: dcc_resume](#event-dcc_resume)
+  - [event: dcc_resume_reply](#event-dcc_resume_reply)
+  - [event: dcc_send](#event-dcc_send)
+  - [event: dcc_send_reply](#event-dcc_send_reply)
   - [event: disconnected](#event-disconnected)
   - [event: error](#event-error)
   - [event: error_reply](#event-error_reply)
@@ -629,6 +637,73 @@ client.on("ctcp_version_reply", (msg) => {
 });
 ```
 
+### event: dcc_accept
+
+User accepts a `DCC RESUME`.
+
+```ts
+client.on("dcc_accept", (msg) => {
+  msg.params.text;   // original DCC payload string
+  msg.params.filename; // string
+  msg.params.port;     // number (0 if passive)
+  msg.params.position; // number (byte offset)
+  msg.params.token;    // number | undefined
+  msg.params.passive;  // boolean
+});
+```
+
+### event: dcc_chat
+
+User requests starting a direct chat session.
+`SCHAT` is normalized here with `tls: true`.
+
+```ts
+client.on("dcc_chat", (msg) => {
+  msg.params.text;   // original DCC payload string
+  msg.params.ip;      // { type: "ipv4"|"ipv6"|"hostname"; value: string }
+  msg.params.port;    // number (0 if passive)
+  msg.params.token;   // number | undefined
+  msg.params.passive; // boolean
+  msg.params.tls;     // boolean (true if SCHAT, else false)
+});
+```
+
+### event: dcc_resume
+
+User requests resuming a file transfer.
+
+```ts
+client.on("dcc_resume", (msg) => {
+  // common
+  msg.params.action; // "resume"
+  msg.params.text;   // original DCC payload string
+
+  // payload
+  msg.params.filename; // string
+  msg.params.port;     // number (0 if passive)
+  msg.params.position; // number (byte offset)
+  msg.params.token;    // number | undefined
+  msg.params.passive;  // boolean
+});
+```
+
+### event: dcc_send
+
+User offers sending a file.
+
+```ts
+client.on("dcc_send", (msg) => {
+  msg.params.source     // { name: "nickname"; mask: { user: "string"; host: "string" } }
+  msg.params.text;      // original DCC payload string
+  msg.params.filename;  // string
+  msg.params.ip;        // { type: "ipv4"|"ipv6"|"hostname"; value: string }
+  msg.params.port;      // number (0 if passive)
+  msg.params.size;      // number (bytes)
+  msg.params.token;     // number | undefined
+  msg.params.passive;   // boolean
+});
+```
+
 ### event: disconnected
 
 Client has been disconnected from the server.
@@ -1221,6 +1296,64 @@ For easier use, see also other CTCP-derived methods:
 - `ping`
 - `time`
 - `version`
+
+### command: dcc
+
+Sends a CTCP `DCC` command to a `target`. Returns the raw IRC `PRIVMSG` line that was sent.
+
+`dcc(target: string, cmd: DccCmd): string`
+
+- `send`: filename, ip, port, size, [token]
+- `chat`: ip, port, [token]
+- `schat`: ip, port, [token] (secure; serialized as `SCHAT`)
+- `resume`: filename, port, position, [token]
+- `accept`: filename, port, position, [token]
+
+```ts
+// DCC CHAT
+client.dcc("someone", {
+  action: "chat",
+  args: { ip: "203.0.113.42", port: 6000 }
+});
+// returns: "PRIVMSG someone :\x01DCC CHAT 203.0.113.42 6000\x01"
+```
+
+```ts
+// DCC SCHAT (secure chat)
+client.dcc("someone", {
+  action: "schat",
+  args: { ip: "[2001:db8::1]", port: 6697 }
+});
+// returns: "PRIVMSG someone :\x01DCC SCHAT [2001:db8::1] 6697\x01"
+```
+
+```ts
+// DCC SEND with size and optional token
+client.dcc("someone", {
+  action: "send",
+  args: { filename: "file.bin", ip: "203.0.113.10", port: 5000, size: 123456, token: 42 }
+});
+// returns: "PRIVMSG someone :\x01DCC SEND file.bin 203.0.113.10 5000 123456 42\x01"
+```
+
+```ts
+// DCC RESUME (request resuming at byte position)
+client.dcc("someone", {
+  action: "resume",
+  args: { filename: "file.bin", port: 5000, position: 65536 }
+});
+// returns: "PRIVMSG someone :\x01DCC RESUME file.bin 5000 65536\x01"
+```
+
+```ts
+// DCC ACCEPT (accept resume at byte position)
+client.dcc("someone", {
+  action: "accept",
+  args: { filename: "file.bin", port: 5000, position: 65536 }
+});
+// returns: "PRIVMSG someone :\x01DCC ACCEPT file.bin 5000 65536\x01"
+```
+
 
 ### command: dehalfop
 
