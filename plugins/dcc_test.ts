@@ -6,7 +6,7 @@ describe("plugins/dcc", (test) => {
   // utils: nextToken
   test("utils: nextToken parses tokens and offsets", async () => {
     const { client } = await mock();
-    const nt = client.utils.dcc.nextToken;
+    const { utils: { dcc: { nextToken: nt } } } = client;
 
     // Unquoted tokens + offsets
     assertEquals(nt("foo bar baz", 0), { tok: "foo", next: 4 });
@@ -64,7 +64,7 @@ describe("plugins/dcc", (test) => {
   // utils: parseHost
   test("utils: parseHost normalizes IPv4, IPv6, and hostnames", async () => {
     const { client } = await mock();
-    const { parseHost } = client.utils.dcc;
+    const { utils: { dcc: { parseHost } } } = client;
 
     // Decimal IPv4 bounds
     assertEquals(parseHost("4294967295"), {
@@ -115,7 +115,7 @@ describe("plugins/dcc", (test) => {
   // utils: isPassivePlaceholder
   test("utils: isPassivePlaceholder detects 0.0.0.0 and ::", async () => {
     const { client } = await mock();
-    const { isPassivePlaceholder } = client.utils.dcc;
+    const { utils: { dcc: { isPassivePlaceholder } } } = client;
 
     assertEquals(isPassivePlaceholder("0"), true);
     assertEquals(isPassivePlaceholder("0.0.0.0"), true);
@@ -126,7 +126,7 @@ describe("plugins/dcc", (test) => {
   // utils: parsePort
   test("utils: parsePort validates active and passive", async () => {
     const { client } = await mock();
-    const { parsePort } = client.utils.dcc;
+    const { utils: { dcc: { parsePort } } } = client;
 
     // Active: 1..65535
     assertEquals(parsePort("1", false), 1);
@@ -148,7 +148,7 @@ describe("plugins/dcc", (test) => {
   // utils: parseUint
   test("utils: parseUint supports max and safe bounds", async () => {
     const { client } = await mock();
-    const { parseUint } = client.utils.dcc;
+    const { utils: { dcc: { parseUint } } } = client;
 
     // No max
     assertEquals(parseUint("0"), 0);
@@ -181,15 +181,16 @@ describe("plugins/dcc", (test) => {
   // parser: ignores bare and unknown verbs
   test("parser: ignores bare DCC and unknown verbs", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
 
-    const bare = client.utils.dcc.createDcc({
+    const bare = createDcc({
       source: { name: "nick", mask: { user: "u", host: "h" } },
       command: "dcc",
       params: { target: "me", arg: "DCC" },
     });
     assertEquals(bare, undefined);
 
-    const unknown = client.utils.dcc.createDcc({
+    const unknown = createDcc({
       source: { name: "nick", mask: { user: "u", host: "h" } },
       command: "dcc",
       params: { target: "me", arg: "FOOBAR 1 2 3" },
@@ -200,11 +201,13 @@ describe("plugins/dcc", (test) => {
   // parser: prototype pollution does not match verbs
   test("parser: proto-polluted verb falls through", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
+
     try {
       // Make "weird" in DCC_SCHEMA true via prototype, not own prop.
       (Object.prototype as any).weird = 1;
 
-      const ev = client.utils.dcc.createDcc({
+      const ev = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg: "WEIRD arg1 arg2" }, // lowercased -> "weird"
@@ -220,6 +223,8 @@ describe("plugins/dcc", (test) => {
   // parser: SEND (table-driven)
   test("parser: SEND covers IPv4/IPv6/FQDN/passive/token/size bounds", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
+
     const cases = [
       {
         arg: 'SEND "f.bin" 203.0.113.10 6000 123',
@@ -362,7 +367,7 @@ describe("plugins/dcc", (test) => {
     ] as const;
 
     for (const c of cases) {
-      const ev = client.utils.dcc.createDcc({
+      const ev = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg: c.arg },
@@ -380,7 +385,7 @@ describe("plugins/dcc", (test) => {
       `SEND "f.bin" 203.0.113.10 6000 ${Number.MAX_SAFE_INTEGER + 1}`, // size overflow
     ];
     for (const arg of invalid) {
-      const r = client.utils.dcc.createDcc({
+      const r = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg },
@@ -392,6 +397,8 @@ describe("plugins/dcc", (test) => {
   // parser: CHAT and SCHAT (table-driven)
   test("parser: CHAT and SCHAT cover subtype, passive, and tls", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
+
     const cases = [
       {
         arg: "CHAT [2001:DB8::1] 6000",
@@ -480,7 +487,7 @@ describe("plugins/dcc", (test) => {
     ] as const;
 
     for (const c of cases) {
-      const ev = client.utils.dcc.createDcc({
+      const ev = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg: c.arg },
@@ -497,7 +504,7 @@ describe("plugins/dcc", (test) => {
       "SCHAT 6000", // missing IP
     ];
     for (const arg of invalid) {
-      const r = client.utils.dcc.createDcc({
+      const r = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg },
@@ -509,13 +516,14 @@ describe("plugins/dcc", (test) => {
   // parser: SCHAT differs from CHAT only by tls flag
   test("parser: SCHAT differs from CHAT only by tls flag", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
 
-    const chat = client.utils.dcc.createDcc({
+    const chat = createDcc({
       source: { name: "n", mask: { user: "u", host: "h" } },
       command: "dcc",
       params: { target: "me", arg: "CHAT 203.0.113.10 6000 5" },
     })!;
-    const schat = client.utils.dcc.createDcc({
+    const schat = createDcc({
       source: { name: "n", mask: { user: "u", host: "h" } },
       command: "dcc",
       params: { target: "me", arg: "SCHAT 203.0.113.10 6000 5" },
@@ -536,6 +544,8 @@ describe("plugins/dcc", (test) => {
   // parser: RESUME and ACCEPT
   test("parser: RESUME and ACCEPT handle passive and position", async () => {
     const { client } = await mock();
+    const { utils: { dcc: { createDcc } } } = client;
+
     const cases = [
       {
         arg: 'RESUME "f.bin" 6000 1024',
@@ -564,7 +574,7 @@ describe("plugins/dcc", (test) => {
     ] as const;
 
     for (const c of cases) {
-      const ev = client.utils.dcc.createDcc({
+      const ev = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg: c.arg },
@@ -579,7 +589,7 @@ describe("plugins/dcc", (test) => {
       'RESUME "f.bin" abc 1024', // invalid port
     ];
     for (const arg of invalid) {
-      const r = client.utils.dcc.createDcc({
+      const r = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
         command: "dcc",
         params: { target: "me", arg },
