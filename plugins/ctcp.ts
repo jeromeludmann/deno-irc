@@ -58,7 +58,10 @@ interface CtcpFeatures {
   };
   events:
     & { [K in `raw_ctcp:${AnyCtcpCommand}`]: RawCtcpEvent }
-    & { [K in `raw_ctcp:${Exclude<AnyCtcpCommand, 'dcc'>}_reply`]: RawCtcpReplyEvent };
+    & {
+      [K in `raw_ctcp:${Exclude<AnyCtcpCommand, "dcc">}_reply`]:
+        RawCtcpReplyEvent;
+    };
   utils: {
     isCtcp: (msg: Raw) => boolean;
     createCtcp: (command: AnyRawCtcpCommand, param?: string) => string;
