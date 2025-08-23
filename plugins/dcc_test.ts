@@ -205,7 +205,7 @@ describe("plugins/dcc", (test) => {
 
     try {
       // Make "weird" in DCC_SCHEMA true via prototype, not own prop.
-      (Object.prototype as any).weird = 1;
+      Reflect.set(Object.prototype, "weird", 1);
 
       const ev = createDcc({
         source: { name: "n", mask: { user: "u", host: "h" } },
@@ -216,7 +216,7 @@ describe("plugins/dcc", (test) => {
       // Branches for send/chat/schat/resume/accept will not match -> falls through.
       assertEquals(ev, undefined);
     } finally {
-      delete (Object.prototype as any).weird;
+      Reflect.deleteProperty(Object.prototype, "weird");
     }
   });
 
@@ -532,8 +532,8 @@ describe("plugins/dcc", (test) => {
     assert(chat.action === "chat");
     assert(schat.action === "chat");
 
-    const strip = (o: any) => {
-      const { text, tls, ...rest } = o;
+    const strip = (o: Record<string, unknown>) => {
+      const { text: _text, tls: _tls, ...rest } = o;
       return rest;
     };
     assertEquals(strip(chat), strip(schat));
@@ -668,9 +668,9 @@ describe("plugins/dcc", (test) => {
     const { client } = await mock();
 
     const calls: Array<{ target: string; command: string; param: string }> = [];
-    client.ctcp = ((target: string, command: string, param?: string) => {
+    client.ctcp = (target: string, command: string, param?: string) => {
       calls.push({ target, command, param: String(param) });
-    }) as any;
+    };
 
     // SEND with quoting and IPv4 -> uint32
     const l1 = client.dcc("nick", {

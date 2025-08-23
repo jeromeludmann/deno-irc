@@ -83,22 +83,22 @@ type Schema = readonly SchemaRow[];
 /** Extract the row for key K in schema T. */
 type RowForKey<T extends Schema, K extends string> = Extract<
   T[number],
-  readonly [K, any, any]
+  readonly [K, unknown, unknown]
 >;
 
 /** Resolve the TS type for key K in schema T. */
 type TypeForKey<T extends Schema, K extends string> = RowForKey<T, K> extends
-  readonly [any, infer C, any] ? FieldKindToType<Extract<C, FieldKind>>
+  readonly [unknown, infer C, unknown] ? FieldKindToType<Extract<C, FieldKind>>
   : never;
 
 /** Collect all keys of a schema T. */
 type AllKeysOf<T extends Schema> = T[number] extends
-  readonly [infer K, any, any] ? K : never;
+  readonly [infer K, unknown, unknown] ? K : never;
 
 /** Required keys of schema T. */
 type RequiredKeysOf<T extends Schema> = Extract<
   T[number],
-  readonly [any, any, true]
+  readonly [string, FieldKind, true]
 >[0];
 
 /** Optional keys of schema T. */
@@ -156,7 +156,7 @@ export type DccEventPayload<K extends keyof DccEventMap> = DccEventMap[K];
  * @typeParam K - Field name in the schema.
  */
 type KindForKey<T extends Schema, K extends string> = RowForKey<T, K> extends
-  readonly [any, infer C, any] ? Extract<C, FieldKind> : never;
+  readonly [unknown, infer C, unknown] ? Extract<C, FieldKind> : never;
 
 /**
  * Wire type for a field kind.
