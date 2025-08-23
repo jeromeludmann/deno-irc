@@ -224,7 +224,7 @@ function createDcc(event: RawCtcpEvent | RawCtcpReplyEvent) {
     : undefined;
   if (!action) return undefined;
 
-  let idx = verb.length + 1;
+  const idx = verb.length + 1;
 
   if (action === "send") {
     const t1 = nextToken(raw, idx); // filename

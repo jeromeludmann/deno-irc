@@ -46,7 +46,7 @@ describe("plugins/dcc", (test) => {
 
     // Sequence with internal offsets and extra spaces
     const s = `SEND   "my file.txt"   203.0.113.10  6000   123`;
-    let i = "SEND".length + 1;
+    const i = "SEND".length + 1;
     const t1 = nt(s, i);
     const t2 = nt(s, t1.next);
     const t3 = nt(s, t2.next);
