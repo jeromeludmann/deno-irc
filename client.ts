@@ -9,6 +9,7 @@ import chanmodes from "./plugins/chanmodes.ts";
 import chantypes from "./plugins/chantypes.ts";
 import clientinfo from "./plugins/clientinfo.ts";
 import ctcp from "./plugins/ctcp.ts";
+import dcc from "./plugins/dcc.ts";
 import errorReply from "./plugins/error_reply.ts";
 import invalidNames from "./plugins/invalid_names.ts";
 import invite from "./plugins/invite.ts";
@@ -54,6 +55,7 @@ const plugins = [
   chantypes,
   clientinfo,
   ctcp,
+  dcc,
   errorReply,
   invalidNames,
   invite,
