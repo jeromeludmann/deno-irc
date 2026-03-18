@@ -1,19 +1,23 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp from "./ctcp.ts";
 
+/** Parameters for a CTCP VERSION query event. */
 export interface CtcpVersionEventParams {
   /** Target of the CTCP VERSION query. */
   target: string;
 }
 
+/** Event emitted when a CTCP VERSION query is received. */
 export type CtcpVersionEvent = Message<CtcpVersionEventParams>;
 
+/** Parameters for a CTCP VERSION reply event. */
 export interface CtcpVersionReplyEventParams {
   /** Client version of the user. */
   version: string;
 }
 
+/** Event emitted when a CTCP VERSION reply is received. */
 export type CtcpVersionReplyEvent = Message<CtcpVersionReplyEventParams>;
 
 interface VersionFeatures {
@@ -39,10 +43,10 @@ interface VersionFeatures {
 
 const DEFAULT_VERSION = "deno-irc";
 
-export default createPlugin(
+const plugin: Plugin<VersionFeatures, AnyPlugins> = createPlugin(
   "version",
   [ctcp],
-)<VersionFeatures>((client, options) => {
+)((client, options) => {
   // Sends VERSION command.
 
   client.version = (target) => {
@@ -78,3 +82,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

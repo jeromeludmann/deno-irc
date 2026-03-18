@@ -8,6 +8,7 @@ import {
   PROTOCOL,
 } from "./protocol.ts";
 
+/** User identity mask with username and hostname. */
 export interface Mask {
   /** Username of the user. */
   user: string;
@@ -16,6 +17,7 @@ export interface Mask {
   host: string;
 }
 
+/** Origin of an IRC message, either a server or a user. */
 export interface Source {
   /** Server name or user nick. */
   name: string;
@@ -39,6 +41,7 @@ export interface Message<TParams> {
   params: TParams;
 }
 
+/** A parsed IRC message with its command resolved to a human-readable name. */
 export type Raw = Message<string[]> & {
   /** Command of the message.
    *
@@ -46,6 +49,7 @@ export type Raw = Message<string[]> & {
   command: AnyCommand | AnyReply | AnyError;
 };
 
+/** Parses an IRC prefix string (e.g. `nick!user@host`) into a {@link Source}. */
 export function parseSource(prefix: string): Source {
   const source = {} as Source;
   const [name, user, host] = prefix.split(/[@!]+/);
@@ -117,6 +121,7 @@ function parseMessage(raw: string): Raw {
   return msg;
 }
 
+/** Stateful parser that handles incremental IRC message chunks split across TCP reads. */
 export class Parser {
   private chunk = "";
 

@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import mode from "./mode.ts";
 
 interface ModeAliasesFeatures {
@@ -29,10 +29,10 @@ interface ModeAliasesFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<ModeAliasesFeatures, AnyPlugins> = createPlugin(
   "mode_aliases",
   [mode],
-)<ModeAliasesFeatures>((client) => {
+)((client) => {
   // OPER
 
   client.op = (channel, ...nicks) =>
@@ -65,3 +65,5 @@ export default createPlugin(
   client.unban = (channel, ...masks) =>
     client.mode(channel, "-" + "b".repeat(masks.length), ...masks);
 });
+
+export default plugin;

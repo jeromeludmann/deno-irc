@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters carried by a KILL event. */
 export interface KillEventParams {
   /** Nick who is killed. */
   nick: string;
@@ -9,6 +10,7 @@ export interface KillEventParams {
   comment: string;
 }
 
+/** Emitted when a user is killed (forcibly disconnected) from the server. */
 export type KillEvent = Message<KillEventParams>;
 
 interface KillFeatures {
@@ -21,7 +23,7 @@ interface KillFeatures {
   };
 }
 
-export default createPlugin("kill")<KillFeatures>((client) => {
+const plugin: Plugin<KillFeatures> = createPlugin("kill")((client) => {
   // Sends KILL command.
   client.kill = (nick, comment) => {
     client.send("KILL", nick, comment);
@@ -33,3 +35,5 @@ export default createPlugin("kill")<KillFeatures>((client) => {
     client.emit("kill", { source, params: { nick, comment } });
   });
 });
+
+export default plugin;

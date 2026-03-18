@@ -1,6 +1,7 @@
 import { type Message, parseSource, type Source } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters for a channel topic change event. */
 export interface TopicEventParams {
   /** Channel where the topic is set. */
   channel: string;
@@ -9,10 +10,13 @@ export interface TopicEventParams {
   topic?: string;
 }
 
+/** Event emitted when a channel topic is changed. */
 export type TopicEvent = Message<TopicEventParams>;
 
+/** Event emitted in response to a TOPIC query (RPL_TOPIC or RPL_NOTOPIC). */
 export type TopicReplyEvent = Message<TopicEventParams>;
 
+/** Parameters for a RPL_TOPICWHOTIME reply (who set the topic and when). */
 export interface TopicWhoTimeReplyEventParams {
   /** Channel where the topic is set. */
   channel: string;
@@ -24,6 +28,7 @@ export interface TopicWhoTimeReplyEventParams {
   time: Date;
 }
 
+/** Event emitted with metadata about who set the topic and when. */
 export type TopicWhoTimeReplyEvent = Message<TopicWhoTimeReplyEventParams>;
 
 interface TopicFeatures {
@@ -41,7 +46,7 @@ interface TopicFeatures {
   };
 }
 
-export default createPlugin("topic")<TopicFeatures>((client) => {
+const plugin: Plugin<TopicFeatures> = createPlugin("topic")((client) => {
   // Sends TOPIC command.
 
   client.topic = (...params: string[]) => {
@@ -80,3 +85,5 @@ export default createPlugin("topic")<TopicFeatures>((client) => {
     });
   });
 });
+
+export default plugin;

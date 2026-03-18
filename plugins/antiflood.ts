@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import { newQueue } from "../core/queue.ts";
 
 interface AntiFloodFeatures {
@@ -10,7 +10,10 @@ interface AntiFloodFeatures {
   };
 }
 
-export default createPlugin("antiflood", [])<AntiFloodFeatures>(
+const plugin: Plugin<AntiFloodFeatures, AnyPlugins> = createPlugin(
+  "antiflood",
+  [],
+)(
   (client, options) => {
     if (!options.floodDelay || options.floodDelay <= 0) return;
     // Queue object and delay structure for anti-flood protection
@@ -34,3 +37,5 @@ export default createPlugin("antiflood", [])<AntiFloodFeatures>(
     });
   },
 );
+
+export default plugin;

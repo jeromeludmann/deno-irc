@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import nick from "./nick.ts";
 import register from "./register.ts";
 import registration from "./registration.ts";
@@ -12,10 +12,10 @@ interface InvalidNamesFeatures {
 
 const RESOLVING_ENABLED = false;
 
-export default createPlugin(
+const plugin: Plugin<InvalidNamesFeatures, AnyPlugins> = createPlugin(
   "invalid_names",
   [nick, register, registration],
-)<InvalidNamesFeatures>((client, options) => {
+)((client, options) => {
   const enabled = options.resolveInvalidNames ?? RESOLVING_ENABLED;
   if (!enabled) return;
 
@@ -38,3 +38,5 @@ export default createPlugin(
     client.user(user.username, user.realname);
   });
 });
+
+export default plugin;

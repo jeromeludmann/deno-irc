@@ -1,10 +1,11 @@
 import { Raw } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 import nick from "./nick.ts";
 import privmsg from "./privmsg.ts";
 import register from "./register.ts";
 
+/** Represents the identity of the connected IRC user. */
 export interface User {
   nick: string;
   username: string;
@@ -49,10 +50,10 @@ function chunks(str: string, n: number): string[] {
   return result;
 }
 
-export default createPlugin(
+const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
   "registration",
   [cap, nick, register, privmsg],
-)<RegistrationFeatures>((client, options) => {
+)((client, options) => {
   const {
     nick,
     username = nick,
@@ -145,3 +146,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

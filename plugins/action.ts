@@ -1,7 +1,8 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp from "./ctcp.ts";
 
+/** Parameters for a CTCP ACTION event (e.g., /me messages). */
 export interface CtcpActionEventParams {
   /** Target of the CTCP ACTION. */
   target: string;
@@ -10,6 +11,7 @@ export interface CtcpActionEventParams {
   text: string;
 }
 
+/** Event emitted when a CTCP ACTION message is received. */
 export type CtcpActionEvent = Message<CtcpActionEventParams>;
 
 interface ActionFeatures {
@@ -25,7 +27,9 @@ interface ActionFeatures {
   };
 }
 
-export default createPlugin("action", [ctcp])<ActionFeatures>((client) => {
+const plugin: Plugin<ActionFeatures, AnyPlugins> = createPlugin("action", [
+  ctcp,
+])((client) => {
   // Sends CTCP ACTION command.
 
   client.action = client.me = (target, text) => {
@@ -41,3 +45,5 @@ export default createPlugin("action", [ctcp])<ActionFeatures>((client) => {
     }
   });
 });
+
+export default plugin;

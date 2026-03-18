@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters for the register event (RPL_WELCOME). */
 export interface RegisterEventParams {
   /** Nick who is registered. */
   nick: string;
@@ -9,6 +10,7 @@ export interface RegisterEventParams {
   text: string;
 }
 
+/** Event emitted when the client is successfully registered on the server. */
 export type RegisterEvent = Message<RegisterEventParams>;
 
 interface RegisterFeatures {
@@ -24,7 +26,7 @@ interface RegisterFeatures {
   };
 }
 
-export default createPlugin("register")<RegisterFeatures>((client) => {
+const plugin: Plugin<RegisterFeatures> = createPlugin("register")((client) => {
   // Sends USER command.
 
   client.user = (username, realname) => {
@@ -44,3 +46,5 @@ export default createPlugin("register")<RegisterFeatures>((client) => {
     client.emit("register", { source, params: { nick, text } });
   });
 });
+
+export default plugin;

@@ -1,5 +1,5 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp, { RawCtcpEvent, RawCtcpReplyEvent } from "./ctcp.ts";
 
 /** DCC host kinds. */
@@ -212,7 +212,9 @@ export type DccCmd =
   | { action: "accept"; args: DccArgsFor<"accept"> };
 
 /** Create a typed DCC payload from a raw CTCP event. */
-function createDcc(event: RawCtcpEvent | RawCtcpReplyEvent) {
+function createDcc(
+  event: RawCtcpEvent | RawCtcpReplyEvent,
+): DccPayloadByAction[DccAction] | undefined {
   const { source, params: { arg } } = event;
   if (!source || !arg) return undefined;
 
@@ -437,7 +439,7 @@ function parseHost(raw: string): HostValue | undefined {
  * If a token starts with a quote but never closes, the remainder of
  * the string is returned as the token, with next = s.length.
  */
-function nextToken(s: string, i: number) {
+function nextToken(s: string, i: number): { tok: string; next: number } {
   const n = s.length;
 
   // skip spaces
@@ -547,99 +549,103 @@ interface DccFeatures {
   };
 }
 
-export default createPlugin("dcc", [ctcp])<DccFeatures>((client) => {
-  /** Emit a typed DCC event with its payload. */
-  const emit = <A extends DccAction>(
-    a: A,
-    p: Message<DccPayloadByAction[A]>,
-  ) => {
-    (client.emit as <K extends keyof DccEventMap>(
-      k: K,
-      v: DccEventMap[K],
-    ) => void)(
-      `dcc_${a}` as Extract<keyof DccEventMap, `dcc_${A}`>,
-      p as DccEventMap[Extract<keyof DccEventMap, `dcc_${A}`>],
-    );
-  };
+const plugin: Plugin<DccFeatures, AnyPlugins> = createPlugin("dcc", [ctcp])(
+  (client) => {
+    /** Emit a typed DCC event with its payload. */
+    const emit = <A extends DccAction>(
+      a: A,
+      p: Message<DccPayloadByAction[A]>,
+    ) => {
+      (client.emit as <K extends keyof DccEventMap>(
+        k: K,
+        v: DccEventMap[K],
+      ) => void)(
+        `dcc_${a}` as Extract<keyof DccEventMap, `dcc_${A}`>,
+        p as DccEventMap[Extract<keyof DccEventMap, `dcc_${A}`>],
+      );
+    };
 
-  client.dcc = (target: string, cmd: DccCmd): string => {
-    let msg: string;
+    client.dcc = (target: string, cmd: DccCmd): string => {
+      let msg: string;
 
-    switch (cmd.action) {
-      case "send": {
-        const a = cmd.args;
-        msg = [
-          "SEND",
-          fmtFilename(a.filename),
-          fmtHost(a.ip),
-          String(a.port),
-          String(a.size),
-          ...(a.token !== undefined ? [String(a.token)] : []),
-        ].join(" ");
-        break;
+      switch (cmd.action) {
+        case "send": {
+          const a = cmd.args;
+          msg = [
+            "SEND",
+            fmtFilename(a.filename),
+            fmtHost(a.ip),
+            String(a.port),
+            String(a.size),
+            ...(a.token !== undefined ? [String(a.token)] : []),
+          ].join(" ");
+          break;
+        }
+        case "chat": {
+          const a = cmd.args;
+          msg = [
+            "CHAT",
+            fmtHost(a.ip),
+            String(a.port),
+            ...(a.token !== undefined ? [String(a.token)] : []),
+          ].join(" ");
+          break;
+        }
+        case "schat": {
+          const a = cmd.args;
+          msg = [
+            "SCHAT",
+            fmtHost(a.ip),
+            String(a.port),
+            ...(a.token !== undefined ? [String(a.token)] : []),
+          ].join(" ");
+          break;
+        }
+        case "resume": {
+          const a = cmd.args;
+          msg = [
+            "RESUME",
+            fmtFilename(a.filename),
+            String(a.port),
+            String(a.position),
+            ...(a.token !== undefined ? [String(a.token)] : []),
+          ].join(" ");
+          break;
+        }
+        case "accept": {
+          const a = cmd.args;
+          msg = [
+            "ACCEPT",
+            fmtFilename(a.filename),
+            String(a.port),
+            String(a.position),
+            ...(a.token !== undefined ? [String(a.token)] : []),
+          ].join(" ");
+          break;
+        }
       }
-      case "chat": {
-        const a = cmd.args;
-        msg = [
-          "CHAT",
-          fmtHost(a.ip),
-          String(a.port),
-          ...(a.token !== undefined ? [String(a.token)] : []),
-        ].join(" ");
-        break;
-      }
-      case "schat": {
-        const a = cmd.args;
-        msg = [
-          "SCHAT",
-          fmtHost(a.ip),
-          String(a.port),
-          ...(a.token !== undefined ? [String(a.token)] : []),
-        ].join(" ");
-        break;
-      }
-      case "resume": {
-        const a = cmd.args;
-        msg = [
-          "RESUME",
-          fmtFilename(a.filename),
-          String(a.port),
-          String(a.position),
-          ...(a.token !== undefined ? [String(a.token)] : []),
-        ].join(" ");
-        break;
-      }
-      case "accept": {
-        const a = cmd.args;
-        msg = [
-          "ACCEPT",
-          fmtFilename(a.filename),
-          String(a.port),
-          String(a.position),
-          ...(a.token !== undefined ? [String(a.token)] : []),
-        ].join(" ");
-        break;
-      }
-    }
 
-    client.ctcp(target, "DCC", msg);
-    return `PRIVMSG ${target} :\x01DCC ${msg}\x01`;
-  };
+      client.ctcp(target, "DCC", msg);
+      return `PRIVMSG ${target} :\x01DCC ${msg}\x01`;
+    };
 
-  // Bridge CTCP DCC raw events to typed DCC events.
-  client.on(["raw_ctcp:dcc"], (msg) => {
-    const dcc = client.utils.dcc.createDcc(msg);
-    if (!dcc) return;
-    emit(dcc.action, { ...msg, params: dcc });
-  });
+    // Bridge CTCP DCC raw events to typed DCC events.
+    client.on(["raw_ctcp:dcc"], (msg) => {
+      const dcc = client.utils.dcc.createDcc(msg);
+      if (!dcc) return;
+      emit(dcc.action, { ...msg, params: dcc });
+    });
 
-  client.utils.dcc = {
-    createDcc,
-    parseUint,
-    parsePort,
-    parseToken,
-    isPassivePlaceholder,
-    parseHost,
-    nextToken,
-  };
-});
+    client.utils.dcc = {
+      createDcc,
+      parseUint,
+      parsePort,
+      parseToken,
+      isPassivePlaceholder,
+      parseHost,
+      nextToken,
+    };
+  },
+);
+
+export default plugin;

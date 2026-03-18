@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Aggregated WHOIS information for a user. */
 export interface WhoisReplyEventParams {
   /** Nick. */
   nick: string;
@@ -33,6 +34,7 @@ export interface WhoisReplyEventParams {
   away?: string;
 }
 
+/** Event emitted with complete WHOIS data after RPL_ENDOFWHOIS. */
 export type WhoisReplyEvent = Message<WhoisReplyEventParams>;
 
 interface WhoisFeatures {
@@ -48,7 +50,7 @@ interface WhoisFeatures {
   };
 }
 
-export default createPlugin("whois")<WhoisFeatures>((client) => {
+const plugin: Plugin<WhoisFeatures> = createPlugin("whois")((client) => {
   const buffers: Record<string, Partial<WhoisReplyEventParams>> = {};
 
   // Sends WHOIS command.
@@ -113,3 +115,5 @@ export default createPlugin("whois")<WhoisFeatures>((client) => {
     }
   });
 });
+
+export default plugin;

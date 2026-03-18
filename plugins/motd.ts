@@ -1,11 +1,13 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters carried by a MOTD reply event. */
 export interface MotdEventParams {
   /** Message of the day (MOTD). */
   motd?: string[];
 }
 
+/** Emitted when the server's message of the day has been fully received. */
 export type MotdEvent = Message<MotdEventParams>;
 
 interface MotdFeatures {
@@ -20,7 +22,7 @@ interface MotdFeatures {
   };
 }
 
-export default createPlugin("motd")<MotdFeatures>((client) => {
+const plugin: Plugin<MotdFeatures> = createPlugin("motd")((client) => {
   const motd: string[] = [];
 
   // Sends MOTD command.
@@ -51,3 +53,5 @@ export default createPlugin("motd")<MotdFeatures>((client) => {
     client.emit("motd_reply", { source, params: { motd } });
   });
 });
+
+export default plugin;

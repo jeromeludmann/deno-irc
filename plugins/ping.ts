@@ -1,14 +1,17 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp from "./ctcp.ts";
 
+/** Parameters for a server PING event. */
 export interface PingEventParams {
   /** Keys of the PING. */
   keys: string[];
 }
 
+/** Event emitted when a PING is received from the server. */
 export type PingEvent = Message<PingEventParams>;
 
+/** Parameters for a server PONG response, including latency. */
 export interface PongEventParams {
   /** Daemon of the PONG. */
   daemon: string;
@@ -20,8 +23,10 @@ export interface PongEventParams {
   latency: number;
 }
 
+/** Event emitted when a PONG is received from the server. */
 export type PongEvent = Message<PongEventParams>;
 
+/** Parameters for a CTCP PING query event. */
 export interface CtcpPingEventParams {
   /** Target of the CTCP PING query.
    *
@@ -32,8 +37,10 @@ export interface CtcpPingEventParams {
   key: string;
 }
 
+/** Event emitted when a CTCP PING query is received. */
 export type CtcpPingEvent = Message<CtcpPingEventParams>;
 
+/** Parameters for a CTCP PING reply, including round-trip latency. */
 export interface CtcpPingReplyEventParams {
   /** Key of the CTCP PING reply. */
   key: string;
@@ -42,6 +49,7 @@ export interface CtcpPingReplyEventParams {
   latency: number;
 }
 
+/** Event emitted when a CTCP PING reply is received. */
 export type CtcpPingReplyEvent = Message<CtcpPingReplyEventParams>;
 
 interface PingFeatures {
@@ -85,66 +93,70 @@ interface PingFeatures {
 
 const CTCP_REPLY_ENABLED = true;
 
-export default createPlugin("ping", [ctcp])<PingFeatures>((client, options) => {
-  // Sends PING command.
+const plugin: Plugin<PingFeatures, AnyPlugins> = createPlugin("ping", [ctcp])(
+  (client, options) => {
+    // Sends PING command.
 
-  client.ping = (target) => {
-    const key = Date.now().toString();
+    client.ping = (target) => {
+      const key = Date.now().toString();
 
-    if (target === undefined) {
-      client.send("PING", key);
-    } else {
-      client.ctcp(target, "PING", key);
-    }
-  };
+      if (target === undefined) {
+        client.send("PING", key);
+      } else {
+        client.ctcp(target, "PING", key);
+      }
+    };
 
-  // Emits 'ping' and 'pong' events.
+    // Emits 'ping' and 'pong' events.
 
-  const getLatency = (key: string): number => Date.now() - parseInt(key, 10);
+    const getLatency = (key: string): number => Date.now() - parseInt(key, 10);
 
-  client.on("raw:ping", (msg) => {
-    const { source, params: keys } = msg;
-    client.emit("ping", { source, params: { keys } });
-  });
+    client.on("raw:ping", (msg) => {
+      const { source, params: keys } = msg;
+      client.emit("ping", { source, params: { keys } });
+    });
 
-  client.on("raw:pong", (msg) => {
-    const { source, params: [daemon, key] } = msg;
-    const latency = getLatency(key);
-    client.emit("pong", { source, params: { daemon, key, latency } });
-  });
+    client.on("raw:pong", (msg) => {
+      const { source, params: [daemon, key] } = msg;
+      const latency = getLatency(key);
+      client.emit("pong", { source, params: { daemon, key, latency } });
+    });
 
-  // Emits 'ctcp_ping' and 'ctcp_ping_reply' events.
+    // Emits 'ctcp_ping' and 'ctcp_ping_reply' events.
 
-  client.on("raw_ctcp:ping", (msg) => {
-    const { source, params: { target, arg: key } } = msg;
-    if (key !== undefined) {
-      client.emit("ctcp_ping", { source, params: { target, key } });
-    }
-  });
-
-  client.on("raw_ctcp:ping_reply", (msg) => {
-    const { source, params: { arg: key } } = msg;
-    const latency = getLatency(key);
-    client.emit("ctcp_ping_reply", { source, params: { key, latency } });
-  });
-
-  // Replies to PING.
-
-  client.on("ping", (msg) => {
-    client.send("PONG", ...msg.params.keys);
-  });
-
-  // Replies to CTCP PING.
-
-  const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
-
-  if (ctcpReplyEnabled) {
-    client.on("ctcp_ping", (msg) => {
-      const { source, params: { key } } = msg;
-      if (source) {
-        const ctcp = client.utils.createCtcp("PING", key);
-        client.send("NOTICE", source.name, ctcp);
+    client.on("raw_ctcp:ping", (msg) => {
+      const { source, params: { target, arg: key } } = msg;
+      if (key !== undefined) {
+        client.emit("ctcp_ping", { source, params: { target, key } });
       }
     });
-  }
-});
+
+    client.on("raw_ctcp:ping_reply", (msg) => {
+      const { source, params: { arg: key } } = msg;
+      const latency = getLatency(key);
+      client.emit("ctcp_ping_reply", { source, params: { key, latency } });
+    });
+
+    // Replies to PING.
+
+    client.on("ping", (msg) => {
+      client.send("PONG", ...msg.params.keys);
+    });
+
+    // Replies to CTCP PING.
+
+    const ctcpReplyEnabled = options.ctcpReplies?.ping ?? CTCP_REPLY_ENABLED;
+
+    if (ctcpReplyEnabled) {
+      client.on("ctcp_ping", (msg) => {
+        const { source, params: { key } } = msg;
+        if (source) {
+          const ctcp = client.utils.createCtcp("PING", key);
+          client.send("NOTICE", source.name, ctcp);
+        }
+      });
+    }
+  },
+);
+
+export default plugin;

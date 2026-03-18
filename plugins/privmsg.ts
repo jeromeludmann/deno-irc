@@ -1,8 +1,9 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp from "./ctcp.ts";
 import chantypes from "./chantypes.ts";
 
+/** Parameters for a PRIVMSG event (channel or private message). */
 export interface PrivmsgEventParams {
   /** Target of the PRIVMSG.
    *
@@ -13,6 +14,7 @@ export interface PrivmsgEventParams {
   text: string;
 }
 
+/** Event emitted when a PRIVMSG is received. */
 export type PrivmsgEvent = Message<PrivmsgEventParams>;
 
 interface PrivmsgFeatures {
@@ -30,10 +32,10 @@ interface PrivmsgFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<PrivmsgFeatures, AnyPlugins> = createPlugin(
   "privmsg",
   [ctcp, chantypes],
-)<PrivmsgFeatures>((client) => {
+)((client) => {
   // Sends PRIVMSG command.
 
   client.privmsg = client.msg = (target, text) => {
@@ -58,3 +60,5 @@ export default createPlugin(
     ["privmsg:channel", "privmsg:private"],
   );
 });
+
+export default plugin;

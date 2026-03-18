@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { type ClientError } from "../core/errors.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 import { type AnyRawCommand } from "../core/protocol.ts";
 import { bold, dim, green, red } from "@std/fmt/colors";
 
@@ -108,9 +108,9 @@ const defaultFormattedLogger: LoggerImpl = (payload) => {
   }
 };
 
-export default createPlugin(
+const plugin: Plugin<VerboseFeatures> = createPlugin(
   "verbose",
-)<VerboseFeatures>((client, options) => {
+)((client, options) => {
   const getLoggerImpl = () => {
     switch (options.verbose) {
       case "raw":
@@ -147,3 +147,5 @@ export default createPlugin(
     loggerImpl({ type: "state", state, key, value });
   });
 });
+
+export default plugin;

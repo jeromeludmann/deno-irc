@@ -1,7 +1,8 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import myinfo from "./myinfo.ts";
 import isupport from "./isupport.ts";
 
+/** Map of channel mode letters to their type and optional prefix. */
 export interface Modes {
   [mode: string]: {
     type: string;
@@ -9,6 +10,7 @@ export interface Modes {
   };
 }
 
+/** Map of nick prefixes (e.g., @, +) to their priority order. */
 export interface Prefixes {
   [prefix: string]: {
     priority: number;
@@ -22,10 +24,10 @@ interface ChanmodesFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<ChanmodesFeatures, AnyPlugins> = createPlugin(
   "chanmodes",
   [myinfo, isupport],
-)<ChanmodesFeatures>((client) => {
+)((client) => {
   // Default 'chanmodes' state.
 
   client.state.chanmodes = {
@@ -127,3 +129,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

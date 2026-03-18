@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import join, { type ChannelDescriptions } from "./join.ts";
 import register from "./register.ts";
 
@@ -9,10 +9,10 @@ interface JoinOnRegisterFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<JoinOnRegisterFeatures, AnyPlugins> = createPlugin(
   "join_on_register",
   [join, register],
-)<JoinOnRegisterFeatures>((client, options) => {
+)((client, options) => {
   const channels = options.channels;
   if (!channels) return;
 
@@ -21,3 +21,5 @@ export default createPlugin(
     client.join(...channels);
   });
 });
+
+export default plugin;

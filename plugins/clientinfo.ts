@@ -1,19 +1,23 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp, { type AnyCtcpCommand } from "./ctcp.ts";
 
+/** Parameters for a CTCP CLIENTINFO query event. */
 export interface CtcpClientinfoEventParams {
   /** Target of the CTCP CLIENTINFO query. */
   target: string;
 }
 
+/** Event emitted when a CTCP CLIENTINFO query is received. */
 export type CtcpClientinfoEvent = Message<CtcpClientinfoEventParams>;
 
+/** Parameters for a CTCP CLIENTINFO reply event. */
 export interface CtcpClientinfoReplyEventParams {
   /** Array of supported commands by the user. */
   supported: Uppercase<AnyCtcpCommand>[];
 }
 
+/** Event emitted when a CTCP CLIENTINFO reply is received. */
 export type CtcpClientinfoReplyEvent = Message<CtcpClientinfoReplyEventParams>;
 
 interface ClientinfoFeatures {
@@ -39,10 +43,10 @@ const REPLY_ENABLED = true;
 
 const SUPPORTED_COMMANDS = ["PING", "TIME", "VERSION"];
 
-export default createPlugin(
+const plugin: Plugin<ClientinfoFeatures, AnyPlugins> = createPlugin(
   "clientinfo",
   [ctcp],
-)<ClientinfoFeatures>((client, options) => {
+)((client, options) => {
   // Sends CTCP CLIENTINFO command.
 
   client.clientinfo = (target) => {
@@ -77,3 +81,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** A channel entry returned by the LIST command. */
 export interface Channel {
   /** Name of the channel. */
   name: string;
@@ -12,11 +13,13 @@ export interface Channel {
   topic: string;
 }
 
+/** Parameters carried by a LIST reply event. */
 export interface ListReplyEventParams {
   /** The entire channel list. */
   channels: Channel[];
 }
 
+/** Emitted when the full channel list has been received from the server. */
 export type ListReplyEvent = Message<ListReplyEventParams>;
 
 interface ListFeatures {
@@ -31,7 +34,7 @@ interface ListFeatures {
   };
 }
 
-export default createPlugin("list")<ListFeatures>((client) => {
+const plugin: Plugin<ListFeatures> = createPlugin("list")((client) => {
   let buffer: Channel[] = [];
 
   // Sends LIST command.
@@ -70,3 +73,5 @@ export default createPlugin("list")<ListFeatures>((client) => {
     buffer = []; // useful because sometimes RPL_LISTSTART could not be sent
   });
 });
+
+export default plugin;

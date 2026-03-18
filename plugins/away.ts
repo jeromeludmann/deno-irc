@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters for an RPL_AWAY reply event. */
 export interface AwayReplyEventParams {
   /** Nick of the client who is away. */
   nick: string;
@@ -9,6 +10,7 @@ export interface AwayReplyEventParams {
   text: string;
 }
 
+/** Event emitted when a user's away status is returned by the server. */
 export type AwayReplyEvent = Message<AwayReplyEventParams>;
 
 interface AwayFeatures {
@@ -41,7 +43,7 @@ interface AwayFeatures {
   };
 }
 
-export default createPlugin("away")<AwayFeatures>((client) => {
+const plugin: Plugin<AwayFeatures> = createPlugin("away")((client) => {
   client.state.away = false;
 
   // Sends AWAY command.
@@ -67,3 +69,5 @@ export default createPlugin("away")<AwayFeatures>((client) => {
   client.on("raw:rpl_unaway", () => client.state.away = false);
   client.on("raw:rpl_nowaway", () => client.state.away = true);
 });
+
+export default plugin;

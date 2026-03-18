@@ -1,11 +1,13 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** IRC server identification (host and version). */
 export interface Server {
   host: string;
   version: string;
 }
 
+/** Parameters carried by a MYINFO event (server info and supported modes). */
 export interface MyinfoEventParams {
   /** Server informations. */
   server: Server;
@@ -17,6 +19,7 @@ export interface MyinfoEventParams {
   chanmodes: string;
 }
 
+/** Emitted when the server sends its RPL_MYINFO with server capabilities. */
 export type MyinfoEvent = Message<MyinfoEventParams>;
 
 interface MyinfoFeatures {
@@ -28,7 +31,7 @@ interface MyinfoFeatures {
   };
 }
 
-export default createPlugin("myinfo")<MyinfoFeatures>((client) => {
+const plugin: Plugin<MyinfoFeatures> = createPlugin("myinfo")((client) => {
   // Emits 'myinfo' event.
 
   client.on("raw:rpl_myinfo", (msg) => {
@@ -51,3 +54,5 @@ export default createPlugin("myinfo")<MyinfoFeatures>((client) => {
     client.state.server = msg.params.server;
   });
 });
+
+export default plugin;

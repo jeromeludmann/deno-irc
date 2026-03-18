@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters for a PART (channel leave) event. */
 export interface PartEventParams {
   /** Channel left by the user. */
   channel: string;
@@ -9,6 +10,7 @@ export interface PartEventParams {
   comment?: string;
 }
 
+/** Event emitted when a user leaves a channel. */
 export type PartEvent = Message<PartEventParams>;
 
 interface PartFeatures {
@@ -21,7 +23,7 @@ interface PartFeatures {
   };
 }
 
-export default createPlugin("part")<PartFeatures>((client) => {
+const plugin: Plugin<PartFeatures> = createPlugin("part")((client) => {
   // Sends PART command.
 
   client.part = (channel, comment) => {
@@ -35,3 +37,5 @@ export default createPlugin("part")<PartFeatures>((client) => {
     client.emit("part", { source, params: { channel, comment } });
   });
 });
+
+export default plugin;

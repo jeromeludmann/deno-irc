@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import invite from "./invite.ts";
 import join from "./join.ts";
 import registration from "./registration.ts";
@@ -12,10 +12,10 @@ interface JoinOnInviteFeatures {
 
 const JOIN_ON_INVITE_ENABLED = false;
 
-export default createPlugin(
+const plugin: Plugin<JoinOnInviteFeatures, AnyPlugins> = createPlugin(
   "join_on_invite",
   [join, registration, invite],
-)<JoinOnInviteFeatures>((client, options) => {
+)((client, options) => {
   const enabled = options.joinOnInvite ?? JOIN_ON_INVITE_ENABLED;
   if (!enabled) return;
 
@@ -26,3 +26,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

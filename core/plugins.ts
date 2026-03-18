@@ -14,6 +14,7 @@ type PluginFeatures = {
   [K in AnyPluginFeaturesKey]?: Record<string, unknown>;
 };
 
+/** Defines a named plugin with its dependencies and initialization function. */
 export interface Plugin<
   F extends PluginFeatures = Record<never, never>,
   P extends Plugin<any, any>[] = [],
@@ -22,6 +23,9 @@ export interface Plugin<
   deps: P;
   fn: PluginFn<F>;
 }
+
+/** Type alias for plugin dependency arrays, centralizing `any` usage. */
+export type AnyPlugins = Plugin<any, any>[];
 
 type ExtendedClient<F extends PluginFeatures> =
   & CoreClient<CoreFeatures["events"] & F["events"]>
@@ -43,6 +47,7 @@ type InferPluginFeatures<
   P extends Plugin,
 > = P extends Plugin<infer F, infer _P> ? F : PluginFeatures;
 
+/** Merges the feature types of multiple plugins into a single intersection type. */
 export type CombinePluginFeatures<
   P extends Plugin<any, any>[],
 > = UnionToIntersection<InferPluginFeatures<P[number]>>;
@@ -55,6 +60,7 @@ type PluginFn<
   options: Readonly<ExtendedOptions<CombinePluginFeatures<P> & F>>,
 ) => void;
 
+/** Resolves plugin dependency graph and initializes all plugins on the client. */
 export function loadPlugins(
   client: CoreClient<any>,
   options: CoreFeatures["options"],
@@ -78,6 +84,7 @@ export function loadPlugins(
   }
 }
 
+/** Factory for creating a typed plugin with optional dependencies. */
 export function createPlugin<P extends Plugin<any, any>[] = []>(
   /** Unique name of the plugin. */
   name: string,
@@ -85,7 +92,9 @@ export function createPlugin<P extends Plugin<any, any>[] = []>(
    *
    * Required plugins to load the plugin. They will be loaded before. */
   deps: P = [] as unknown as P,
-) {
+): <F extends PluginFeatures = Record<never, never>>(
+  fn: PluginFn<F, P>,
+) => Plugin<F, P> {
   return <
     F extends PluginFeatures = Record<never, never>,
   >(fn: PluginFn<F, P>): Plugin<F, P> => ({

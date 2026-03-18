@@ -1,10 +1,12 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 import chanmodes from "./chanmodes.ts";
 
+/** Map of nicknames to their prefix arrays for a channel. */
 export type Names = Record<string, string[]>;
 
+/** Parameters carried by a NAMES reply event. */
 export interface NamesReplyEventParams {
   /** Name of the channel. */
   channel: string;
@@ -13,6 +15,7 @@ export interface NamesReplyEventParams {
   names: Names;
 }
 
+/** Emitted when the full NAMES list for a channel has been received. */
 export type NamesReplyEvent = Message<NamesReplyEventParams>;
 
 interface NamesFeatures {
@@ -25,10 +28,10 @@ interface NamesFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<NamesFeatures, AnyPlugins> = createPlugin(
   "names",
   [cap, chanmodes],
-)<NamesFeatures>((client) => {
+)((client) => {
   const buffers: Record<string, Names> = {};
 
   client.state.capabilities.push("multi-prefix");
@@ -83,3 +86,5 @@ export default createPlugin(
     }
   });
 });
+
+export default plugin;

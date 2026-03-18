@@ -1,7 +1,8 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import myinfo from "./myinfo.ts";
 import isupport from "./isupport.ts";
 
+/** Map of user mode characters to their type classification. */
 export interface Modes {
   [mode: string]: { type: string };
 }
@@ -12,10 +13,10 @@ interface UsermodesFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<UsermodesFeatures, AnyPlugins> = createPlugin(
   "usermodes",
   [myinfo, isupport],
-)<UsermodesFeatures>((client) => {
+)((client) => {
   // Default 'usermodes' state.
 
   client.state.usermodes = {
@@ -28,3 +29,5 @@ export default createPlugin(
     "w": { type: "d" }, // RFC1459: WALLOPS
   };
 });
+
+export default plugin;

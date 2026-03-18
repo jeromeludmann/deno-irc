@@ -1,6 +1,7 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters carried by an INVITE event. */
 export interface InviteEventParams {
   /** Nick who was invited. */
   nick: string;
@@ -9,6 +10,7 @@ export interface InviteEventParams {
   channel: string;
 }
 
+/** Emitted when a user is invited to a channel. */
 export type InviteEvent = Message<InviteEventParams>;
 
 interface InviteFeatures {
@@ -21,7 +23,7 @@ interface InviteFeatures {
   };
 }
 
-export default createPlugin("invite")<InviteFeatures>((client) => {
+const plugin: Plugin<InviteFeatures> = createPlugin("invite")((client) => {
   // Sends INVITE command.
   client.invite = (nick, channel) => {
     client.send("INVITE", nick, channel);
@@ -33,3 +35,5 @@ export default createPlugin("invite")<InviteFeatures>((client) => {
     client.emit("invite", { source, params: { nick, channel } });
   });
 });
+
+export default plugin;

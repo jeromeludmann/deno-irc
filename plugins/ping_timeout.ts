@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ping from "./ping.ts";
 import register from "./register.ts";
 
@@ -13,10 +13,10 @@ interface PingTimeoutFeatures {
 
 const DEFAULT_PING_TIMEOUT = 30;
 
-export default createPlugin(
+const plugin: Plugin<PingTimeoutFeatures, AnyPlugins> = createPlugin(
   "ping_timeout",
   [ping, register],
-)<PingTimeoutFeatures>((client, options) => {
+)((client, options) => {
   if (options.pingTimeout === false) {
     return;
   }
@@ -67,3 +67,5 @@ export default createPlugin(
     stopPingTimer();
   });
 });
+
+export default plugin;

@@ -13,6 +13,7 @@ import {
 
 type AnyRawEventName = `raw:${AnyCommand | AnyReply | AnyError}`;
 
+/** Describes the base feature set (options, events, state, utils) of the core IRC client. */
 export interface CoreFeatures {
   options: EventEmitterOptions & {
     /** Size of the buffer that receives data from server.
@@ -36,6 +37,7 @@ export interface CoreFeatures {
   utils: Record<never, never>;
 }
 
+/** Generates an array of `raw:<command>` event names from a protocol category. */
 export function generateRawEvents<
   T extends keyof typeof PROTOCOL,
   U extends typeof PROTOCOL[T],
@@ -49,6 +51,7 @@ export function generateRawEvents<
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
 
+/** Network address of a remote IRC server. */
 export interface RemoteAddr {
   hostname: string;
   port: number;
@@ -61,6 +64,7 @@ interface ConnectImpl {
   withTls(opts: Deno.ConnectTlsOptions): Promise<Deno.Conn>;
 }
 
+/** Low-level IRC client handling TCP connection, raw message parsing, and event dispatching. */
 export class CoreClient<
   TEvents extends CoreFeatures["events"] = CoreFeatures["events"],
 > extends EventEmitter<TEvents> {
@@ -72,7 +76,9 @@ export class CoreClient<
     withTls: Deno.connectTls,
   };
   protected conn: Deno.Conn | null = null;
-  protected hooks = new Hooks<CoreClient<TEvents>>(this);
+  protected hooks: Hooks<CoreClient<TEvents>> = new Hooks<CoreClient<TEvents>>(
+    this,
+  );
 
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();

@@ -1,11 +1,13 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
+/** Parameters for a QUIT event. */
 export interface QuitEventParams {
   /** Optional comment of the QUIT. */
   comment?: string;
 }
 
+/** Event emitted when a user disconnects from the server. */
 export type QuitEvent = Message<QuitEventParams>;
 
 interface QuitFeatures {
@@ -20,7 +22,7 @@ interface QuitFeatures {
   };
 }
 
-export default createPlugin("quit")<QuitFeatures>((client) => {
+const plugin: Plugin<QuitFeatures> = createPlugin("quit")((client) => {
   // Sends QUIT command.
   client.quit = async (...params: string[]) => {
     await client.send("QUIT", ...params);
@@ -33,3 +35,5 @@ export default createPlugin("quit")<QuitFeatures>((client) => {
     client.emit("quit", { source, params: { comment } });
   });
 });
+
+export default plugin;

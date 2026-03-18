@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import isupport from "./isupport.ts";
 
 interface ChantypesFeatures {
@@ -13,10 +13,10 @@ interface ChantypesFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<ChantypesFeatures, AnyPlugins> = createPlugin(
   "chantypes",
   [isupport],
-)<ChantypesFeatures>((client) => {
+)((client) => {
   // Default 'chantypes' state.
 
   client.state.chantypes = "#";
@@ -36,3 +36,5 @@ export default createPlugin(
     return client.state.chantypes.includes(target.charAt(0));
   };
 });
+
+export default plugin;

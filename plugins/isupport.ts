@@ -1,11 +1,13 @@
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 import { type Message } from "../core/parsers.ts";
 
+/** Parameters carried by an ISUPPORT event. */
 export interface IsupportEventParams {
   /** Value of the current ISUPPORT parameter. */
   value?: string;
 }
 
+/** Emitted for each ISUPPORT parameter advertised by the server. */
 export type IsupportEvent = Message<IsupportEventParams>;
 
 type AnyIsupportParamKey = "USERMODES" | "CHANMODES" | "PREFIX" | "CHANTYPES";
@@ -16,7 +18,7 @@ interface IsupportFeatures {
   };
 }
 
-export default createPlugin("isupport")<IsupportFeatures>((client) => {
+const plugin: Plugin<IsupportFeatures> = createPlugin("isupport")((client) => {
   // Emits 'isupport:*' events.
 
   client.on("raw:rpl_isupport", (msg) => {
@@ -38,3 +40,5 @@ export default createPlugin("isupport")<IsupportFeatures>((client) => {
     }
   });
 });
+
+export default plugin;

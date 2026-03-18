@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
 interface OperFeatures {
   commands: {
@@ -11,7 +11,7 @@ interface OperFeatures {
   };
 }
 
-export default createPlugin("oper")<OperFeatures>((client) => {
+const plugin: Plugin<OperFeatures> = createPlugin("oper")((client) => {
   client.state.oper = false;
 
   // Sends OPER command.
@@ -32,3 +32,5 @@ export default createPlugin("oper")<OperFeatures>((client) => {
     client.state.oper = false;
   });
 });
+
+export default plugin;

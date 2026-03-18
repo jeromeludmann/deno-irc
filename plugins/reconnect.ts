@@ -1,5 +1,5 @@
 import { RemoteAddr } from "../core/client.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import register from "./register.ts";
 
 interface ReconnectFeatures {
@@ -36,10 +36,10 @@ const DEFAULT_ATTEMPTS = 10;
 const DEFAULT_DELAY = 5;
 const DEFAULT_BACKOFF_FACTOR = { STATIC: 1, EXPONENTIAL: 2 };
 
-export default createPlugin(
+const plugin: Plugin<ReconnectFeatures, AnyPlugins> = createPlugin(
   "reconnect",
   [register],
-)<ReconnectFeatures>((client, options) => {
+)((client, options) => {
   let config = options.reconnect ?? DEFAULT_RECONNECT;
   if (!config) return;
 
@@ -109,3 +109,5 @@ export default createPlugin(
   };
   client.hooks.beforeCall("connect", requireErrorListener);
 });
+
+export default plugin;

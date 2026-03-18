@@ -12,6 +12,7 @@ type InferredPayload<
   TEventName extends keyof TEvents,
 > = TEvents[TEventName];
 
+/** Configuration options for the event emitter. */
 export interface EventEmitterOptions {
   /** Number of maximum registrable listeners.
    *
@@ -23,6 +24,7 @@ export interface EventEmitterOptions {
 
 const MAX_LISTENERS_PER_EVENT = 1000;
 
+/** Type-safe event emitter supporting multi-events, one-time listeners, and listener limits. */
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners: EventListeners<TEvents>;
   private multiEventNames: MultiEventNames<TEvents>;

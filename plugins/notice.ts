@@ -1,8 +1,9 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ctcp from "./ctcp.ts";
 import chantypes from "./chantypes.ts";
 
+/** Parameters carried by a NOTICE event. */
 export interface NoticeEventParams {
   /** Target of the NOTICE.
    *
@@ -13,6 +14,7 @@ export interface NoticeEventParams {
   text: string;
 }
 
+/** Emitted when a NOTICE is received (channel or private). */
 export type NoticeEvent = Message<NoticeEventParams>;
 
 interface NoticeFeatures {
@@ -27,10 +29,10 @@ interface NoticeFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<NoticeFeatures, AnyPlugins> = createPlugin(
   "notice",
   [ctcp, chantypes],
-)<NoticeFeatures>((client) => {
+)((client) => {
   // Sends NOTICE command.
 
   client.notice = (target, text) => {
@@ -55,3 +57,5 @@ export default createPlugin(
     ["notice:channel", "notice:private"],
   );
 });
+
+export default plugin;

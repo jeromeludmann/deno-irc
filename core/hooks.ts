@@ -1,6 +1,7 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 type AsyncReturnType<T extends () => unknown> = Awaited<ReturnType<T>>;
 
+/** Intercepts method calls and property mutations on a target object via monkey-patching and proxies. */
 export class Hooks<T extends Record<PropertyKey, any>> {
   constructor(private target: T) {}
 

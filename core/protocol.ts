@@ -273,6 +273,7 @@ const ERRORS = {
   "907": "err_saslalready",
 } as const;
 
+/** Lookup tables mapping raw IRC protocol codes/commands to human-readable names. */
 export const PROTOCOL = {
   COMMANDS,
   REPLIES,
@@ -280,11 +281,17 @@ export const PROTOCOL = {
   ALL: { ...COMMANDS, ...REPLIES, ...ERRORS },
 };
 
+/** Raw IRC command string (e.g. `"PRIVMSG"`, `"JOIN"`). */
 export type AnyRawCommand = keyof typeof COMMANDS;
+/** Human-readable IRC command name (e.g. `"privmsg"`, `"join"`). */
 export type AnyCommand = typeof COMMANDS[AnyRawCommand];
 
+/** Raw IRC numeric reply code (e.g. `"001"`, `"353"`). */
 export type AnyRawReply = keyof typeof REPLIES;
+/** Human-readable IRC reply name (e.g. `"rpl_welcome"`, `"rpl_namreply"`). */
 export type AnyReply = typeof REPLIES[AnyRawReply];
 
+/** Raw IRC numeric error code (e.g. `"401"`, `"433"`). */
 export type AnyRawError = keyof typeof ERRORS;
+/** Human-readable IRC error name (e.g. `"err_nosuchnick"`, `"err_nicknameinuse"`). */
 export type AnyError = typeof ERRORS[AnyRawError];

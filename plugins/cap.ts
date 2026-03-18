@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
 type AnyCapabilityCommand =
   | "LS"
@@ -32,7 +32,7 @@ interface CapNegotiationOptions {
   extraCaps?: string[];
 }
 
-export default createPlugin("cap")<CapFeatures>((client) => {
+const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
   client.state.capabilities = [];
 
   // Sends CAP command.
@@ -62,3 +62,5 @@ export default createPlugin("cap")<CapFeatures>((client) => {
     client.cap("END");
   };
 });
+
+export default plugin;

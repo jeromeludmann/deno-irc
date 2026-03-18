@@ -1,7 +1,7 @@
 import { type Raw } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { createPlugin, type Plugin } from "../core/plugins.ts";
 
-export default createPlugin("throw_on_error")((client) => {
+const plugin: Plugin = createPlugin("throw_on_error")((client) => {
   // Wraps server ERROR message into an `Error` object.
   // It will throw error if there are no error listeners bound to it.
 
@@ -12,3 +12,5 @@ export default createPlugin("throw_on_error")((client) => {
 
   client.on("raw:error", emitError);
 });
+
+export default plugin;

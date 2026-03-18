@@ -1,5 +1,5 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import chanmodes from "./chanmodes.ts";
 import chantypes from "./chantypes.ts";
 import names, { type Names } from "./names.ts";
@@ -12,8 +12,10 @@ import part from "./part.ts";
 import quit from "./quit.ts";
 import registration from "./registration.ts";
 
+/** Sorted list of nicknames with their highest channel prefix. */
 export type Nicklist = { prefix: string; nick: string }[];
 
+/** Parameters carried by a nicklist update event. */
 export interface NicklistEventParams {
   /** Name of the channel. */
   channel: string;
@@ -22,6 +24,7 @@ export interface NicklistEventParams {
   nicklist: Nicklist;
 }
 
+/** Emitted when a channel's nicklist is created or updated. */
 export type NicklistEvent = Message<NicklistEventParams>;
 
 interface NicklistFeatures {
@@ -37,7 +40,7 @@ interface NicklistFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<NicklistFeatures, AnyPlugins> = createPlugin(
   "nicklist",
   [
     chanmodes,
@@ -52,7 +55,7 @@ export default createPlugin(
     quit,
     registration,
   ],
-)<NicklistFeatures>((client) => {
+)((client) => {
   const namesMap: Record<string, Names> = {};
   client.state.nicklists = {};
 
@@ -205,3 +208,5 @@ export default createPlugin(
 
   client.nicklist = client.names;
 });
+
+export default plugin;

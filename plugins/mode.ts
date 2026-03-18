@@ -1,5 +1,5 @@
 import { type Message } from "../core/parsers.ts";
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import chanmodes, { type Modes } from "./chanmodes.ts";
 import usermodes from "./usermodes.ts";
 import chantypes from "./chantypes.ts";
@@ -12,6 +12,7 @@ interface Mode {
   arg?: string;
 }
 
+/** Parameters for a single mode change (letter, optional arg, and target). */
 export type ModeEventParams = Mode & {
   /** Target of the MODE.
    *
@@ -19,8 +20,10 @@ export type ModeEventParams = Mode & {
   target: string;
 };
 
+/** Emitted when a mode change occurs on a channel or user. */
 export type ModeEvent = Message<ModeEventParams>;
 
+/** Parameters carried by a MODE reply (all active modes on a target). */
 export interface ModeReplyEventParams {
   /** Target of the MODE reply.
    *
@@ -31,6 +34,7 @@ export interface ModeReplyEventParams {
   modes: Mode[];
 }
 
+/** Emitted in response to a mode query, containing all active modes. */
 export type ModeReplyEvent = Message<ModeReplyEventParams>;
 
 interface ModeFeatures {
@@ -68,10 +72,10 @@ interface ModeFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<ModeFeatures, AnyPlugins> = createPlugin(
   "mode",
   [chanmodes, usermodes, chantypes],
-)<ModeFeatures>((client) => {
+)((client) => {
   function parseModes(rawModes: string[], supportedModes: Modes): Mode[] {
     const modes: Mode[] = [];
     let modeSet: "+" | "-" | "" = "";
@@ -192,3 +196,5 @@ export default createPlugin(
     client.emit(isChannel ? "mode_reply:channel" : "mode_reply:user", payload);
   });
 });
+
+export default plugin;

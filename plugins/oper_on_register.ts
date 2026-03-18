@@ -1,4 +1,4 @@
-import { createPlugin } from "../core/plugins.ts";
+import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import oper from "./oper.ts";
 import register from "./register.ts";
 
@@ -15,10 +15,10 @@ interface OperOnRegisterFeatures {
   };
 }
 
-export default createPlugin(
+const plugin: Plugin<OperOnRegisterFeatures, AnyPlugins> = createPlugin(
   "oper_on_register",
   [oper, register],
-)<OperOnRegisterFeatures>((client, options) => {
+)((client, options) => {
   const { user, pass } = options.oper ?? {};
   if (!user || !pass) return;
 
@@ -27,3 +27,5 @@ export default createPlugin(
     client.oper(user, pass);
   });
 });
+
+export default plugin;
