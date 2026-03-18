@@ -1,15 +1,11 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@henrygd/queue@^1.0.6": "1.0.6",
     "jsr:@std/assert@^1.0.6": "1.0.6",
     "jsr:@std/fmt@^1.0.2": "1.0.2",
     "jsr:@std/internal@^1.0.4": "1.0.4"
   },
   "jsr": {
-    "@henrygd/queue@1.0.6": {
-      "integrity": "f5ff9ee41b9abcaf1b9f878cae72fdb7a3955740938871228f8cdcb75d037d8f"
-    },
     "@std/assert@1.0.6": {
       "integrity": "1904c05806a25d94fe791d6d883b685c9e2dcd60e4f9fc30f4fc5cf010c72207",
       "dependencies": [
@@ -42,7 +38,6 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@henrygd/queue@^1.0.6",
       "jsr:@std/assert@^1.0.6",
       "jsr:@std/fmt@^1.0.2"
     ]

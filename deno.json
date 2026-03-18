@@ -38,7 +38,6 @@
     ]
   },
   "imports": {
-    "@henrygd/queue": "jsr:@henrygd/queue@^1.0.6",
     "@std/assert": "jsr:@std/assert@^1.0.6",
     "@std/fmt": "jsr:@std/fmt@^1.0.2"
   }
