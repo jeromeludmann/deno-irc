@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download Deno
         uses: denoland/setup-deno@v2
@@ -30,6 +30,10 @@ jobs:
       - name: Lint sources
         if: matrix.os == 'ubuntu-latest'
         run: deno task lint
+
+      - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
+        run: deno fmt --check
 
       - name: Run tests
         run: deno task test

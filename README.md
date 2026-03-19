@@ -19,6 +19,12 @@ Now available on [JSR](https://jsr.io/@irc/client).
 The first thing to do is to import the `Client`:
 
 ```ts
+import { Client } from "jsr:@irc/client";
+```
+
+Alternatively, you can use the `deno.land/x` registry:
+
+```ts
 import { Client } from "https://deno.land/x/irc/mod.ts";
 ```
 
