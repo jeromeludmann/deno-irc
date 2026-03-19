@@ -1,6 +1,6 @@
-// deno-lint-ignore-file no-explicit-any
 type Listener<T> = (payload: T) => void;
 
+// deno-lint-ignore no-explicit-any
 type EventListeners<T> = Map<keyof T, Set<Listener<any>>>;
 
 type MemorizedEventListenerCounts<T> = Map<keyof T, number>;
@@ -25,6 +25,7 @@ export interface EventEmitterOptions {
 const MAX_LISTENERS_PER_EVENT = 1000;
 
 /** Type-safe event emitter supporting multi-events, one-time listeners, and listener limits. */
+// deno-lint-ignore no-explicit-any
 export class EventEmitter<TEvents extends Record<string, any>> {
   private listeners: EventListeners<TEvents>;
   private multiEventNames: MultiEventNames<TEvents>;

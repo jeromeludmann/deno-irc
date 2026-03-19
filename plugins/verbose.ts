@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { type ClientError } from "../core/errors.ts";
 import { createPlugin, type Plugin } from "../core/plugins.ts";
 import { type AnyRawCommand } from "../core/protocol.ts";
@@ -12,7 +11,7 @@ interface RawLogPayload {
 interface EventLogPayload {
   type: "event";
   event: string;
-  payload: any;
+  payload: unknown;
 }
 
 interface CommandLogPayload {
@@ -23,9 +22,9 @@ interface CommandLogPayload {
 
 interface StateLogPayload {
   type: "state";
-  state: any;
+  state: Record<string, unknown>;
   key: string;
-  value: any;
+  value: unknown;
 }
 
 type LogPayload =
@@ -127,6 +126,7 @@ const plugin: Plugin<VerboseFeatures> = createPlugin(
   const loggerImpl = getLoggerImpl();
   if (!loggerImpl) return;
 
+  // deno-lint-ignore no-explicit-any
   client.hooks.afterCall("read" as any, (chunks: string | null) => {
     loggerImpl({ type: "raw_input", msg: chunks });
   });

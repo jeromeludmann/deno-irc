@@ -1,5 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
-
 import { type CoreClient, type CoreFeatures } from "./client.ts";
 import { type Hooks } from "./hooks.ts";
 
@@ -17,6 +15,7 @@ type PluginFeatures = {
 /** Defines a named plugin with its dependencies and initialization function. */
 export interface Plugin<
   F extends PluginFeatures = Record<never, never>,
+  // deno-lint-ignore no-explicit-any
   P extends Plugin<any, any>[] = [],
 > {
   name: `plugins/${string}`;
@@ -25,6 +24,7 @@ export interface Plugin<
 }
 
 /** Type alias for plugin dependency arrays, centralizing `any` usage. */
+// deno-lint-ignore no-explicit-any
 export type AnyPlugins = Plugin<any, any>[];
 
 type ExtendedClient<F extends PluginFeatures> =
@@ -49,6 +49,7 @@ type InferPluginFeatures<
 
 /** Merges the feature types of multiple plugins into a single intersection type. */
 export type CombinePluginFeatures<
+  // deno-lint-ignore no-explicit-any
   P extends Plugin<any, any>[],
 > = UnionToIntersection<InferPluginFeatures<P[number]>>;
 
@@ -62,12 +63,14 @@ type PluginFn<
 
 /** Resolves plugin dependency graph and initializes all plugins on the client. */
 export function loadPlugins(
+  // deno-lint-ignore no-explicit-any
   client: CoreClient<any>,
   options: CoreFeatures["options"],
   plugins: Plugin[],
 ): void {
   const loaded = new Set<string>();
 
+  // deno-lint-ignore no-explicit-any
   const resolvePluginDeps = (plugin: Plugin<any>, stack: string[]) => {
     if (loaded.has(plugin.name)) return;
 
@@ -92,6 +95,7 @@ export function loadPlugins(
 }
 
 /** Factory for creating a typed plugin with optional dependencies. */
+// deno-lint-ignore no-explicit-any
 export function createPlugin<P extends Plugin<any, any>[] = []>(
   /** Unique name of the plugin. */
   name: string,
@@ -107,6 +111,7 @@ export function createPlugin<P extends Plugin<any, any>[] = []>(
   >(fn: PluginFn<F, P>): Plugin<F, P> => ({
     name: `plugins/${name}`,
     deps,
+    // deno-lint-ignore no-explicit-any
     fn: fn as PluginFn<any, any>,
   });
 }
