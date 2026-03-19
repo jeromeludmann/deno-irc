@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { CoreClient } from "./client.ts";
 import { createPlugin, loadPlugins, type Plugin } from "./plugins.ts";
@@ -44,5 +44,24 @@ describe("core/plugins", (test) => {
     loadPlugins(null as unknown as CoreClient, {}, plugins);
 
     assertEquals(loaded, ["p1", "p2"]);
+  });
+
+  test("throw on circular plugin dependency", () => {
+    const fakePlugin = (name: string, deps: Plugin<any, any>[] = []) =>
+      createPlugin(name, deps)(() => {});
+
+    const p1 = fakePlugin("p1");
+    const p2 = fakePlugin("p2", [p1]);
+
+    // Manually create a cycle: p1 -> p2 -> p1
+    p1.deps = [p2] as any;
+
+    const plugins: Plugin<any, any>[] = [p1];
+
+    assertThrows(
+      () => loadPlugins(null as unknown as CoreClient, {}, plugins),
+      Error,
+      "Circular plugin dependency detected",
+    );
   });
 });

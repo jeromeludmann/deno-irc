@@ -66,21 +66,28 @@ export function loadPlugins(
   options: CoreFeatures["options"],
   plugins: Plugin[],
 ): void {
-  const deps = new Set<string>();
+  const loaded = new Set<string>();
 
-  const resolvePluginDeps = (plugin: Plugin<any>) => {
-    if (deps.has(plugin.name)) {
-      return;
+  const resolvePluginDeps = (plugin: Plugin<any>, stack: string[]) => {
+    if (loaded.has(plugin.name)) return;
+
+    const cycleIndex = stack.indexOf(plugin.name);
+    if (cycleIndex !== -1) {
+      const cycle = [...stack.slice(cycleIndex), plugin.name].join(" -> ");
+      throw new Error(`Circular plugin dependency detected: ${cycle}`);
     }
+
+    stack.push(plugin.name);
     for (const dep of plugin.deps) {
-      resolvePluginDeps(dep);
+      resolvePluginDeps(dep, stack);
     }
     plugin.fn(client, options);
-    deps.add(plugin.name);
+    loaded.add(plugin.name);
+    stack.pop();
   };
 
   for (const plugin of plugins) {
-    resolvePluginDeps(plugin);
+    resolvePluginDeps(plugin, []);
   }
 }
 
