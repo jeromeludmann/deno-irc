@@ -1,0 +1,7 @@
+services:
+  ircd:
+    image: ghcr.io/ngircd/ngircd:latest
+    ports:
+      - "6667:6667"
+    volumes:
+      - ./ngircd.conf:/opt/ngircd/etc/ngircd.conf:ro
