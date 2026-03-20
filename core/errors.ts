@@ -7,15 +7,10 @@ export interface ClientError extends Error {
 }
 
 /** Arguments for constructing a ClientError, either from an existing error or a message string. */
-export type ErrorArgs = [
-  type: ClientErrorType,
-  error: Error | unknown,
-] | [
-  type: ClientErrorType,
-  error: string,
+export type ErrorArgs =
+  | [type: ClientErrorType, error: unknown]
   // deno-lint-ignore ban-types
-  callSite: Function,
-];
+  | [type: ClientErrorType, error: string, callSite: Function];
 
 /** Wraps an error or message string into a typed {@link ClientError}. */
 export function toClientError(

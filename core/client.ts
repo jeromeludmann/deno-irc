@@ -38,14 +38,11 @@ export interface CoreFeatures {
 }
 
 /** Generates an array of `raw:<command>` event names from a protocol category. */
-export function generateRawEvents<
-  T extends keyof typeof PROTOCOL,
-  U extends typeof PROTOCOL[T],
-  V extends `raw:${U[keyof U] extends string ? U[keyof U] : never}`[],
->(type: T) {
+export function generateRawEvents<T extends keyof typeof PROTOCOL>(type: T) {
+  type Commands = typeof PROTOCOL[T][keyof typeof PROTOCOL[T]];
   return Object
     .values(PROTOCOL[type])
-    .map((command) => `raw:${command}`) as V;
+    .map((command) => `raw:${command}`) as `raw:${Commands & string}`[];
 }
 
 const BUFFER_SIZE = 4096;
