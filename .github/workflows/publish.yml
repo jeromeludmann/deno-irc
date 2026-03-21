@@ -1,0 +1,40 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Download Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          DENO_VERSION=$(deno eval "const c = JSON.parse(Deno.readTextFileSync('deno.json')); console.log(c.version)")
+          if [ "$TAG_VERSION" != "$DENO_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match deno.json version ($DENO_VERSION)"
+            exit 1
+          fi
+
+      - name: Publish to JSR
+        run: deno publish
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

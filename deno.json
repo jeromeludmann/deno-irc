@@ -33,6 +33,7 @@
       "core",
       "plugins",
       "README.md",
+      "CONTRIBUTING.md",
       "API.md",
       "deno.json",
       "deno.lock",

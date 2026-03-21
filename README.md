@@ -143,27 +143,7 @@ See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#e
 
 ## Contributing
 
-This module is mainly built around two patterns:
-
-- event driven architecture
-- internal plugins
-
-It involves keeping the _core_ client as minimal as possible and delegates
-feature implementations to decoupled _plugins_ parts.
-
-The core contains some internal parts related to IRC protocol, TCP sockets and
-event system. Plugins contain all the extra features built on top of the core
-client.
-
-In most of the cases, it is quite handy to add new features using plugins
-without touching the core.
-
-All added parts (core and plugins):
-
-- should be tested to ensure they work as expected
-- should provide documentation about its options, events, commands
-
-Need help? Type `deno task`.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
