@@ -1,6 +1,6 @@
 {
   "name": "@irc/client",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "exports": "./mod.ts",
   "license": "MIT",
   "fmt": {
@@ -10,15 +10,28 @@
     "semiColons": true,
     "singleQuote": false,
     "proseWrap": "preserve",
-    "include": ["core/", "plugins/", "testing/"]
+    "include": [
+      "core/",
+      "plugins/",
+      "testing/"
+    ]
   },
   "test": {
-    "include": ["core/", "plugins/"]
+    "include": [
+      "core/",
+      "plugins/"
+    ]
   },
   "lint": {
-    "include": ["core", "plugins", "testing"],
+    "include": [
+      "core",
+      "plugins",
+      "testing"
+    ],
     "rules": {
-      "tags": ["recommended"]
+      "tags": [
+        "recommended"
+      ]
     }
   },
   "tasks": {
