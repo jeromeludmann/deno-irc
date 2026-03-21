@@ -1,22 +1,22 @@
 {
-  "version": "4",
+  "version": "5",
   "specifiers": {
-    "jsr:@std/assert@^1.0.6": "1.0.6",
-    "jsr:@std/fmt@^1.0.2": "1.0.2",
-    "jsr:@std/internal@^1.0.4": "1.0.4"
+    "jsr:@std/assert@^1.0.19": "1.0.19",
+    "jsr:@std/fmt@^1.0.9": "1.0.9",
+    "jsr:@std/internal@^1.0.12": "1.0.12"
   },
   "jsr": {
-    "@std/assert@1.0.6": {
-      "integrity": "1904c05806a25d94fe791d6d883b685c9e2dcd60e4f9fc30f4fc5cf010c72207",
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
       "dependencies": [
         "jsr:@std/internal"
       ]
     },
-    "@std/fmt@1.0.2": {
-      "integrity": "87e9dfcdd3ca7c066e0c3c657c1f987c82888eb8103a3a3baa62684ffeb0f7a7"
+    "@std/fmt@1.0.9": {
+      "integrity": "2487343e8899fb2be5d0e3d35013e54477ada198854e52dd05ed0422eddcabe0"
     },
-    "@std/internal@1.0.4": {
-      "integrity": "62e8e4911527e5e4f307741a795c0b0a9e6958d0b3790716ae71ce085f755422"
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
     }
   },
   "remote": {
@@ -38,8 +38,8 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@^1.0.6",
-      "jsr:@std/fmt@^1.0.2"
+      "jsr:@std/assert@^1.0.19",
+      "jsr:@std/fmt@^1.0.9"
     ]
   }
 }

@@ -55,7 +55,7 @@
     ]
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@^1.0.6",
-    "@std/fmt": "jsr:@std/fmt@^1.0.2"
+    "@std/assert": "jsr:@std/assert@^1.0.19",
+    "@std/fmt": "jsr:@std/fmt@^1.0.9"
   }
 }
