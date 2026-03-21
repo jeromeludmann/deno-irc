@@ -143,7 +143,7 @@ See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#e
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/jeromeludmann/deno-irc/blob/main/CONTRIBUTING.md).
 
 ## License
 
