@@ -36,16 +36,22 @@ Run `deno task` to see all available commands. Key tasks:
 
 ## Releasing (maintainers)
 
-Releases are automated via GitHub Actions. To create a release:
+Releases are handled by a single GitHub Actions workflow. To create a release:
 
 ```
 gh workflow run release.yml -f release-type=patch|minor|major
 ```
 
+Or trigger it manually from the Actions tab on GitHub.
+
 This will:
 
 1. Bump the version in `deno.json`
-2. Commit `chore: release X.Y.Z` and tag `vX.Y.Z`
-3. Push to `main`
-4. Automatically publish to [JSR](https://jsr.io/@irc/client) and create a
-   GitHub Release with auto-generated notes
+2. Commit `chore: release X.Y.Z` and push to `main`
+3. Create and push tag `vX.Y.Z`
+4. Publish to [JSR](https://jsr.io/@irc/client)
+5. Create a GitHub Release with a changelog generated from conventional commits
+
+The changelog groups commits by type (`feat` → Features, `fix` → Bug Fixes).
+Use [conventional commits](https://www.conventionalcommits.org/) to get clean
+release notes.
