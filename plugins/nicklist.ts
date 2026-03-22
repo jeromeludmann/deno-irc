@@ -129,10 +129,13 @@ const plugin: Plugin<NicklistFeatures, AnyPlugins> = createPlugin(
     if (!source) return;
 
     for (const channel in namesMap) {
+      if (!(source.name in namesMap[channel])) continue;
+
       namesMap[channel][nick] = namesMap[channel][source.name];
       delete namesMap[channel][source.name];
 
       const nicklist = createNicklist(namesMap[channel]);
+      client.state.nicklists[channel] = nicklist;
       client.emit("nicklist", { params: { channel, nicklist } });
     }
   });

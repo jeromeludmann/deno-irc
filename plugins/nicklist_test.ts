@@ -138,6 +138,69 @@ describe("plugins/nicklist", (test) => {
     }]);
   });
 
+  test("update nicklists state on NICK", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 353 me = #channel1 :@%+nick1 +nick2 nick3",
+      ":serverhost 366 me #channel1 :End of /NAMES list",
+      ":serverhost 353 me = #channel2 :@nick1 nick2 nick3",
+      ":serverhost 366 me #channel2 :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    server.send(":nick2!user@host NICK nick4");
+    await client.once("nicklist");
+
+    assertEquals(client.state.nicklists, {
+      "#channel1": [
+        { prefix: "@", nick: "nick1" },
+        { prefix: "+", nick: "nick4" },
+        { prefix: "", nick: "nick3" },
+      ],
+      "#channel2": [
+        { prefix: "@", nick: "nick1" },
+        { prefix: "", nick: "nick3" },
+        { prefix: "", nick: "nick4" },
+      ],
+    });
+  });
+
+  test("emit 'nicklist' only for channels where nick is present on NICK", async () => {
+    const { client, server } = await mock();
+    const messages: NicklistEvent[] = [];
+
+    server.send([
+      ":serverhost 353 me = #channel1 :@nick1 +nick2 nick3",
+      ":serverhost 366 me #channel1 :End of /NAMES list",
+      ":serverhost 353 me = #channel2 :@nick1 nick3",
+      ":serverhost 366 me #channel2 :End of /NAMES list",
+    ]);
+    await client.once("names_reply");
+
+    client.on("nicklist", (msg) => messages.push(msg));
+
+    server.send(":nick2!user@host NICK nick4");
+    await client.once("nicklist");
+
+    assertEquals(messages.length, 1);
+    assertEquals(messages[0], {
+      params: {
+        channel: "#channel1",
+        nicklist: [
+          { prefix: "@", nick: "nick1" },
+          { prefix: "+", nick: "nick4" },
+          { prefix: "", nick: "nick3" },
+        ],
+      },
+    });
+
+    assertEquals(client.state.nicklists["#channel2"], [
+      { prefix: "@", nick: "nick1" },
+      { prefix: "", nick: "nick3" },
+    ]);
+  });
+
   test("do no emit 'nicklist' on NICK from empty sources", async () => {
     const { client, server } = await mock();
     let triggered = 0;
