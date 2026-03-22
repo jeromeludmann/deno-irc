@@ -1,28 +1,21 @@
 import { EventEmitter } from "../core/events.ts";
+import type { Conn } from "../runtime/types.ts";
 
 interface Events {
   "read": string[] | null;
 }
 
-export class MockConn extends EventEmitter<Events> implements Deno.Conn {
-  localAddr: Deno.NetAddr = {
-    hostname: "local_host",
-    port: 12345,
-    transport: "tcp",
-  };
-  remoteAddr: Deno.NetAddr;
-  rid = -1;
-  readable = new ReadableStream();
-  writable = new WritableStream();
-
+export class MockConn extends EventEmitter<Events> implements Conn {
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
 
   raw: string[] = [];
 
-  constructor(hostname: string, port: number) {
+  constructor(
+    public readonly hostname: string,
+    public readonly port: number,
+  ) {
     super();
-    this.remoteAddr = { hostname, port, transport: "tcp" };
   }
 
   async read(buffer: Uint8Array): Promise<number | null> {
@@ -50,17 +43,7 @@ export class MockConn extends EventEmitter<Events> implements Deno.Conn {
     return Promise.resolve(bytes.length);
   }
 
-  closeWrite(): Promise<void> {
-    return Promise.resolve();
-  }
-
   close(): void {
     this.emit("read", null);
   }
-
-  ref(): void {}
-
-  unref(): void {}
-
-  [Symbol.dispose](): void {}
 }

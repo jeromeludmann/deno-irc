@@ -3,6 +3,7 @@
   "version": "0.19.0",
   "exports": "./mod.ts",
   "license": "MIT",
+  "nodeModulesDir": "none",
   "fmt": {
     "useTabs": false,
     "lineWidth": 80,
@@ -13,20 +14,27 @@
     "include": [
       "core/",
       "plugins/",
+      "runtime/",
       "testing/"
     ]
   },
   "test": {
     "include": [
       "core/",
-      "plugins/"
+      "plugins/",
+      "runtime/"
     ]
   },
   "lint": {
     "include": [
       "core",
       "plugins",
+      "runtime",
       "testing"
+    ],
+    "exclude": [
+      "runtime/node.ts",
+      "runtime/node_test.ts"
     ],
     "rules": {
       "tags": [
@@ -35,16 +43,17 @@
     }
   },
   "tasks": {
-    "lint": "deno lint **/*.ts",
-    "fmt": "deno fmt **/*.ts",
-    "test": "deno test --failfast core/*_test.ts plugins/*_test.ts --parallel",
-    "coverage": "rm -rf coverage && deno test --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\"",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "test": "deno test --failfast --allow-net core/*_test.ts plugins/*_test.ts runtime/deno_test.ts --parallel",
+    "coverage": "rm -rf coverage && deno test --allow-net --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts runtime/deno_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\"",
     "test:e2e": "docker compose -f e2e/docker-compose.yml down -v 2>/dev/null; docker compose -f e2e/docker-compose.yml up -d --force-recreate && sleep 2 && deno test --allow-net --allow-read e2e/e2e_test.ts --failfast ; docker compose -f e2e/docker-compose.yml down -v"
   },
   "publish": {
     "include": [
       "core",
       "plugins",
+      "runtime",
       "README.md",
       "API.md",
       "deno.json",

@@ -1295,7 +1295,7 @@ Default port to `6667`.
 
 Resolves when connected.
 
-`async connect(hostname: string, options?: ConnectOptions): Promise<Deno.Conn | null>`
+`async connect(hostname: string, options?: ConnectOptions): Promise<Conn | null>`
 
 ```ts
 client.connect("irc.libera.chat");
@@ -1315,9 +1315,9 @@ client.connect("irc.libera.chat", {
 client.connect("irc.libera.chat", {
   port: 6697,
   tls: true,
-  cert: Deno.readTextFileSync("client.pem"),
-  key: Deno.readTextFileSync("client-key.pem"),
-  caCerts: [Deno.readTextFileSync("ca.pem")],
+  cert: certContent,
+  key: keyContent,
+  caCerts: [caContent],
 });
 ```
 

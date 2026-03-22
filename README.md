@@ -1,13 +1,24 @@
 # deno-irc
 
 ![ci](https://github.com/jeromeludmann/deno-irc/workflows/ci/badge.svg)
+[![JSR](https://jsr.io/badges/@irc/client)](https://jsr.io/@irc/client)
 
-IRC client protocol module for [Deno](https://deno.land/) which aims to provide
-an easy way to talk with IRC servers.
+IRC client protocol module for [Deno](https://deno.land/) 2+ and
+[Node.js](https://nodejs.org/) 20+ which aims to provide an easy way to
+talk with IRC servers.
+
+> **New:** Node.js is now officially supported. Install via
+> `npx jsr add @irc/client` and use the same API as on Deno.
+
+- **Cross-runtime** — runs on Deno and Node.js with the same API
+- **Fully typed** — events, commands and state are inferred from TypeScript, no guessing
+- **Plugin architecture** — 40+ built-in plugins (SASL, DCC, CTCP, reconnect, flood control...)
+- **TLS & SASL** — PLAIN, EXTERNAL (client certificates), NickServ fallback
+- **Zero dependencies** — no external runtime dependencies
 
 Any feedback and contributions are welcome.
 
-Now available on [JSR](https://jsr.io/@irc/client).
+Available on [JSR](https://jsr.io/@irc/client).
 
 ## Documentation
 
@@ -16,19 +27,27 @@ Now available on [JSR](https://jsr.io/@irc/client).
 
 ## Getting Started
 
-The first thing to do is to import the `Client`:
+### Installation
+
+**Deno:**
 
 ```ts
 import { Client } from "jsr:@irc/client";
 ```
 
-Alternatively, you can use the `deno.land/x` registry:
+**Node.js:**
 
-```ts
-import { Client } from "https://deno.land/x/irc/mod.ts";
+```sh
+npx jsr add @irc/client
 ```
 
-and just instantiate a new client like this:
+```ts
+import { Client } from "@irc/client";
+```
+
+### Usage
+
+Instantiate a new client like this:
 
 ```ts
 const client = new Client({
@@ -60,7 +79,7 @@ await client.connect("irc.libera.chat");
 await client.connect("irc.libera.chat", { port: 6697, tls: true });
 ```
 
-Note that connecting to servers requires the `--allow-net` option:
+When using Deno, connecting to servers requires the `--allow-net` permission:
 
 ```
 deno run --allow-net ./code.ts

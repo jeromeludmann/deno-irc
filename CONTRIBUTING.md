@@ -14,7 +14,8 @@ feature implementations to decoupled _plugins_ parts.
 
 The core contains some internal parts related to IRC protocol, TCP sockets and
 event system. Plugins contain all the extra features built on top of the core
-client.
+client. Runtime-specific code (Deno, Node.js) is isolated in the `runtime/`
+directory behind a common interface.
 
 In most of the cases, it is quite handy to add new features using plugins
 without touching the core.
@@ -26,13 +27,18 @@ All added parts (core and plugins):
 
 ## Development
 
-Prerequisites: [Deno](https://deno.land/) v2.x
+Prerequisites:
 
-Run `deno task` to see all available commands. Key tasks:
+- [Deno](https://deno.land/) 2+
+- [Node.js](https://nodejs.org/) 20+ (for cross-runtime testing)
 
-- `deno task test` — run unit tests
+Run `deno task` to see all available Deno commands. Key tasks:
+
+- `deno task test` — run unit tests (Deno)
 - `deno task lint` — lint the codebase
 - `deno task fmt` — format the codebase
+- `npm test` — run unit tests (Node.js)
+- `npm run test:e2e` — run E2E tests (Node.js)
 
 ## Releasing (maintainers)
 

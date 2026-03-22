@@ -1,7 +1,11 @@
 import { type ClientError } from "../core/errors.ts";
 import { createPlugin, type Plugin } from "../core/plugins.ts";
 import { type AnyRawCommand } from "../core/protocol.ts";
-import { bold, dim, green, red } from "@std/fmt/colors";
+
+const bold = (s: string) => `\x1b[1m${s}\x1b[22m`;
+const dim = (s: string) => `\x1b[2m${s}\x1b[22m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[39m`;
+const red = (s: string) => `\x1b[31m${s}\x1b[39m`;
 
 interface RawLogPayload {
   type: "raw_input" | "raw_output";

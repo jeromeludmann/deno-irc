@@ -4,9 +4,10 @@ import { Client } from "../client.ts";
 
 const HOST = "127.0.0.1";
 const PORT = 6667;
-let counter = 0;
 
 describe("e2e", (test) => {
+  let counter = 0;
+
   const connect = async (base: string) => {
     const nick = `${base}${++counter}`;
     const client = new Client({
@@ -186,8 +187,10 @@ describe("e2e", (test) => {
     assertEquals(opOff.params.mode, "-o");
 
     // +m (moderated): bob without voice cannot send
+    const bobSeesModerated = bob.once("mode:channel");
     alice.mode("#modes", "+m");
     await alice.once("mode:channel");
+    await bobSeesModerated;
 
     // bob sends a message — alice should NOT receive it
     bob.privmsg("#modes", "should be blocked");
@@ -398,9 +401,6 @@ describe("e2e", (test) => {
   test("sasl external authentication", async () => {
     const nick = `ext${++counter}`;
     const password = "testpass_ext";
-    const caCert = await Deno.readTextFile("e2e/certs/ca.pem");
-    const cert = await Deno.readTextFile("e2e/certs/client.pem");
-    const key = await Deno.readTextFile("e2e/certs/client-key.pem");
 
     const TLS_PORT = 6697;
 
@@ -412,9 +412,9 @@ describe("e2e", (test) => {
     await reg.connect(HOST, {
       port: TLS_PORT,
       tls: true,
-      cert,
-      key,
-      caCerts: [caCert],
+      certFile: "e2e/certs/client.pem",
+      keyFile: "e2e/certs/client-key.pem",
+      caCertFile: "e2e/certs/ca.pem",
     });
     await reg.once("register");
     reg.privmsg("NickServ", `REGISTER ${password} ${nick}@test.com`);

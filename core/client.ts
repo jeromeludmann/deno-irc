@@ -10,6 +10,8 @@ import {
   type AnyReply,
   PROTOCOL,
 } from "./protocol.ts";
+import type { Conn, Runtime } from "../runtime/types.ts";
+import { getRuntime } from "../runtime/mod.ts";
 
 type AnyRawEventName = `raw:${AnyCommand | AnyReply | AnyError}`;
 
@@ -81,16 +83,6 @@ export interface RemoteAddr {
 /** Network address exposed in events — without sensitive fields (cert/key). */
 export type PublicAddr = Omit<RemoteAddr, "cert" | "key">;
 
-/** How to connect to a server */
-interface ConnectImpl {
-  noTls(opts: Deno.ConnectOptions): Promise<Deno.Conn>;
-  withTls(
-    opts:
-      | Deno.ConnectTlsOptions
-      | (Deno.ConnectTlsOptions & Deno.TlsCertifiedKeyPem),
-  ): Promise<Deno.Conn>;
-}
-
 /** Low-level IRC client handling TCP connection, raw message parsing, and event dispatching. */
 export class CoreClient<
   TEvents extends CoreFeatures["events"] = CoreFeatures["events"],
@@ -98,11 +90,8 @@ export class CoreClient<
   readonly state: CoreFeatures["state"];
   readonly utils: CoreFeatures["utils"];
 
-  protected connectImpl: ConnectImpl = {
-    noTls: Deno.connect,
-    withTls: Deno.connectTls,
-  };
-  protected conn: Deno.Conn | null = null;
+  protected runtime: Runtime | null = null;
+  protected conn: Conn | null = null;
   protected hooks: Hooks<CoreClient<TEvents>> = new Hooks<CoreClient<TEvents>>(
     this,
   );
@@ -148,26 +137,28 @@ export class CoreClient<
   async connect(
     hostname: string,
     options: ConnectOptions = {},
-  ): Promise<Deno.Conn | null> {
+  ): Promise<Conn | null> {
+    if (!this.runtime) {
+      this.runtime = await getRuntime();
+    }
+
     const { port = PORT } = options;
     const tls = options.tls ?? false;
 
     let tlsFields: { cert?: string; key?: string; caCerts?: string[] } = {};
     if (options.tls) {
-      const o = options as {
-        cert?: string;
-        key?: string;
-        caCerts?: string[];
-        certFile?: string;
-        keyFile?: string;
-        caCertFile?: string;
-      };
-      const cert = o.cert ??
-        (o.certFile ? Deno.readTextFileSync(o.certFile) : undefined);
-      const key = o.key ??
-        (o.keyFile ? Deno.readTextFileSync(o.keyFile) : undefined);
-      const caCerts = o.caCerts ??
-        (o.caCertFile ? [Deno.readTextFileSync(o.caCertFile)] : undefined);
+      const cert = options.cert ??
+        (options.certFile
+          ? this.runtime.readTextFileSync(options.certFile)
+          : undefined);
+      const key = options.key ??
+        (options.keyFile
+          ? this.runtime.readTextFileSync(options.keyFile)
+          : undefined);
+      const caCerts = options.caCerts ??
+        (options.caCertFile
+          ? [this.runtime.readTextFileSync(options.caCertFile)]
+          : undefined);
       tlsFields = {
         ...(cert !== undefined && { cert }),
         ...(key !== undefined && { key }),
@@ -187,12 +178,17 @@ export class CoreClient<
     try {
       if (tls) {
         const { cert, key, caCerts } = this.state.remoteAddr;
-        const tlsOpts: Deno.ConnectTlsOptions = { hostname, port, caCerts };
         this.conn = cert && key
-          ? await this.connectImpl.withTls({ ...tlsOpts, cert, key })
-          : await this.connectImpl.withTls(tlsOpts);
+          ? await this.runtime.connectTls({
+            hostname,
+            port,
+            caCerts,
+            cert,
+            key,
+          })
+          : await this.runtime.connectTls({ hostname, port, caCerts });
       } else {
-        this.conn = await this.connectImpl.noTls({ hostname, port });
+        this.conn = await this.runtime.connect({ hostname, port });
       }
       this.emit("connected", publicAddr);
     } catch (error) {
@@ -210,7 +206,7 @@ export class CoreClient<
     return publicAddr;
   }
 
-  private async loop(conn: Deno.Conn): Promise<void> {
+  private async loop(conn: Conn): Promise<void> {
     for (;;) {
       const chunks = await this.read(conn);
       if (chunks === null) break;
@@ -225,7 +221,7 @@ export class CoreClient<
     this.close();
   }
 
-  private async read(conn: Deno.Conn): Promise<string | null> {
+  private async read(conn: Conn): Promise<string | null> {
     let read: number | null;
 
     try {
@@ -305,9 +301,7 @@ export class CoreClient<
   /** Emits properly an error. */
   emitError(...args: ErrorArgs): void {
     const [, error] = args;
-    const isSilentError = error instanceof Deno.errors.BadResource ||
-      error instanceof Deno.errors.Interrupted;
-    if (isSilentError) {
+    if (this.runtime?.isSilentError(error)) {
       return;
     }
     this.emit("error", toClientError(...args));

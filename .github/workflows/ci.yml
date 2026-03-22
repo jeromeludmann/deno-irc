@@ -39,7 +39,7 @@ jobs:
         run: deno task test
 
   e2e:
-    name: e2e
+    name: e2e (deno)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,3 +47,31 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno task test:e2e
+
+  test-node:
+    name: tests node (${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 22]
+      fail-fast: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm test
+
+  e2e-node:
+    name: e2e (node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run test:e2e

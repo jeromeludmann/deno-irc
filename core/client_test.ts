@@ -2,7 +2,7 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
 import { mockConsole } from "../testing/console.ts";
 import { MockServer } from "../testing/server.ts";
-import { MockCoreClient } from "../testing/client.ts";
+import { MockCoreClient, SilentTestError } from "../testing/client.ts";
 import { type CoreFeatures } from "./client.ts";
 import { type Raw } from "./parsers.ts";
 import { createPlugin, type Plugin } from "./plugins.ts";
@@ -353,15 +353,13 @@ describe("core/client", (test) => {
     assertEquals("key" in addr, false);
   });
 
-  test("prefer cert over certFile when both provided", async () => {
+  test("store TLS cert and key in remoteAddr", async () => {
     const { client } = mock();
 
     await client.connect("host", {
       tls: true,
       cert: "INLINE_CERT",
-      certFile: "/nonexistent/cert.pem",
       key: "INLINE_KEY",
-      keyFile: "/nonexistent/key.pem",
     });
 
     assertEquals(client.state.remoteAddr.cert, "INLINE_CERT");
@@ -369,7 +367,7 @@ describe("core/client", (test) => {
     client.disconnect();
   });
 
-  test("swallow some Deno errors silently", () => {
+  test("swallow silent errors", () => {
     const { client } = mock();
     let triggered = 0;
 
@@ -378,8 +376,8 @@ describe("core/client", (test) => {
     });
 
     client.emitError("write", new Error("Boom!")); // +1
-    client.emitError("write", new Deno.errors.BadResource()); // should not throw
-    client.emitError("write", new Deno.errors.Interrupted()); // should not throw
+    client.emitError("write", new SilentTestError()); // should not throw
+    client.emitError("write", new SilentTestError()); // should not throw
 
     assertEquals(triggered, 1);
   });
