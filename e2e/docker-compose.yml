@@ -1,7 +1,11 @@
 services:
   ircd:
-    image: ghcr.io/ngircd/ngircd:latest
+    image: ghcr.io/ergochat/ergo:stable
+    init: true
     ports:
       - "6667:6667"
+      - "6697:6697"
     volumes:
-      - ./ngircd.conf:/opt/ngircd/etc/ngircd.conf:ro
+      - ./certs/server.pem:/certs/fullchain.pem:ro
+      - ./certs/server-key.pem:/certs/privkey.pem:ro
+      - ./ircd.yaml:/ircd/ircd.yaml:ro

@@ -125,14 +125,12 @@ const client = new Client(options);
 
 ### option: authMethod
 
-The auth method to use with a supplied username and password. Defaults to
-NickServ if omitted.
+The authentication method to use. Defaults to NickServ if omitted.
 
-The authentication method to use.
-
-- `NickServ` - Non-standard nickserv authentication.
-- `sasl` - SASL PLAIN auth. Errors out if SASL fails.
-- `saslThenNickServ` - Try SASL PLAIN, but fallback to NickServ if it fails.
+- `NickServ` - Non-standard nickserv authentication. Requires `password`.
+- `sasl` - SASL PLAIN auth. Requires `password`. Errors out if SASL fails.
+- `saslThenNickServ` - Try SASL PLAIN, fallback to NickServ. Requires `password`.
+- `saslExternal` - SASL EXTERNAL auth via TLS client certificate. Must NOT have `password`. Connection must use `{ tls: true }`.
 
 ```ts
 const client = new Client({
@@ -147,6 +145,19 @@ const client = new Client({
   username: "SaslUser",
   password: "password",
   authMethod: "sasl",
+});
+```
+
+```ts
+const client = new Client({
+  nick: "user",
+  authMethod: "saslExternal",
+});
+
+await client.connect("irc.libera.chat", {
+  tls: true,
+  certFile: "client.pem",
+  keyFile: "client-key.pem",
 });
 ```
 
@@ -1265,16 +1276,32 @@ Connects to a server using a hostname and an optional port.
 
 Default port to `6667`.
 
-If `tls=true`, attempts to connect using a TLS connection.
-
 Resolves when connected.
 
-`async connect(hostname: string, port: number, tls?: boolean): Promise<Deno.Conn | null>`
+`async connect(hostname: string, options?: ConnectOptions): Promise<Deno.Conn | null>`
 
 ```ts
-client.connect("host", 6667);
+client.connect("irc.libera.chat");
 
-client.connect("host", 7000, true); // with TLS
+client.connect("irc.libera.chat", { port: 6697, tls: true });
+
+// With client certificate (file paths)
+client.connect("irc.libera.chat", {
+  port: 6697,
+  tls: true,
+  certFile: "client.pem",
+  keyFile: "client-key.pem",
+  caCertFile: "ca.pem",
+});
+
+// Or with PEM content directly
+client.connect("irc.libera.chat", {
+  port: 6697,
+  tls: true,
+  cert: Deno.readTextFileSync("client.pem"),
+  key: Deno.readTextFileSync("client-key.pem"),
+  caCerts: [Deno.readTextFileSync("ca.pem")],
+});
 ```
 
 ### command: ctcp

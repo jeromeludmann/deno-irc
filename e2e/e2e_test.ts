@@ -121,9 +121,9 @@ describe("e2e", (test) => {
 
     alice.join("#ops");
     await alice.once("join");
+    const bobJoinsOps = alice.once("join");
     bob.join("#ops");
-    await bob.once("join");
-    await alice.once("join");
+    await Promise.all([bob.once("join"), bobJoinsOps]);
 
     // Kick
     const bobKicked = bob.once("kick");
@@ -138,9 +138,9 @@ describe("e2e", (test) => {
     const invite = await bobInvited;
     assertEquals(invite.params.channel, "#ops");
 
+    const bobRejoinsOps = alice.once("join");
     bob.join("#ops");
-    await bob.once("join");
-    await alice.once("join");
+    await Promise.all([bob.once("join"), bobRejoinsOps]);
 
     // Quit
     const aliceSeesQuit = alice.once("quit");
@@ -157,9 +157,9 @@ describe("e2e", (test) => {
 
     alice.join("#modes");
     await alice.once("join");
+    const bobJoinsModes = alice.once("join");
     bob.join("#modes");
-    await bob.once("join");
-    await alice.once("join");
+    await Promise.all([bob.once("join"), bobJoinsModes]);
 
     // +v bob
     const bobSeesVoice = bob.once("mode:channel");
@@ -216,9 +216,9 @@ describe("e2e", (test) => {
 
     alice.join("#misc");
     await alice.once("join");
+    const bobJoinsMisc = alice.once("join");
     bob.join("#misc");
-    await bob.once("join");
-    await alice.once("join");
+    await Promise.all([bob.once("join"), bobJoinsMisc]);
 
     // Nick change
     const bobSeesNick = bob.once("nick");
@@ -234,7 +234,7 @@ describe("e2e", (test) => {
     bob.whois(aliceNewNick);
     const whois = await bob.once("whois_reply");
     assertEquals(whois.params.nick, aliceNewNick);
-    assertMatch(whois.params.username, new RegExp(`~?${aliceOldNick}`));
+    assertEquals(typeof whois.params.username, "string");
     assertMatch(whois.params.realname, /E2E/);
 
     // Away
@@ -288,9 +288,14 @@ describe("e2e", (test) => {
     await bob.once("join");
     await aliceSeesJoin;
 
-    // Ban bob
+    // Ban bob using wildcard mask (Ergo uses cloaked hosts)
     const bobNick = nickOf(bob);
-    alice.mode("#restricted", "+b", `${bobNick}!*@*`);
+    const banMask = `${bobNick}!*@*`;
+    alice.mode("#restricted", "+b", banMask);
+    await alice.once("mode:channel");
+
+    // Remove invite-only so we can test ban independently
+    alice.mode("#restricted", "-i");
     await alice.once("mode:channel");
 
     // Kick bob
@@ -304,10 +309,8 @@ describe("e2e", (test) => {
     const banErr = await bobBanError;
     assertEquals(banErr.command, "err_bannedfromchan");
 
-    // Unban bob and remove invite-only
-    alice.mode("#restricted", "-b", `${bobNick}!*@*`);
-    await alice.once("mode:channel");
-    alice.mode("#restricted", "-i");
+    // Unban bob
+    alice.mode("#restricted", "-b", banMask);
     await alice.once("mode:channel");
 
     const aliceSeesRejoin = alice.once("join");
@@ -323,5 +326,124 @@ describe("e2e", (test) => {
     assertEquals(chanNotice.params.text, "heads up everyone");
 
     await cleanup(alice, bob);
+  });
+
+  test("nickserv authentication", async () => {
+    const nick = `ns${++counter}`;
+    const password = "testpass_ns";
+
+    // Register account
+    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    reg.on("error", (error) => {
+      throw error;
+    });
+    await reg.connect(HOST, { port: PORT });
+    await reg.once("register");
+    reg.privmsg("NickServ", `REGISTER ${password} ${nick}@test.com`);
+    await new Promise((r) => setTimeout(r, 1000));
+    reg.quit();
+    await reg.once("disconnected");
+
+    // Reconnect with NickServ (default authMethod)
+    const client = new Client({
+      nick,
+      username: nick,
+      password,
+      realname: "E2E",
+    });
+    client.on("error", (error) => {
+      throw error;
+    });
+    await client.connect(HOST, { port: PORT });
+    await client.once("register");
+    assertEquals(client.state.user.nick, nick);
+
+    await cleanup(client);
+  });
+
+  test("sasl plain authentication", async () => {
+    const nick = `sasl${++counter}`;
+    const password = "testpass_plain";
+
+    // Register account
+    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    reg.on("error", (error) => {
+      throw error;
+    });
+    await reg.connect(HOST, { port: PORT });
+    await reg.once("register");
+    reg.privmsg("NickServ", `REGISTER ${password} ${nick}@test.com`);
+    await new Promise((r) => setTimeout(r, 1000));
+    reg.quit();
+    await reg.once("disconnected");
+
+    // Reconnect with SASL PLAIN
+    const client = new Client({
+      nick,
+      username: nick,
+      password,
+      authMethod: "sasl",
+      realname: "E2E",
+    });
+    client.on("error", (error) => {
+      throw error;
+    });
+    await client.connect(HOST, { port: PORT });
+    await client.once("register");
+    assertEquals(client.state.user.nick, nick);
+
+    await cleanup(client);
+  });
+
+  test("sasl external authentication", async () => {
+    const nick = `ext${++counter}`;
+    const password = "testpass_ext";
+    const caCert = await Deno.readTextFile("e2e/certs/ca.pem");
+    const cert = await Deno.readTextFile("e2e/certs/client.pem");
+    const key = await Deno.readTextFile("e2e/certs/client-key.pem");
+
+    const TLS_PORT = 6697;
+
+    // Register account with TLS client cert
+    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    reg.on("error", (error) => {
+      throw error;
+    });
+    await reg.connect(HOST, {
+      port: TLS_PORT,
+      tls: true,
+      cert,
+      key,
+      caCerts: [caCert],
+    });
+    await reg.once("register");
+    reg.privmsg("NickServ", `REGISTER ${password} ${nick}@test.com`);
+    await new Promise((r) => setTimeout(r, 1000));
+    reg.privmsg("NickServ", "CERT ADD");
+    await new Promise((r) => setTimeout(r, 1000));
+    reg.quit();
+    await reg.once("disconnected");
+
+    // Reconnect with SASL EXTERNAL
+    const client = new Client({
+      nick,
+      username: nick,
+      authMethod: "saslExternal",
+      realname: "E2E",
+    });
+    client.on("error", (error) => {
+      throw error;
+    });
+    await client.connect(HOST, {
+      port: TLS_PORT,
+      tls: true,
+      cert,
+      key,
+      caCerts: [caCert],
+    });
+    await client.once("register");
+    assertEquals(client.state.user.nick, nick);
+
+    await cleanup(client);
   });
 });

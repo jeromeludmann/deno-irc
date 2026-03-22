@@ -48,15 +48,24 @@ export function generateRawEvents<T extends keyof typeof PROTOCOL>(type: T) {
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
 
-/** Options for connecting to an IRC server. `cert`/`key`/`caCerts` only available when `tls` is `true`. */
+/** Options for connecting to an IRC server. TLS fields only available when `tls` is `true`. */
 export type ConnectOptions =
   | { tls?: false; port?: number }
   | {
     tls: true;
     port?: number;
+    /** PEM client certificate content. */
     cert?: string;
+    /** PEM private key content. */
     key?: string;
+    /** PEM CA certificate contents. */
     caCerts?: string[];
+    /** Path to PEM client certificate file. Alternative to `cert`. */
+    certFile?: string;
+    /** Path to PEM private key file. Alternative to `key`. */
+    keyFile?: string;
+    /** Path to PEM CA certificate file. Alternative to `caCerts`. */
+    caCertFile?: string;
   };
 
 /** Full network address and connection details of a remote IRC server. */
@@ -142,9 +151,29 @@ export class CoreClient<
   ): Promise<Deno.Conn | null> {
     const { port = PORT } = options;
     const tls = options.tls ?? false;
-    const tlsFields = options.tls
-      ? options as { cert?: string; key?: string; caCerts?: string[] }
-      : {};
+
+    let tlsFields: { cert?: string; key?: string; caCerts?: string[] } = {};
+    if (options.tls) {
+      const o = options as {
+        cert?: string;
+        key?: string;
+        caCerts?: string[];
+        certFile?: string;
+        keyFile?: string;
+        caCertFile?: string;
+      };
+      const cert = o.cert ??
+        (o.certFile ? Deno.readTextFileSync(o.certFile) : undefined);
+      const key = o.key ??
+        (o.keyFile ? Deno.readTextFileSync(o.keyFile) : undefined);
+      const caCerts = o.caCerts ??
+        (o.caCertFile ? [Deno.readTextFileSync(o.caCertFile)] : undefined);
+      tlsFields = {
+        ...(cert !== undefined && { cert }),
+        ...(key !== undefined && { key }),
+        ...(caCerts !== undefined && { caCerts }),
+      };
+    }
 
     this.state.remoteAddr = { hostname, port, tls, ...tlsFields };
 

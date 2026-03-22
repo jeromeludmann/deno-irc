@@ -39,7 +39,7 @@
     "fmt": "deno fmt **/*.ts",
     "test": "deno test --failfast core/*_test.ts plugins/*_test.ts --parallel",
     "coverage": "rm -rf coverage && deno test --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\"",
-    "test:e2e": "docker compose -f e2e/docker-compose.yml up -d --force-recreate && sleep 2 && deno test --allow-net e2e/e2e_test.ts --failfast ; docker compose -f e2e/docker-compose.yml down"
+    "test:e2e": "docker compose -f e2e/docker-compose.yml down -v 2>/dev/null; docker compose -f e2e/docker-compose.yml up -d --force-recreate && sleep 2 && deno test --allow-net --allow-read e2e/e2e_test.ts --failfast ; docker compose -f e2e/docker-compose.yml down -v"
   },
   "publish": {
     "include": [

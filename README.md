@@ -55,9 +55,9 @@ client.on("join", (msg) => {
 Finally you have to establish a connection with the server:
 
 ```ts
-await client.connect("irc.libera.chat", 6667);
+await client.connect("irc.libera.chat");
 
-await client.connect("irc.libera.chat", 7000, true); // with TLS
+await client.connect("irc.libera.chat", { port: 6697, tls: true });
 ```
 
 Note that connecting to servers requires the `--allow-net` option:
