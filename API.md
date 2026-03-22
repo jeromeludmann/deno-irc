@@ -15,6 +15,7 @@
   - [option: realname](#option-realname)
   - [option: reconnect](#option-reconnect)
   - [option: resolveInvalidNames](#option-resolveinvalidnames)
+  - [option: saslTimeout](#option-sasltimeout)
   - [option: serverPassword](#option-serverpassword)
   - [option: username](#option-username)
   - [option: verbose](#option-verbose)
@@ -396,6 +397,22 @@ Auto resolve invalid names (for nick and username).
 ```ts
 const client = new Client({
   resolveInvalidNames: true,
+});
+```
+
+### option: saslTimeout
+
+Timeout in seconds for SASL authentication. If the server does not respond
+within this delay, SASL is treated as failed.
+
+Default to `15`. `false` to disable.
+
+```ts
+const client = new Client({
+  nick: "user",
+  password: "password",
+  authMethod: "sasl",
+  saslTimeout: 30,
 });
 ```
 

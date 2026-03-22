@@ -353,6 +353,22 @@ describe("core/client", (test) => {
     assertEquals("key" in addr, false);
   });
 
+  test("prefer cert over certFile when both provided", async () => {
+    const { client } = mock();
+
+    await client.connect("host", {
+      tls: true,
+      cert: "INLINE_CERT",
+      certFile: "/nonexistent/cert.pem",
+      key: "INLINE_KEY",
+      keyFile: "/nonexistent/key.pem",
+    });
+
+    assertEquals(client.state.remoteAddr.cert, "INLINE_CERT");
+    assertEquals(client.state.remoteAddr.key, "INLINE_KEY");
+    client.disconnect();
+  });
+
   test("swallow some Deno errors silently", () => {
     const { client } = mock();
     let triggered = 0;

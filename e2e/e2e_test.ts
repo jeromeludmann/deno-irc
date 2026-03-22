@@ -424,7 +424,7 @@ describe("e2e", (test) => {
     reg.quit();
     await reg.once("disconnected");
 
-    // Reconnect with SASL EXTERNAL
+    // Reconnect with SASL EXTERNAL using certFile/keyFile
     const client = new Client({
       nick,
       username: nick,
@@ -437,9 +437,9 @@ describe("e2e", (test) => {
     await client.connect(HOST, {
       port: TLS_PORT,
       tls: true,
-      cert,
-      key,
-      caCerts: [caCert],
+      certFile: "e2e/certs/client.pem",
+      keyFile: "e2e/certs/client-key.pem",
+      caCertFile: "e2e/certs/ca.pem",
     });
     await client.once("register");
     assertEquals(client.state.user.nick, nick);
