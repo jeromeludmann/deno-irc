@@ -26,7 +26,6 @@
   - [event: ctcp_action](#event-ctcp_action)
   - [event: ctcp_clientinfo](#event-ctcp_clientinfo)
   - [event: ctcp_time](#event-ctcp_time)
-  - [event: ctcp_time](#event-ctcp_time)
   - [event: ctcp_time_reply](#event-ctcp_time_reply)
   - [event: ctcp_ping](#event-ctcp_ping)
   - [event: ctcp_ping_reply](#event-ctcp_ping_reply)
