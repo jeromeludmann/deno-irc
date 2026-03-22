@@ -1,4 +1,9 @@
-import { CoreClient, type CoreFeatures } from "./core/client.ts";
+import {
+  type ConnectOptions,
+  CoreClient,
+  type CoreFeatures,
+  type PublicAddr,
+} from "./core/client.ts";
 import { type CombinePluginFeatures } from "./core/plugins.ts";
 import plugins from "./plugins/mod.ts";
 
@@ -14,6 +19,8 @@ export type Commands = ClientFeatures["commands"];
 export type Events = ClientFeatures["events"];
 /** All merged client utilities from plugins. */
 export type Utils = ClientFeatures["utils"];
+
+export type { ConnectOptions, PublicAddr };
 
 /** Configuration options accepted by the {@link Client} constructor. */
 export interface ClientOptions extends Options {}

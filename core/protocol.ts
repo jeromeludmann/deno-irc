@@ -271,6 +271,7 @@ const ERRORS = {
   "905": "err_sasltoolong",
   "906": "err_saslaborted",
   "907": "err_saslalready",
+  "908": "rpl_saslmechs",
 } as const;
 
 /** Lookup tables mapping raw IRC protocol codes/commands to human-readable names. */

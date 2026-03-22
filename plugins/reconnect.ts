@@ -67,9 +67,11 @@ const plugin: Plugin<ReconnectFeatures, AnyPlugins> = createPlugin(
     const { remoteAddr } = client.state;
     client.emit("reconnecting", remoteAddr);
 
-    const { hostname, port, tls } = remoteAddr;
     timeout = setTimeout(
-      async () => await client.connect(hostname, port, tls),
+      async () => {
+        const { hostname, ...options } = remoteAddr;
+        await client.connect(hostname, options);
+      },
       delay * 1000 * Math.pow(backoffFactor, currentAttempts - 1),
     );
   };

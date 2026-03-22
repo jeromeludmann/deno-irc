@@ -23,9 +23,9 @@ export interface CoreFeatures {
   };
 
   events: {
-    "connecting": RemoteAddr;
-    "connected": RemoteAddr;
-    "disconnected": RemoteAddr;
+    "connecting": PublicAddr;
+    "connected": PublicAddr;
+    "disconnected": PublicAddr;
     "error": ClientError;
     "raw": Raw; // never be emitted, but using it will generate all raw events
   } & { [K in AnyRawEventName]: Raw };
@@ -48,17 +48,38 @@ export function generateRawEvents<T extends keyof typeof PROTOCOL>(type: T) {
 const BUFFER_SIZE = 4096;
 const PORT = 6667;
 
-/** Network address of a remote IRC server. */
+/** Options for connecting to an IRC server. `cert`/`key`/`caCerts` only available when `tls` is `true`. */
+export type ConnectOptions =
+  | { tls?: false; port?: number }
+  | {
+    tls: true;
+    port?: number;
+    cert?: string;
+    key?: string;
+    caCerts?: string[];
+  };
+
+/** Full network address and connection details of a remote IRC server. */
 export interface RemoteAddr {
   hostname: string;
   port: number;
   tls?: boolean;
+  cert?: string;
+  key?: string;
+  caCerts?: string[];
 }
+
+/** Network address exposed in events — without sensitive fields (cert/key). */
+export type PublicAddr = Omit<RemoteAddr, "cert" | "key">;
 
 /** How to connect to a server */
 interface ConnectImpl {
   noTls(opts: Deno.ConnectOptions): Promise<Deno.Conn>;
-  withTls(opts: Deno.ConnectTlsOptions): Promise<Deno.Conn>;
+  withTls(
+    opts:
+      | Deno.ConnectTlsOptions
+      | (Deno.ConnectTlsOptions & Deno.TlsCertifiedKeyPem),
+  ): Promise<Deno.Conn>;
 }
 
 /** Low-level IRC client handling TCP connection, raw message parsing, and event dispatching. */
@@ -107,32 +128,44 @@ export class CoreClient<
     this.memorizeCurrentListenerCounts();
   }
 
-  /** Connects to a server using a hostname and an optional port.
+  /** Connects to a server.
    *
    * Default port to `6667`.
    *
-   * If `tls=true`, attempts to connect using a TLS connection.
+   * Pass `{ tls: true }` to connect using TLS.
+   * Pass `{ tls: true, cert, key }` to connect with a client certificate.
    *
    * Resolves when connected. */
   async connect(
     hostname: string,
-    port = PORT,
-    tls = false,
+    options: ConnectOptions = {},
   ): Promise<Deno.Conn | null> {
-    this.state.remoteAddr = { hostname, port, tls };
+    const { port = PORT } = options;
+    const tls = options.tls ?? false;
+    const tlsFields = options.tls
+      ? options as { cert?: string; key?: string; caCerts?: string[] }
+      : {};
+
+    this.state.remoteAddr = { hostname, port, tls, ...tlsFields };
 
     if (this.conn !== null) {
       this.close();
     }
 
-    const { remoteAddr } = this.state;
-    this.emit("connecting", remoteAddr);
+    const publicAddr = this.getPublicAddr();
+    this.emit("connecting", publicAddr);
 
     try {
-      this.conn = await (tls
-        ? this.connectImpl.withTls({ hostname, port })
-        : this.connectImpl.noTls({ hostname, port }));
-      this.emit("connected", remoteAddr);
+      if (tls) {
+        const { cert, key, caCerts } = this.state.remoteAddr;
+        const tlsOpts: Deno.ConnectTlsOptions = { hostname, port, caCerts };
+        this.conn = cert && key
+          ? await this.connectImpl.withTls({ ...tlsOpts, cert, key })
+          : await this.connectImpl.withTls(tlsOpts);
+      } else {
+        this.conn = await this.connectImpl.noTls({ hostname, port });
+      }
+      this.emit("connected", publicAddr);
     } catch (error) {
       this.emitError("connect", error);
       return null;
@@ -141,6 +174,11 @@ export class CoreClient<
     this.loop(this.conn);
 
     return this.conn;
+  }
+
+  private getPublicAddr(): PublicAddr {
+    const { cert: _, key: __, ...publicAddr } = this.state.remoteAddr;
+    return publicAddr;
   }
 
   private async loop(conn: Deno.Conn): Promise<void> {
@@ -182,7 +220,7 @@ export class CoreClient<
 
     try {
       this.conn.close();
-      this.emit("disconnected", this.state.remoteAddr);
+      this.emit("disconnected", this.getPublicAddr());
     } catch (error) {
       this.emitError("close", error);
     } finally {

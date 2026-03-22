@@ -90,6 +90,35 @@ describe("plugins/reconnect", (test) => {
     assertEquals(reconnecting, 0);
   });
 
+  test("preserve tls options on reconnect", async () => {
+    const { client, server } = await mock(
+      { reconnect: { attempts: 2, delay: 0 } },
+      { withConnection: false },
+    );
+
+    client.on("error", noop);
+
+    await client.connect("", {
+      tls: true,
+      cert: "TEST_CERT",
+      key: "TEST_KEY",
+      caCerts: ["TEST_CA"],
+    });
+
+    // Trigger reconnect
+    server.send("ERROR :Closing link");
+    await client.once("reconnecting");
+
+    // After reconnect, remoteAddr should still have TLS options
+    const { cert, key, caCerts, tls } = client.state.remoteAddr;
+    assertEquals(tls, true);
+    assertEquals(cert, "TEST_CERT");
+    assertEquals(key, "TEST_KEY");
+    assertEquals(caCerts, ["TEST_CA"]);
+
+    await client.once("connecting"); // wait for timeout clearing
+  });
+
   test("throw if missing error listener", async () => {
     const { client } = await mock(
       { reconnect: true },

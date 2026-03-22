@@ -182,4 +182,122 @@ describe("plugins/registration", (test) => {
 
     assertEquals(user.nick, "me");
   });
+
+  // SASL EXTERNAL tests
+
+  test("send sasl external capability sequence", async () => {
+    const { client, server } = await mock(
+      { ...options, authMethod: "saslExternal" },
+      { withConnection: false },
+    );
+
+    await client.connect("", { tls: true });
+    server.send(":serverhost 903 user :SASL authentication successful");
+    await client.once("raw:rpl_saslsuccess");
+    const raw = server.receive();
+
+    assertEquals(raw, [
+      "CAP REQ multi-prefix",
+      "CAP REQ sasl",
+      "CAP END",
+      "NICK me",
+      "USER user 0 * :real name",
+    ]);
+
+    server.send(":serverhost CAP me ACK :sasl");
+    await client.once("raw:cap");
+
+    assertEquals(server.receive(), [
+      "AUTHENTICATE EXTERNAL",
+    ]);
+
+    server.send("AUTHENTICATE +");
+    await client.once("raw:authenticate");
+
+    assertEquals(server.receive(), [
+      "AUTHENTICATE +",
+    ]);
+
+    server.send([
+      ":serverhost 900 me me!user@host me :You are now logged in as me",
+      ":serverhost 903 me :SASL authentication successful",
+    ]);
+
+    await client.once("raw:rpl_saslsuccess");
+  });
+
+  test("sasl external without tls emits error", async () => {
+    const { client } = await mock(
+      { ...options, authMethod: "saslExternal" },
+      { withConnection: false },
+    );
+
+    const errorPromise = client.once("error");
+    await client.connect("");
+    const error = await errorPromise;
+
+    assertEquals(error.type, "connect");
+  });
+
+  test("sasl external failure emits error on ERR_SASLFAIL", async () => {
+    const { client, server } = await mock(
+      { ...options, authMethod: "saslExternal" },
+      { withConnection: false },
+    );
+
+    await client.connect("", { tls: true });
+    server.receive();
+
+    const errorPromise = client.once("error");
+    server.send(":serverhost 904 me :SASL authentication failed");
+    const error = await errorPromise;
+
+    assertEquals(error.type, "read");
+  });
+
+  test("sasl external failure emits error on ERR_SASLABORTED", async () => {
+    const { client, server } = await mock(
+      { ...options, authMethod: "saslExternal" },
+      { withConnection: false },
+    );
+
+    await client.connect("", { tls: true });
+    server.receive();
+
+    const errorPromise = client.once("error");
+    server.send(":serverhost 906 me :SASL authentication aborted");
+    const error = await errorPromise;
+
+    assertEquals(error.type, "read");
+  });
+
+  test("sasl external times out if server never responds", async () => {
+    const { client, server } = await mock(
+      { ...options, authMethod: "saslExternal", saslTimeout: 0 },
+      { withConnection: false },
+    );
+
+    const errorPromise = client.once("error");
+    await client.connect("", { tls: true });
+    server.receive();
+
+    const error = await errorPromise;
+    assertEquals(error.type, "read");
+    assertEquals(error.message, "ERROR: SASL auth failed");
+  });
+
+  test("sasl plain times out if server never responds", async () => {
+    const { client, server } = await mock(
+      { ...options, password: "password", authMethod: "sasl", saslTimeout: 0 },
+      { withConnection: false },
+    );
+
+    const errorPromise = client.once("error");
+    await client.connect("");
+    server.receive();
+
+    const error = await errorPromise;
+    assertEquals(error.type, "read");
+    assertEquals(error.message, "ERROR: SASL auth failed");
+  });
 });

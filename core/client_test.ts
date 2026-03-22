@@ -33,7 +33,7 @@ describe("core/client", (test) => {
   test("connect to server", async () => {
     const { client } = mock();
 
-    client.connect("host", 6668);
+    client.connect("host", { port: 6668 });
     const addr = await client.once("connected");
 
     assertEquals(addr, {
@@ -46,7 +46,7 @@ describe("core/client", (test) => {
   test("connect to server with TLS", async () => {
     const { client } = mock();
 
-    client.connect("host", 6668, true);
+    client.connect("host", { port: 6668, tls: true });
     const addr = await client.once("connected");
 
     assertEquals(addr, {
@@ -293,6 +293,64 @@ describe("core/client", (test) => {
     // - 4 messages for `client.on("raw", fn)`
     // - 4 messages for `client.on(["raw"], fn)`
     assertEquals(messages.length, 8);
+  });
+
+  test("not expose cert/key in connecting event", async () => {
+    const { client } = mock();
+
+    const connectingPromise = client.once("connecting");
+    client.connect("host", {
+      port: 6668,
+      tls: true,
+      cert: "SECRET_CERT",
+      key: "SECRET_KEY",
+    });
+    const addr = await connectingPromise;
+
+    assertEquals(addr.hostname, "host");
+    assertEquals(addr.tls, true);
+    assertEquals("cert" in addr, false);
+    assertEquals("key" in addr, false);
+    client.disconnect();
+  });
+
+  test("not expose cert/key in connected event", async () => {
+    const { client } = mock();
+
+    const connectedPromise = client.once("connected");
+    client.connect("host", {
+      port: 6668,
+      tls: true,
+      cert: "SECRET_CERT",
+      key: "SECRET_KEY",
+    });
+    const addr = await connectedPromise;
+
+    assertEquals(addr.hostname, "host");
+    assertEquals(addr.tls, true);
+    assertEquals("cert" in addr, false);
+    assertEquals("key" in addr, false);
+    client.disconnect();
+  });
+
+  test("not expose cert/key in disconnected event", async () => {
+    const { client } = mock();
+
+    await client.connect("host", {
+      port: 6668,
+      tls: true,
+      cert: "SECRET_CERT",
+      key: "SECRET_KEY",
+    });
+    const [addr] = await Promise.all([
+      client.once("disconnected"),
+      client.disconnect(),
+    ]);
+
+    assertEquals(addr.hostname, "host");
+    assertEquals(addr.tls, true);
+    assertEquals("cert" in addr, false);
+    assertEquals("key" in addr, false);
   });
 
   test("swallow some Deno errors silently", () => {

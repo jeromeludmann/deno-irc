@@ -30,11 +30,18 @@ interface RegistrationFeatures {
     serverPassword?: string;
 
     /** The authentication method to use. Defaults to NickServ if omitted.
-     * * `NickServ` - Non-standard nickserv authentication.
-     * * `sasl` - SASL PLAIN auth. Errors out if SASL fails.
-     * * `saslThenNickServ` - Try SASL PLAIN, but fallback to NickServ if it fails.
+     * * `NickServ` - Non-standard nickserv authentication. Requires `password`.
+     * * `sasl` - SASL PLAIN auth. Requires `password`. Errors out if SASL fails.
+     * * `saslThenNickServ` - Try SASL PLAIN, fallback to NickServ. Requires `password`.
+     * * `saslExternal` - SASL EXTERNAL auth via TLS client certificate.
+     *   Must NOT have `password`. Connection must use `{ tls: true }`.
      */
-    authMethod?: "NickServ" | "sasl" | "saslThenNickServ";
+    authMethod?: "NickServ" | "sasl" | "saslThenNickServ" | "saslExternal";
+
+    /** Timeout in seconds for SASL authentication.
+     *
+     * Default to `15`. `false` to disable. */
+    saslTimeout?: number | false;
   };
   state: {
     user: User;
@@ -63,6 +70,9 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
   } = options;
 
   const authMethod = options.authMethod ?? "NickServ";
+  const saslTimeout = options.saslTimeout !== false
+    ? (options.saslTimeout ?? 15)
+    : false;
   client.state.user = { nick, username, realname };
 
   const sendRegistration = () => {
@@ -98,9 +108,65 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
     });
   };
 
+  const trySaslExternal = function () {
+    const capListener = (payload: Raw) => {
+      if (payload.params[2] !== "sasl") return;
+      client.send("AUTHENTICATE", "EXTERNAL");
+      client.off("raw:cap", capListener);
+    };
+
+    client.on("raw:cap", capListener);
+
+    client.once("raw:authenticate", (payload) => {
+      if (payload.params[0] === "+") {
+        client.send("AUTHENTICATE", "+");
+      }
+    });
+  };
+
+  let saslTimeoutId: number | undefined;
+
+  const clearSaslTimeout = () => clearTimeout(saslTimeoutId);
+
+  const onSaslFail = (_: Raw) => {
+    clearSaslTimeout();
+    client.utils.completeCapNegotiation();
+    if (authMethod === "saslThenNickServ") tryNickServ();
+    else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
+  };
+
+  const waitForSaslSuccess = () => {
+    const onSuccess = () => {
+      clearSaslTimeout();
+      client.utils.completeCapNegotiation();
+      sendRegistration();
+    };
+
+    client.once("raw:rpl_saslsuccess", onSuccess);
+
+    if (saslTimeout !== false) {
+      saslTimeoutId = setTimeout(() => {
+        client.off("raw:rpl_saslsuccess", onSuccess);
+        onSaslFail({ command: "err_saslfail", params: [] } as Raw);
+      }, saslTimeout * 1000);
+    }
+  };
+
   // Sends capabilities, attempts SASL connection, and registers once connected.
   client.on("connected", () => {
-    if (!password) {
+    if (authMethod === "saslExternal") {
+      if (!client.state.remoteAddr.tls) {
+        client.emitError(
+          "connect",
+          "SASL EXTERNAL requires a TLS connection",
+          trySaslExternal,
+        );
+        return;
+      }
+      client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
+      trySaslExternal();
+      waitForSaslSuccess();
+    } else if (!password) {
       sendRegistration();
       return client.utils.negotiateCapabilities({ completeImmediately: true });
     } else if (authMethod === "NickServ") {
@@ -110,13 +176,7 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
     } else {
       client.utils.negotiateCapabilities({ extraCaps: ["sasl"] });
       trySasl();
-      client.once(
-        "raw:rpl_saslsuccess",
-        () => {
-          client.utils.completeCapNegotiation();
-          sendRegistration();
-        },
-      );
+      waitForSaslSuccess();
     }
   });
 
@@ -127,12 +187,6 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
   client.on("register", (msg) => {
     client.state.user.nick = msg.params.nick;
   });
-
-  const onSaslFail = (_: Raw) => {
-    client.utils.completeCapNegotiation();
-    if (authMethod === "saslThenNickServ") tryNickServ();
-    else client.emitError("read", "ERROR: SASL auth failed", onSaslFail);
-  };
 
   client.on(["raw:err_saslfail", "raw:err_saslaborted"], onSaslFail);
 

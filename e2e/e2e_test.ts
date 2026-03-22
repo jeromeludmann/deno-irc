@@ -17,7 +17,7 @@ describe("e2e", (test) => {
     client.on("error", (error) => {
       throw error;
     });
-    await client.connect(HOST, PORT);
+    await client.connect(HOST, { port: PORT });
     await client.once("register");
     return client;
   };
