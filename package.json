@@ -2,12 +2,15 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@types/node": "^24.7.2",
     "@std/assert": "npm:@jsr/std__assert@^1.0.19",
     "@std/fmt": "npm:@jsr/std__fmt@^1.0.9",
+    "typescript": "^5.9.3",
     "tsx": "^4"
   },
   "scripts": {
     "test": "tsx --test core/*_test.ts plugins/*_test.ts runtime/node_test.ts",
+    "typecheck": "tsc -p tsconfig.node.json --noEmit",
     "test:e2e": "docker compose -f e2e/docker-compose.yml down -v 2>/dev/null; docker compose -f e2e/docker-compose.yml up -d --force-recreate && sleep 2 && tsx --test e2e/e2e_test.ts; docker compose -f e2e/docker-compose.yml down -v"
   }
 }

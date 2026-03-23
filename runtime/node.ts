@@ -1,5 +1,4 @@
 // deno-lint-ignore-file
-// @ts-nocheck -- Node-only module, not type-checked under Deno
 
 import { readFileSync } from "node:fs";
 import { connect as netConnect, Socket } from "node:net";

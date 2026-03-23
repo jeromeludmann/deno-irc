@@ -1,5 +1,4 @@
 // Node-only test — run with: npx tsx --test runtime/node_test.ts
-// @ts-nocheck
 
 import { strictEqual } from "node:assert";
 import { createServer } from "node:net";
@@ -12,7 +11,10 @@ function listen(
   return new Promise((resolve) =>
     server.listen(0, "127.0.0.1", () => {
       const addr = server.address();
-      resolve({ port: (addr as { port: number }).port });
+      if (!addr || typeof addr === "string") {
+        throw new TypeError("Expected server.address() to return a NetAddress");
+      }
+      resolve({ port: addr.port });
     })
   );
 }
@@ -58,6 +60,7 @@ test("NodeConn buffers chunks arriving before read()", async () => {
 
   const buf1 = new Uint8Array(64);
   const n1 = await conn.read(buf1);
+  if (n1 === null) throw new TypeError("Unexpected EOF");
   const text = new TextDecoder().decode(buf1.subarray(0, n1));
 
   // May arrive as one merged chunk or two separate — both are valid
