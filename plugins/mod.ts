@@ -46,6 +46,7 @@ export { default as accountTag } from "./account_tag.ts";
 export { default as awayNotify } from "./away_notify.ts";
 export { default as chghost } from "./chghost.ts";
 export { default as echoMessage } from "./echo_message.ts";
+export { default as extendedJoin } from "./extended_join.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -96,6 +97,7 @@ import accountTag from "./account_tag.ts";
 import awayNotify from "./away_notify.ts";
 import chghost from "./chghost.ts";
 import echoMessage from "./echo_message.ts";
+import extendedJoin from "./extended_join.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -147,6 +149,7 @@ const plugins = [
   awayNotify,
   chghost,
   echoMessage,
+  extendedJoin,
   whois,
 ];
 
