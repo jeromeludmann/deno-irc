@@ -53,6 +53,7 @@ export { default as serverTime } from "./server_time.ts";
 export { default as setname } from "./setname.ts";
 export { default as who } from "./who.ts";
 export { default as monitor } from "./monitor.ts";
+export { default as messageSplit } from "./message_split.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -110,6 +111,7 @@ import serverTime from "./server_time.ts";
 import setname from "./setname.ts";
 import who from "./who.ts";
 import monitor from "./monitor.ts";
+import messageSplit from "./message_split.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -168,6 +170,7 @@ const plugins = [
   setname,
   who,
   monitor,
+  messageSplit,
   whois,
 ];
 
