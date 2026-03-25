@@ -48,6 +48,7 @@ export { default as chghost } from "./chghost.ts";
 export { default as echoMessage } from "./echo_message.ts";
 export { default as extendedJoin } from "./extended_join.ts";
 export { default as inviteNotify } from "./invite_notify.ts";
+export { default as messageTags } from "./message_tags.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -100,6 +101,7 @@ import chghost from "./chghost.ts";
 import echoMessage from "./echo_message.ts";
 import extendedJoin from "./extended_join.ts";
 import inviteNotify from "./invite_notify.ts";
+import messageTags from "./message_tags.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -153,6 +155,7 @@ const plugins = [
   echoMessage,
   extendedJoin,
   inviteNotify,
+  messageTags,
   whois,
 ];
 
