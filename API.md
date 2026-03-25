@@ -585,6 +585,15 @@ client.on("account", (msg) => {
 });
 ```
 
+The `account-tag` IRCv3 cap adds an `account` tag to all messages from
+authenticated users. Use `client.utils.getAccount(msg)` to extract it:
+
+```ts
+client.on("raw:privmsg", (msg) => {
+  const account = client.utils.getAccount(msg); // account name or undefined
+});
+```
+
 ### event: away_notify
 
 Emitted when a user's away status changes in a shared channel. Requires
@@ -875,6 +884,17 @@ Emitted when the server echoes back a NOTICE sent by the client. Requires
 client.on("echo:notice", (msg) => {
   msg.params.target; // target of the echoed notice
   msg.params.text; // text of the echoed notice
+});
+```
+
+You can also check if any raw message is a self-echo with
+`client.utils.isEcho(msg)`:
+
+```ts
+client.on("raw:privmsg", (msg) => {
+  if (client.utils.isEcho(msg)) {
+    // this message was sent by us
+  }
 });
 ```
 
@@ -1260,6 +1280,15 @@ IRCv3 cap. Can be filtered with `tagmsg:channel` and `tagmsg:private`.
 client.on("tagmsg", (msg) => {
   msg.params.target; // target of the TAGMSG
   msg.params.tags; // tags attached to the message
+});
+```
+
+The `server-time` IRCv3 cap adds a `time` tag to all messages. Use
+`client.utils.getServerTime(msg)` to parse it:
+
+```ts
+client.on("raw:privmsg", (msg) => {
+  const time = client.utils.getServerTime(msg); // Date or null
 });
 ```
 
