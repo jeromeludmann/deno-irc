@@ -70,6 +70,24 @@ describe("plugins/isupport", (test) => {
     }]);
   });
 
+  test("initialize isupport state", async () => {
+    const { client } = await mock();
+
+    assertEquals(client.state.isupport, {});
+  });
+
+  test("populate isupport state map", async () => {
+    const { client, server } = await mock();
+
+    server.send(
+      ":serverhost 005 nick MONITOR=100 NETWORK=TestNet :are supported by this server",
+    );
+    await client.once("isupport:monitor");
+
+    assertEquals(client.state.isupport["MONITOR"], "100");
+    assertEquals(client.state.isupport["NETWORK"], "TestNet");
+  });
+
   test("ignore param starting with '-'", async () => {
     const { client, server } = await mock();
 

@@ -10,15 +10,26 @@ export interface IsupportEventParams {
 /** Emitted for each ISUPPORT parameter advertised by the server. */
 export type IsupportEvent = Message<IsupportEventParams>;
 
-type AnyIsupportParamKey = "USERMODES" | "CHANMODES" | "PREFIX" | "CHANTYPES";
+type AnyIsupportParamKey =
+  | "USERMODES"
+  | "CHANMODES"
+  | "PREFIX"
+  | "CHANTYPES"
+  | "MONITOR"
+  | "NETWORK";
 
 interface IsupportFeatures {
   events: {
     [K in `isupport:${Lowercase<AnyIsupportParamKey>}`]: IsupportEvent;
   };
+  state: {
+    isupport: Record<string, string | undefined>;
+  };
 }
 
 const plugin: Plugin<IsupportFeatures> = createPlugin("isupport")((client) => {
+  client.state.isupport = {};
+
   // Emits 'isupport:*' events.
 
   client.on("raw:rpl_isupport", (msg) => {
@@ -32,6 +43,8 @@ const plugin: Plugin<IsupportFeatures> = createPlugin("isupport")((client) => {
       if (key.startsWith("-")) {
         continue;
       }
+
+      client.state.isupport[key] = value;
 
       client.emit(
         `isupport:${key.toLowerCase() as Lowercase<AnyIsupportParamKey>}`,
