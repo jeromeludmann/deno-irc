@@ -270,10 +270,10 @@ server:
         # whether to limit the total number of concurrent connections per IP/CIDR
         count: true
         # maximum concurrent connections per IP/CIDR
-        max-concurrent-connections: 16
+        max-concurrent-connections: 128
 
         # whether to restrict the rate of new connections per IP/CIDR
-        throttle: true
+        throttle: false
         # how long to keep track of connections for
         window: 10m
         # maximum number of new connections per IP/CIDR within the given duration
@@ -771,7 +771,8 @@ opers:
         # or by certificate fingerprint, or both. if a password hash is set, then a
         # password is required to oper up (e.g., /OPER dan mypassword). to generate
         # the hash, use `ergo genpasswd`.
-        password: "$2a$04$fLoy9ULcpj4/quVN2YQdKukbfxZZ3CwVhTAgBqjzLS.z4Hwm5pFU."
+        # password: operpass
+        password: "$2a$04$JEo/x5McCKi2zAVW/Vfh5O1IQcA469psQQWAXuTBN1S5IssRyBRkm"
 
         # if a SHA-256 certificate fingerprint is configured here, then it will be
         # required to /OPER. if you comment out the password hash above, then you can
