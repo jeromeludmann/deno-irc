@@ -139,7 +139,9 @@ const plugin: Plugin<VerboseFeatures> = createPlugin(
     loggerImpl({ type: "raw_output", msg: raw });
   });
 
-  client.hooks.beforeCall("send", (command, ...params) => {
+  client.hooks.beforeCall("send", (first, ...rest) => {
+    const command = typeof first === "object" ? rest[0] : first;
+    const params = typeof first === "object" ? rest.slice(1) : rest;
     loggerImpl({ type: "command", command, params });
   });
 

@@ -45,6 +45,7 @@ export { default as accountNotify } from "./account_notify.ts";
 export { default as accountTag } from "./account_tag.ts";
 export { default as awayNotify } from "./away_notify.ts";
 export { default as chghost } from "./chghost.ts";
+export { default as echoMessage } from "./echo_message.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -94,6 +95,7 @@ import accountNotify from "./account_notify.ts";
 import accountTag from "./account_tag.ts";
 import awayNotify from "./away_notify.ts";
 import chghost from "./chghost.ts";
+import echoMessage from "./echo_message.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -144,6 +146,7 @@ const plugins = [
   accountTag,
   awayNotify,
   chghost,
+  echoMessage,
   whois,
 ];
 
