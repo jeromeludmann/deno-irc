@@ -1,7 +1,7 @@
 import { type ClientError, type ErrorArgs, toClientError } from "./errors.ts";
 import { EventEmitter, type EventEmitterOptions } from "./events.ts";
 import { Hooks } from "./hooks.ts";
-import { Parser, type Raw } from "./parsers.ts";
+import { escapeTagValue, Parser, type Raw } from "./parsers.ts";
 import { loadPlugins, type Plugin } from "./plugins.ts";
 import {
   type AnyCommand,
@@ -260,7 +260,30 @@ export class CoreClient<
   async send(
     command: AnyRawCommand,
     ...params: (string | undefined)[]
-  ): Promise<string | null> {
+  ): Promise<string | null>;
+
+  /** Sends a raw message with IRCv3 tags to the server. */
+  async send(
+    tags: Record<string, string | undefined>,
+    command: AnyRawCommand,
+    ...params: (string | undefined)[]
+  ): Promise<string | null>;
+
+  // deno-lint-ignore no-explicit-any
+  async send(first: any, ...rest: any[]): Promise<string | null> {
+    let tags: Record<string, string | undefined> | undefined;
+    let command: AnyRawCommand;
+    let params: (string | undefined)[];
+
+    if (typeof first === "object") {
+      tags = first;
+      command = rest.shift();
+      params = rest;
+    } else {
+      command = first;
+      params = rest;
+    }
+
     if (this.conn === null) {
       this.emitError("write", "Unable to send message", this.send);
       return null;
@@ -280,8 +303,18 @@ export class CoreClient<
       params[last] = ":" + params[last];
     }
 
+    // Encodes tags prefix.
+    let tagStr = "";
+    if (tags) {
+      tagStr = "@" + Object.entries(tags)
+        .map(([k, v]) => v !== undefined ? `${k}=${escapeTagValue(v)}` : k)
+        .join(";") +
+        " ";
+    }
+
     // Prepares and encodes raw message.
-    const raw = (command + " " + params.join(" ")).trimEnd() + "\r\n";
+    const raw = tagStr +
+      (command + " " + params.join(" ")).trimEnd() + "\r\n";
     const bytes = this.encoder.encode(raw);
 
     try {
