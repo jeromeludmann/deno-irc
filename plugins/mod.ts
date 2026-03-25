@@ -49,6 +49,7 @@ export { default as echoMessage } from "./echo_message.ts";
 export { default as extendedJoin } from "./extended_join.ts";
 export { default as inviteNotify } from "./invite_notify.ts";
 export { default as messageTags } from "./message_tags.ts";
+export { default as serverTime } from "./server_time.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -102,6 +103,7 @@ import echoMessage from "./echo_message.ts";
 import extendedJoin from "./extended_join.ts";
 import inviteNotify from "./invite_notify.ts";
 import messageTags from "./message_tags.ts";
+import serverTime from "./server_time.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -156,6 +158,7 @@ const plugins = [
   extendedJoin,
   inviteNotify,
   messageTags,
+  serverTime,
   whois,
 ];
 
