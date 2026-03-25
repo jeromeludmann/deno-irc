@@ -43,6 +43,7 @@ export { default as verbose } from "./verbose.ts";
 export { default as version } from "./version.ts";
 export { default as accountNotify } from "./account_notify.ts";
 export { default as accountTag } from "./account_tag.ts";
+export { default as awayNotify } from "./away_notify.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -90,6 +91,7 @@ import verbose from "./verbose.ts";
 import version from "./version.ts";
 import accountNotify from "./account_notify.ts";
 import accountTag from "./account_tag.ts";
+import awayNotify from "./away_notify.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -138,6 +140,7 @@ const plugins = [
   version,
   accountNotify,
   accountTag,
+  awayNotify,
   whois,
 ];
 
