@@ -12,8 +12,8 @@ talk with IRC servers.
 
 - **Cross-runtime** — runs on Deno and Node.js with the same API
 - **Fully typed** — events, commands and state are inferred from TypeScript, no guessing
-- **Plugin architecture** — 40+ built-in plugins (SASL, DCC, CTCP, reconnect, flood control...)
-- **TLS & SASL** — PLAIN, EXTERNAL (client certificates), NickServ fallback
+- **Plugin architecture** — 50+ built-in plugins (SASL, DCC, CTCP, reconnect, flood control...)
+- **IRCv3** — server-time, echo-message, message-tags, MONITOR, SASL, and [more](API.md#ircv3-support)
 - **Zero dependencies** — no external runtime dependencies
 
 Any feedback and contributions are welcome.

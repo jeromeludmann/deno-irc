@@ -6,7 +6,9 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "npm:@jsr/std__assert@^1.0.19": "1.0.19",
     "npm:@jsr/std__fmt@^1.0.9": "1.0.9",
-    "npm:tsx@4": "4.21.0"
+    "npm:@types/node@^24.7.2": "24.12.0",
+    "npm:tsx@4": "4.21.0",
+    "npm:typescript@^5.9.3": "5.9.3"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -168,6 +170,12 @@
       "integrity": "sha512-6xReMW9p+paJgqoFRpOE2nogJFvzPfaLHLIlyADYjKMUcwDyjKZxryIbgcU+gxiTygn8yCjld1HoI0ET4/iZeA==",
       "tarball": "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.12.tgz"
     },
+    "@types/node@24.12.0": {
+      "integrity": "sha512-GYDxsZi3ChgmckRT9HPU0WEhKLP08ev/Yfcq2AstjrDASOYCSXeyjDsHg4v5t4jOj7cyDX3vmprafKlWIG9MXQ==",
+      "dependencies": [
+        "undici-types"
+      ]
+    },
     "esbuild@0.27.4": {
       "integrity": "sha512-Rq4vbHnYkK5fws5NF7MYTU68FPRE1ajX7heQ/8QXXWqNgqqJ/GkmmyxIzUnf2Sr/bakf8l54716CcMGHYhMrrQ==",
       "optionalDependencies": [
@@ -225,6 +233,13 @@
         "fsevents"
       ],
       "bin": true
+    },
+    "typescript@5.9.3": {
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "bin": true
+    },
+    "undici-types@7.16.0": {
+      "integrity": "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="
     }
   },
   "remote": {
@@ -253,7 +268,9 @@
       "dependencies": [
         "npm:@jsr/std__assert@^1.0.19",
         "npm:@jsr/std__fmt@^1.0.9",
-        "npm:tsx@4"
+        "npm:@types/node@^24.7.2",
+        "npm:tsx@4",
+        "npm:typescript@^5.9.3"
       ]
     }
   }
