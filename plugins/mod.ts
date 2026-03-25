@@ -41,6 +41,7 @@ export { default as topic } from "./topic.ts";
 export { default as usermodes } from "./usermodes.ts";
 export { default as verbose } from "./verbose.ts";
 export { default as version } from "./version.ts";
+export { default as accountNotify } from "./account_notify.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -86,6 +87,7 @@ import topic from "./topic.ts";
 import usermodes from "./usermodes.ts";
 import verbose from "./verbose.ts";
 import version from "./version.ts";
+import accountNotify from "./account_notify.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -132,6 +134,7 @@ const plugins = [
   usermodes,
   verbose,
   version,
+  accountNotify,
   whois,
 ];
 
