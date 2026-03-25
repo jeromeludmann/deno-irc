@@ -23,7 +23,7 @@ const plugin: Plugin<AntiFloodFeatures, AnyPlugins> = createPlugin(
     // Queues up limiter for outgoing messages with before and after send hooks
 
     client.hooks.hookCall("send", async (send, command, ...params) => {
-      if (command === "PRIVMSG") {
+      if (typeof command === "string" && command === "PRIVMSG") {
         return queue.add(async () => {
           const raw = await send(command, ...params);
           if (raw) {

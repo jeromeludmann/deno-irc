@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
-import { Parser } from "./parsers.ts";
+import { escapeTagValue, Parser, unescapeTagValue } from "./parsers.ts";
 
 describe("core/parsers", (test) => {
   test("parse message without prefix", () => {
@@ -59,6 +59,94 @@ describe("core/parsers", (test) => {
       source: { mask: { host: "host", user: "user" }, name: "someone" },
       tags: { "aaa": "bbb", "ccc": undefined, "example.com/ddd": "eee" },
     }]);
+  });
+
+  test("parse message with tags but no source", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages("@time=2026-03-24T12:00:00Z PING :server\r\n"),
+    );
+
+    assertEquals(msg, [{
+      command: "ping",
+      params: ["server"],
+      tags: { "time": "2026-03-24T12:00:00Z" },
+    }]);
+  });
+
+  test("parse message with empty tag value", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages("@key= :nick!u@h PRIVMSG #chan :text\r\n"),
+    );
+
+    assertEquals(msg[0].tags, { "key": "" });
+  });
+
+  test("parse message with multiple escaped tags", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages(
+        "@a=1\\s2;b=x\\:y;c :nick!u@h PRIVMSG #chan :text\r\n",
+      ),
+    );
+
+    assertEquals(msg[0].tags, { "a": "1 2", "b": "x;y", "c": undefined });
+  });
+
+  test("parse tags split across chunks", () => {
+    const parser = new Parser();
+
+    const raw1 = Array.from(
+      parser.parseMessages("@time=2026-03-24T12:00:00Z :nick!u@h PRI"),
+    );
+    assertEquals(raw1, []);
+
+    const raw2 = Array.from(
+      parser.parseMessages("VMSG #chan :hello\r\n"),
+    );
+    assertEquals(raw2.length, 1);
+    assertEquals(raw2[0].tags, { "time": "2026-03-24T12:00:00Z" });
+    assertEquals(raw2[0].params, ["#chan", "hello"]);
+  });
+
+  test("parse message with escaped tag values", () => {
+    const parser = new Parser();
+
+    const msg = Array.from(
+      parser.parseMessages(
+        "@msg=hello\\sworld\\:test\\\\end :nick!u@h PRIVMSG #chan :text\r\n",
+      ),
+    );
+
+    assertEquals(msg[0].tags, { "msg": "hello world;test\\end" });
+  });
+
+  test("unescape tag values", () => {
+    assertEquals(unescapeTagValue("hello\\sworld"), "hello world");
+    assertEquals(unescapeTagValue("a\\:b"), "a;b");
+    assertEquals(unescapeTagValue("a\\\\b"), "a\\b");
+    assertEquals(unescapeTagValue("a\\rb"), "a\rb");
+    assertEquals(unescapeTagValue("a\\nb"), "a\nb");
+    assertEquals(unescapeTagValue("no\\escape"), "noescape");
+    assertEquals(unescapeTagValue("plain"), "plain");
+  });
+
+  test("escape tag values", () => {
+    assertEquals(escapeTagValue("hello world"), "hello\\sworld");
+    assertEquals(escapeTagValue("a;b"), "a\\:b");
+    assertEquals(escapeTagValue("a\\b"), "a\\\\b");
+    assertEquals(escapeTagValue("a\rb"), "a\\rb");
+    assertEquals(escapeTagValue("a\nb"), "a\\nb");
+    assertEquals(escapeTagValue("plain"), "plain");
+  });
+
+  test("roundtrip tag escape/unescape", () => {
+    const original = "hello world;semi\\backslash\r\n";
+    assertEquals(unescapeTagValue(escapeTagValue(original)), original);
   });
 
   test("parse chunks of raw messages", () => {

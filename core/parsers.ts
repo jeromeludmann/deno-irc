@@ -62,6 +62,48 @@ export function parseSource(prefix: string): Source {
   return source;
 }
 
+const UNESCAPE_MAP: Record<string, string> = {
+  ":": ";",
+  "s": " ",
+  "\\": "\\",
+  "r": "\r",
+  "n": "\n",
+};
+
+/** Decodes IRCv3 tag value escaping. */
+export function unescapeTagValue(value: string): string {
+  if (value.indexOf("\\") === -1) return value;
+  let result = "";
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] === "\\" && i + 1 < value.length) {
+      result += UNESCAPE_MAP[value[++i]] ?? value[i];
+    } else {
+      result += value[i];
+    }
+  }
+  return result;
+}
+
+/** Encodes a string as an IRCv3 tag value. */
+export function escapeTagValue(value: string): string {
+  return value.replace(/[; \\\r\n]/g, (c) => {
+    switch (c) {
+      case ";":
+        return "\\:";
+      case " ":
+        return "\\s";
+      case "\\":
+        return "\\\\";
+      case "\r":
+        return "\\r";
+      case "\n":
+        return "\\n";
+      default:
+        return c;
+    }
+  });
+}
+
 // The following is called on each received raw message
 // and must favor performance over readability.
 function parseMessage(raw: string): Raw {
@@ -80,8 +122,10 @@ function parseMessage(raw: string): Raw {
     while (start < end) {
       let pos = raw.indexOf(";", start);
       if (pos === -1) pos = end;
-      const [key, value] = raw.slice(start, pos).split("=");
-      msg.tags[key] = value;
+      const [key, rawValue] = raw.slice(start, pos).split("=");
+      msg.tags[key] = rawValue !== undefined
+        ? unescapeTagValue(rawValue)
+        : undefined;
       start = pos + 1;
     }
   }

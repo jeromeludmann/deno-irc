@@ -8,6 +8,7 @@
   - [option: floodDelay](#option-flooddelay)
   - [option: joinOnInvite](#option-joinoninvite)
   - [option: maxListeners](#option-maxlisteners)
+  - [option: messageSplit](#option-messagesplit)
   - [option: nick](#option-nick)
   - [option: oper](#option-oper)
   - [option: password](#option-password)
@@ -20,6 +21,8 @@
   - [option: username](#option-username)
   - [option: verbose](#option-verbose)
 - [Events](#events)
+  - [event: account](#event-account)
+  - [event: away_notify](#event-away_notify)
   - [event: away_reply](#event-away_reply)
   - [event: connecting](#event-connecting)
   - [event: connected](#event-connected)
@@ -39,15 +42,26 @@
   - [event: dcc_resume_reply](#event-dcc_resume_reply)
   - [event: dcc_send](#event-dcc_send)
   - [event: dcc_send_reply](#event-dcc_send_reply)
+  - [event: cap:ack](#event-capack)
+  - [event: cap:nak](#event-capnak)
+  - [event: cap:new](#event-capnew)
+  - [event: cap:del](#event-capdel)
+  - [event: chghost](#event-chghost)
   - [event: disconnected](#event-disconnected)
+  - [event: echo:privmsg](#event-echoprivmsg)
+  - [event: echo:notice](#event-echonotice)
   - [event: error](#event-error)
   - [event: error_reply](#event-error_reply)
+  - [event: extended_join](#event-extended_join)
   - [event: invite](#event-invite)
   - [event: isupport](#event-isupport)
   - [event: join](#event-join)
   - [event: kick](#event-kick)
   - [event: kill](#event-kill)
   - [event: list_reply](#event-list_reply)
+  - [event: monitor:online](#event-monitoronline)
+  - [event: monitor:offline](#event-monitoroffline)
+  - [event: monitor:list](#event-monitorlist)
   - [event: mode](#event-mode)
   - [event: mode_reply](#event-mode_reply)
   - [event: motd_reply](#event-motd_reply)
@@ -60,6 +74,8 @@
   - [event: ping](#event-ping)
   - [event: privmsg](#event-privmsg)
   - [event: quit](#event-quit)
+  - [event: setname](#event-setname)
+  - [event: tagmsg](#event-tagmsg)
   - [event: raw](#event-raw)
   - [event: raw_ctcp](#event-raw_ctcp)
   - [event: reconnecting](#event-reconnecting)
@@ -67,6 +83,7 @@
   - [event: topic](#event-topic)
   - [event: topic_reply](#event-topic_reply)
   - [event: topic_who_time_reply](#event-topic_who_time_reply)
+  - [event: who_reply](#event-who_reply)
   - [event: whois_reply](#event-whois_reply)
 - [Commands](#commands)
   - [command: action](#command-action)
@@ -89,6 +106,7 @@
   - [command: list](#command-list)
   - [command: me](#command-me)
   - [command: mode](#command-mode)
+  - [command: monitor](#command-monitor)
   - [command: motd](#command-motd)
   - [command: msg](#command-msg)
   - [command: names](#command-names)
@@ -104,12 +122,15 @@
   - [command: privmsg](#command-privmsg)
   - [command: quit](#command-quit)
   - [command: send](#command-send)
+  - [command: setname](#command-setname)
+  - [command: tagmsg](#command-tagmsg)
   - [command: time](#command-time)
   - [command: topic](#command-topic)
   - [command: unban](#command-unban)
   - [command: user](#command-user)
   - [command: version](#command-version)
   - [command: voice](#command-voice)
+  - [command: who](#command-who)
   - [command: whois](#command-whois)
 
 ## Options
@@ -294,6 +315,19 @@ const client = new Client({
 });
 ```
 
+### option: messageSplit
+
+Enable or disable automatic splitting of long messages. Defaults to `true`.
+
+When enabled, `PRIVMSG` and `NOTICE` messages exceeding the IRC line limit are
+automatically split at word boundaries.
+
+```ts
+const client = new Client({
+  messageSplit: false, // disable auto-splitting
+});
+```
+
 ### option: nick
 
 The nick used to register the client to the server. Will be reused as username
@@ -464,7 +498,7 @@ const client = new Client({
     if (payload.type === "raw_input") {
       console.log(payload.msg);
     }
-  }
+  },
 });
 ```
 
@@ -539,6 +573,30 @@ client.on("event_name", (msg) => {
 ```
 
 See event details below to learn more about event params.
+
+### event: account
+
+Emitted when a user's account changes. Requires `account-notify` IRCv3 cap.
+
+```ts
+client.on("account", (msg) => {
+  msg.source?.name; // nick of the user
+  msg.params.account; // account name, or "*" if logged out
+});
+```
+
+### event: away_notify
+
+Emitted when a user's away status changes in a shared channel. Requires
+`away-notify` IRCv3 cap.
+
+```ts
+client.on("away_notify", (msg) => {
+  msg.source?.name; // nick of the user
+  msg.params.away; // true if away, false if back
+  msg.params.message; // away message (undefined if back)
+});
+```
 
 ### event: away_reply
 
@@ -670,12 +728,12 @@ User accepts a `DCC RESUME`.
 
 ```ts
 client.on("dcc_accept", (msg) => {
-  msg.params.text;   // original DCC payload string
+  msg.params.text; // original DCC payload string
   msg.params.filename; // string
-  msg.params.port;     // number (0 if passive)
+  msg.params.port; // number (0 if passive)
   msg.params.position; // number (byte offset)
-  msg.params.token;    // number | undefined
-  msg.params.passive;  // boolean
+  msg.params.token; // number | undefined
+  msg.params.passive; // boolean
 });
 ```
 
@@ -686,12 +744,12 @@ User requests starting a direct chat session.
 
 ```ts
 client.on("dcc_chat", (msg) => {
-  msg.params.text;   // original DCC payload string
-  msg.params.ip;      // { type: "ipv4"|"ipv6"|"hostname"; value: string }
-  msg.params.port;    // number (0 if passive)
-  msg.params.token;   // number | undefined
+  msg.params.text; // original DCC payload string
+  msg.params.ip; // { type: "ipv4"|"ipv6"|"hostname"; value: string }
+  msg.params.port; // number (0 if passive)
+  msg.params.token; // number | undefined
   msg.params.passive; // boolean
-  msg.params.tls;     // boolean (true if SCHAT, else false)
+  msg.params.tls; // boolean (true if SCHAT, else false)
 });
 ```
 
@@ -703,14 +761,14 @@ User requests resuming a file transfer.
 client.on("dcc_resume", (msg) => {
   // common
   msg.params.action; // "resume"
-  msg.params.text;   // original DCC payload string
+  msg.params.text; // original DCC payload string
 
   // payload
   msg.params.filename; // string
-  msg.params.port;     // number (0 if passive)
+  msg.params.port; // number (0 if passive)
   msg.params.position; // number (byte offset)
-  msg.params.token;    // number | undefined
-  msg.params.passive;  // boolean
+  msg.params.token; // number | undefined
+  msg.params.passive; // boolean
 });
 ```
 
@@ -720,14 +778,66 @@ User offers sending a file.
 
 ```ts
 client.on("dcc_send", (msg) => {
-  msg.params.source     // { name: "nickname"; mask: { user: "string"; host: "string" } }
-  msg.params.text;      // original DCC payload string
-  msg.params.filename;  // string
-  msg.params.ip;        // { type: "ipv4"|"ipv6"|"hostname"; value: string }
-  msg.params.port;      // number (0 if passive)
-  msg.params.size;      // number (bytes)
-  msg.params.token;     // number | undefined
-  msg.params.passive;   // boolean
+  msg.params.source; // { name: "nickname"; mask: { user: "string"; host: "string" } }
+  msg.params.text; // original DCC payload string
+  msg.params.filename; // string
+  msg.params.ip; // { type: "ipv4"|"ipv6"|"hostname"; value: string }
+  msg.params.port; // number (0 if passive)
+  msg.params.size; // number (bytes)
+  msg.params.token; // number | undefined
+  msg.params.passive; // boolean
+});
+```
+
+### event: cap:ack
+
+Emitted when the server acknowledges requested capabilities.
+
+```ts
+client.on("cap:ack", (msg) => {
+  msg.params.caps; // array of acknowledged capability names
+});
+```
+
+### event: cap:nak
+
+Emitted when the server rejects requested capabilities.
+
+```ts
+client.on("cap:nak", (msg) => {
+  msg.params.caps; // array of rejected capability names
+});
+```
+
+### event: cap:new
+
+Emitted when the server advertises new capabilities. Requires `cap-notify`.
+
+```ts
+client.on("cap:new", (msg) => {
+  msg.params.caps; // array of newly available capability names
+});
+```
+
+### event: cap:del
+
+Emitted when the server removes capabilities. Requires `cap-notify`.
+
+```ts
+client.on("cap:del", (msg) => {
+  msg.params.caps; // array of removed capability names
+});
+```
+
+### event: chghost
+
+Emitted when a user's host or ident changes. Requires `chghost` IRCv3 cap.
+
+```ts
+client.on("chghost", (msg) => {
+  msg.source?.name; // nick of the user
+  msg.params.username; // new username
+  msg.params.hostname; // new hostname
 });
 ```
 
@@ -738,6 +848,33 @@ Client has been disconnected from the server.
 ```ts
 client.on("disconnected", (remoteAddr) => {
   remoteAddr; // address of the server
+});
+```
+
+### event: echo:privmsg
+
+Emitted when the server echoes back a PRIVMSG sent by the client. Requires
+`echo-message` IRCv3 cap.
+
+When `echo-message` is active, self-sent messages do not trigger `privmsg`
+events. Use `echo:privmsg` to handle them instead.
+
+```ts
+client.on("echo:privmsg", (msg) => {
+  msg.params.target; // target of the echoed message
+  msg.params.text; // text of the echoed message
+});
+```
+
+### event: echo:notice
+
+Emitted when the server echoes back a NOTICE sent by the client. Requires
+`echo-message` IRCv3 cap.
+
+```ts
+client.on("echo:notice", (msg) => {
+  msg.params.target; // target of the echoed notice
+  msg.params.text; // text of the echoed notice
 });
 ```
 
@@ -800,6 +937,20 @@ Server sends an error to the client.
 client.on("error_reply", (msg) => {
   msg.params.args; // arguments of the error
   msg.params.text; // description of the error
+});
+```
+
+### event: extended_join
+
+Emitted when a user joins with extended information. Requires `extended-join`
+IRCv3 cap. The normal `join` event is also emitted.
+
+```ts
+client.on("extended_join", (msg) => {
+  msg.source?.name; // nick of the user
+  msg.params.channel; // channel name
+  msg.params.account; // account name, or "*" if not logged in
+  msg.params.realname; // real name
 });
 ```
 
@@ -877,6 +1028,36 @@ client.on("list_reply", (msg) => {
     channel.count; // client count
     channel.topic; // topic of this channel
   }
+});
+```
+
+### event: monitor:online
+
+Emitted when monitored nicks come online.
+
+```ts
+client.on("monitor:online", (msg) => {
+  msg.params.nicks; // array of nicks that are now online
+});
+```
+
+### event: monitor:offline
+
+Emitted when monitored nicks go offline.
+
+```ts
+client.on("monitor:offline", (msg) => {
+  msg.params.nicks; // array of nicks that are now offline
+});
+```
+
+### event: monitor:list
+
+Emitted with the full list of currently monitored nicks.
+
+```ts
+client.on("monitor:list", (msg) => {
+  msg.params.nicks; // array of monitored nicks
 });
 ```
 
@@ -1056,6 +1237,41 @@ User leaves the server.
 ```ts
 client.on("quit", (msg) => {
   msg.params.comment; // optional comment of the QUIT
+});
+```
+
+### event: setname
+
+Emitted when a user changes their real name. Requires `setname` IRCv3 cap.
+
+```ts
+client.on("setname", (msg) => {
+  msg.source?.name; // nick of the user
+  msg.params.realname; // new real name
+});
+```
+
+### event: tagmsg
+
+Emitted when a TAGMSG (tags-only message) is received. Requires `message-tags`
+IRCv3 cap. Can be filtered with `tagmsg:channel` and `tagmsg:private`.
+
+```ts
+client.on("tagmsg", (msg) => {
+  msg.params.target; // target of the TAGMSG
+  msg.params.tags; // tags attached to the message
+});
+```
+
+### event: who_reply
+
+Emitted when the full WHO reply for a target has been received.
+
+```ts
+client.on("who_reply", (msg) => {
+  msg.params.target; // target of the WHO query
+  msg.params.entries; // array of WHO entries
+  // each entry: { channel, username, host, server, nick, flags, hopcount, realname }
 });
 ```
 
@@ -1356,7 +1572,7 @@ Sends a CTCP `DCC` command to a `target`. Returns the raw IRC `PRIVMSG` line tha
 // DCC CHAT
 client.dcc("someone", {
   action: "chat",
-  args: { ip: "203.0.113.42", port: 6000 }
+  args: { ip: "203.0.113.42", port: 6000 },
 });
 // returns: "PRIVMSG someone :\x01DCC CHAT 203.0.113.42 6000\x01"
 ```
@@ -1365,7 +1581,7 @@ client.dcc("someone", {
 // DCC SCHAT (secure chat)
 client.dcc("someone", {
   action: "schat",
-  args: { ip: "[2001:db8::1]", port: 6697 }
+  args: { ip: "[2001:db8::1]", port: 6697 },
 });
 // returns: "PRIVMSG someone :\x01DCC SCHAT [2001:db8::1] 6697\x01"
 ```
@@ -1374,7 +1590,13 @@ client.dcc("someone", {
 // DCC SEND with size and optional token
 client.dcc("someone", {
   action: "send",
-  args: { filename: "file.bin", ip: "203.0.113.10", port: 5000, size: 123456, token: 42 }
+  args: {
+    filename: "file.bin",
+    ip: "203.0.113.10",
+    port: 5000,
+    size: 123456,
+    token: 42,
+  },
 });
 // returns: "PRIVMSG someone :\x01DCC SEND file.bin 203.0.113.10 5000 123456 42\x01"
 ```
@@ -1383,7 +1605,7 @@ client.dcc("someone", {
 // DCC RESUME (request resuming at byte position)
 client.dcc("someone", {
   action: "resume",
-  args: { filename: "file.bin", port: 5000, position: 65536 }
+  args: { filename: "file.bin", port: 5000, position: 65536 },
 });
 // returns: "PRIVMSG someone :\x01DCC RESUME file.bin 5000 65536\x01"
 ```
@@ -1392,11 +1614,10 @@ client.dcc("someone", {
 // DCC ACCEPT (accept resume at byte position)
 client.dcc("someone", {
   action: "accept",
-  args: { filename: "file.bin", port: 5000, position: 65536 }
+  args: { filename: "file.bin", port: 5000, position: 65536 },
 });
 // returns: "PRIVMSG someone :\x01DCC ACCEPT file.bin 5000 65536\x01"
 ```
-
 
 ### command: dehalfop
 
@@ -1577,6 +1798,22 @@ client.mode("#chan", "+v", "nick");
 
 client.mode("#chan", "+iko", "secret", "nick");
 ```
+
+### command: monitor
+
+Manages the MONITOR list for online presence tracking.
+
+```ts
+client.monitor.add("nick1"); // add a nick to the monitor list
+client.monitor.add(["nick1", "nick2"]); // add multiple nicks
+client.monitor.remove("nick1"); // remove a nick
+client.monitor.list(); // request the current monitor list
+client.monitor.clear(); // clear the entire monitor list
+client.monitor.status(); // request online status of all monitored nicks
+```
+
+The monitor limit is available via `client.state.monitorLimit` (from ISUPPORT).
+The local monitor list is tracked in `client.state.monitorList`.
 
 ### command: motd
 
@@ -1773,6 +2010,29 @@ client.quit();
 client.quit("Goodbye!");
 ```
 
+### command: setname
+
+Changes your real name. Requires `setname` IRCv3 cap.
+
+`setname(realname: string): void`
+
+```ts
+client.setname("New Real Name");
+```
+
+### command: tagmsg
+
+Sends a TAGMSG (tags-only message) to a target. Requires `message-tags` IRCv3
+cap.
+
+`tagmsg(target: string, tags?: Record<string, string | undefined>): void`
+
+```ts
+client.tagmsg("#channel", { "+typing": "active" });
+
+client.tagmsg("#channel", { "+reply": "msgid123" });
+```
+
 ### command: time
 
 Queries the date time of a `target`.
@@ -1860,6 +2120,22 @@ Shortcut for [`mode`](#command-mode).
 client.voice("#channel", "nick");
 
 client.voice("#channel", "nick1", "nick2", "nick3");
+```
+
+### command: who
+
+Sends a WHO query for a target.
+
+`who(target: string, options?: WhoOptions): void`
+
+```ts
+client.who("#channel");
+```
+
+With WHOX fields:
+
+```ts
+client.who("#channel", { fields: "nuhsra", token: "42" });
 ```
 
 ### command: whois

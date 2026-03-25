@@ -91,6 +91,59 @@ describe("core/client", (test) => {
     ]);
   });
 
+  test("send raw message with tags", async () => {
+    const { client, server } = mock();
+
+    await client.connect("host");
+
+    client.send({ "+typing": "active" }, "TAGMSG", "#channel");
+    const raw = server.receive();
+
+    assertEquals(raw, ["@+typing=active TAGMSG #channel"]);
+  });
+
+  test("send raw message with tags and value escaping", async () => {
+    const { client, server } = mock();
+
+    await client.connect("host");
+
+    client.send({ "+msg": "hello world" }, "TAGMSG", "#channel");
+    const raw = server.receive();
+
+    assertEquals(raw, ["@+msg=hello\\sworld TAGMSG #channel"]);
+  });
+
+  test("send raw message with tag without value", async () => {
+    const { client, server } = mock();
+
+    await client.connect("host");
+
+    client.send({ "+typing": undefined }, "TAGMSG", "#channel");
+    const raw = server.receive();
+
+    assertEquals(raw, ["@+typing TAGMSG #channel"]);
+  });
+
+  test("send raw message with multiple tags", async () => {
+    const { client, server } = mock();
+
+    await client.connect("host");
+
+    client.send(
+      { "+reply": "msgid123", "+typing": "active" },
+      "PRIVMSG",
+      "#channel",
+      "hello",
+    );
+    const raw = server.receive();
+
+    assertEquals(raw.length, 1);
+    assertEquals(raw[0].startsWith("@"), true);
+    assertEquals(raw[0].includes("+reply=msgid123"), true);
+    assertEquals(raw[0].includes("+typing=active"), true);
+    assertEquals(raw[0].includes("PRIVMSG #channel hello"), true);
+  });
+
   test("fail to send raw message if not connected", async () => {
     const { client } = mock();
 

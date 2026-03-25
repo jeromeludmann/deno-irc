@@ -41,6 +41,19 @@ export { default as topic } from "./topic.ts";
 export { default as usermodes } from "./usermodes.ts";
 export { default as verbose } from "./verbose.ts";
 export { default as version } from "./version.ts";
+export { default as accountNotify } from "./account_notify.ts";
+export { default as accountTag } from "./account_tag.ts";
+export { default as awayNotify } from "./away_notify.ts";
+export { default as chghost } from "./chghost.ts";
+export { default as echoMessage } from "./echo_message.ts";
+export { default as extendedJoin } from "./extended_join.ts";
+export { default as inviteNotify } from "./invite_notify.ts";
+export { default as messageTags } from "./message_tags.ts";
+export { default as serverTime } from "./server_time.ts";
+export { default as setname } from "./setname.ts";
+export { default as who } from "./who.ts";
+export { default as monitor } from "./monitor.ts";
+export { default as messageSplit } from "./message_split.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -86,6 +99,19 @@ import topic from "./topic.ts";
 import usermodes from "./usermodes.ts";
 import verbose from "./verbose.ts";
 import version from "./version.ts";
+import accountNotify from "./account_notify.ts";
+import accountTag from "./account_tag.ts";
+import awayNotify from "./away_notify.ts";
+import chghost from "./chghost.ts";
+import echoMessage from "./echo_message.ts";
+import extendedJoin from "./extended_join.ts";
+import inviteNotify from "./invite_notify.ts";
+import messageTags from "./message_tags.ts";
+import serverTime from "./server_time.ts";
+import setname from "./setname.ts";
+import who from "./who.ts";
+import monitor from "./monitor.ts";
+import messageSplit from "./message_split.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -132,6 +158,19 @@ const plugins = [
   usermodes,
   verbose,
   version,
+  accountNotify,
+  accountTag,
+  awayNotify,
+  chghost,
+  echoMessage,
+  extendedJoin,
+  inviteNotify,
+  messageTags,
+  serverTime,
+  setname,
+  who,
+  monitor,
+  messageSplit,
   whois,
 ];
 

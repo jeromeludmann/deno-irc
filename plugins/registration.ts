@@ -87,7 +87,7 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
 
   const trySasl = function () {
     const capListener = (payload: Raw) => {
-      if (payload.params[2] !== "sasl") return;
+      if (!payload.params[2]?.split(" ").includes("sasl")) return;
       client.send("AUTHENTICATE", "PLAIN");
       client.off("raw:cap", capListener);
     };
@@ -110,7 +110,7 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
 
   const trySaslExternal = function () {
     const capListener = (payload: Raw) => {
-      if (payload.params[2] !== "sasl") return;
+      if (!payload.params[2]?.split(" ").includes("sasl")) return;
       client.send("AUTHENTICATE", "EXTERNAL");
       client.off("raw:cap", capListener);
     };
