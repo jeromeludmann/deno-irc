@@ -270,15 +270,47 @@ Key testing utilities:
 Prerequisites:
 
 - [Deno](https://deno.land/) 2+
-- [Node.js](https://nodejs.org/) 20+ (for cross-runtime testing)
+- [Node.js](https://nodejs.org/) 22+ (for cross-runtime testing)
+- [Docker](https://www.docker.com/) (for integration tests)
 
-Run `deno task` to see all available Deno commands. Key tasks:
+### Deno
 
-- `deno task test` — run unit tests (Deno)
+- `deno task test` — run unit tests
 - `deno task lint` — lint the codebase
 - `deno task fmt` — format the codebase
-- `npm test` — run unit tests (Node.js)
-- `npm run test:e2e` — run E2E tests (Node.js)
+- `deno task test:integration` — run integration tests (all ircd)
+- `deno task test:integration:ergo` — run integration tests (Ergo)
+- `deno task test:integration:inspircd` — run integration tests (InspIRCd)
+
+### Node.js
+
+- `npm test` — run unit tests
+- `npm run test:integration` — run integration tests (all ircd)
+- `npm run test:integration:ergo` — run integration tests (Ergo)
+- `npm run test:integration:inspircd` — run integration tests (InspIRCd)
+
+## CI testing strategy
+
+The CI tests the real axes of variation without redundancy. Integration jobs
+depend on unit tests — if parsing is broken, there's no point starting a server.
+
+**Unit tests** validate parsing, plugin logic and events. They run once per
+runtime (Deno, Node) on Ubuntu — unit tests use mocks with no network or
+filesystem calls, so the OS has no impact. Lint and formatting checks run in the
+Deno job.
+
+**Integration tests** validate the IRC protocol against real ircd over the
+network on Ubuntu (Docker required). Deno runs against every supported ircd
+(Ergo, InspIRCd) to cover protocol variations between implementations. Node runs
+against Ergo only — the same parser and plugins produce identical bytes on the
+wire regardless of runtime, so one ircd is enough to validate Node's network
+layer.
+
+Ergo is the reference ircd for cross-runtime and cross-OS tests because it's the
+fastest to start (Go, no DH generation) and the most feature-complete (built-in
+NickServ, SASL, full IRCv3 caps). Account-dependent tests (NickServ, SASL PLAIN,
+SASL EXTERNAL) only run on Ergo — other ircd would require external services
+(Anope/Atheme) for marginal coverage gain.
 
 ## Releasing (maintainers)
 
