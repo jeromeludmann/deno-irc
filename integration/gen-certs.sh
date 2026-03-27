@@ -1,5 +1,5 @@
 #!/bin/bash
-# Generate self-signed test certificates for E2E tests.
+# Generate self-signed test certificates for integration tests.
 # Re-run this script to regenerate expired certs.
 set -e
 

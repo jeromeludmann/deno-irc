@@ -11,6 +11,8 @@
   "scripts": {
     "test": "tsx --test core/*_test.ts plugins/*_test.ts runtime/node_test.ts",
     "typecheck": "tsc -p tsconfig.node.json --noEmit",
-    "test:e2e": "docker compose -f e2e/docker-compose.yml down -v 2>/dev/null; docker compose -f e2e/docker-compose.yml up -d --force-recreate && sleep 2 && tsx --test e2e/e2e_test.ts; docker compose -f e2e/docker-compose.yml down -v"
+    "test:integration": "npm run test:integration:ergo && npm run test:integration:inspircd",
+    "test:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo tsx --test integration/integration_test.ts; docker compose -f integration/ergo/docker-compose.yml down -v",
+    "test:integration:inspircd": "docker compose -f integration/inspircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/inspircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=inspircd tsx --test integration/integration_test.ts; docker compose -f integration/inspircd/docker-compose.yml down -v"
   }
 }

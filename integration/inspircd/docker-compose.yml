@@ -1,0 +1,11 @@
+services:
+  ircd:
+    image: inspircd/inspircd-docker:latest
+    init: true
+    ports:
+      - "6667:6667"
+      - "6697:6697"
+    volumes:
+      - ../certs/server.pem:/inspircd/conf/cert.pem:ro
+      - ../certs/server-key.pem:/inspircd/conf/key.pem:ro
+      - ./inspircd.conf:/inspircd/conf/inspircd.conf:ro

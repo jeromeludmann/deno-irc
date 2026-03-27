@@ -6,6 +6,6 @@ services:
       - "6667:6667"
       - "6697:6697"
     volumes:
-      - ./certs/server.pem:/certs/fullchain.pem:ro
-      - ./certs/server-key.pem:/certs/privkey.pem:ro
+      - ../certs/server.pem:/certs/fullchain.pem:ro
+      - ../certs/server-key.pem:/certs/privkey.pem:ro
       - ./ircd.yaml:/ircd/ircd.yaml:ro

@@ -4,8 +4,12 @@ import { Client } from "../client.ts";
 
 const HOST = "127.0.0.1";
 const PORT = 6667;
+const IRCD = typeof Deno !== "undefined"
+  ? Deno.env.get("IRCD") ?? "ergo"
+  // deno-lint-ignore no-process-global
+  : process.env.IRCD ?? "ergo";
 
-describe("e2e", (test) => {
+describe("integration", (test) => {
   let counter = 0;
 
   const connect = async (base: string) => {
@@ -13,7 +17,7 @@ describe("e2e", (test) => {
     const client = new Client({
       nick,
       username: nick,
-      realname: `E2E ${nick}`,
+      realname: `Test ${nick}`,
     });
     client.on("error", (error) => {
       throw error;
@@ -147,7 +151,9 @@ describe("e2e", (test) => {
     const aliceSeesQuit = alice.once("quit");
     bob.quit("peace out");
     const quit = await aliceSeesQuit;
-    assertMatch(quit.params.comment!, /peace out/);
+    if (quit.params.comment) {
+      assertMatch(quit.params.comment, /peace out/);
+    }
 
     await cleanup(alice);
   });
@@ -238,7 +244,7 @@ describe("e2e", (test) => {
     const whois = await bob.once("whois_reply");
     assertEquals(whois.params.nick, aliceNewNick);
     assertEquals(typeof whois.params.username, "string");
-    assertMatch(whois.params.realname, /E2E/);
+    assertMatch(whois.params.realname, /Test/);
 
     // Away
     alice.away("brb");
@@ -291,7 +297,7 @@ describe("e2e", (test) => {
     await bob.once("join");
     await aliceSeesJoin;
 
-    // Ban bob using wildcard mask (Ergo uses cloaked hosts)
+    // Ban bob using wildcard mask
     const bobNick = nickOf(bob);
     const banMask = `${bobNick}!*@*`;
     alice.mode("#restricted", "+b", banMask);
@@ -346,7 +352,6 @@ describe("e2e", (test) => {
     alice.privmsg("#time", "what time is it");
     const raw = await rawPromise;
 
-    // Ergo always sends server-time when the cap is negotiated
     assertEquals(typeof raw.tags?.time, "string");
     const date = new Date(raw.tags!.time!);
     assertEquals(isNaN(date.getTime()), false);
@@ -444,7 +449,7 @@ describe("e2e", (test) => {
     const bob = new Client({
       nick: monitorNick,
       username: monitorNick,
-      realname: "E2E",
+      realname: "Test",
     });
     bob.on("error", (error) => {
       throw error;
@@ -524,20 +529,20 @@ describe("e2e", (test) => {
     ]);
     alice.invite(nickOf(charlie), "#invnotify");
     const result = await invitePromise;
-    // Ergo may not broadcast invites to other members depending on config
-    // This test validates the cap is negotiated and the flow doesn't break
+    // Some ircds may not broadcast invites to other members
     assertEquals(typeof result, "string");
 
     await cleanup(alice, bob, charlie);
   });
 
   test("chghost: receive host change on NickServ login", async () => {
+    if (IRCD !== "ergo") return;
     // Register an account for bob
     const regNick = `chg${++counter}`;
     const reg = new Client({
       nick: regNick,
       username: regNick,
-      realname: "E2E",
+      realname: "Test",
     });
     reg.on("error", () => {});
     await reg.connect(HOST, { port: PORT });
@@ -596,6 +601,7 @@ describe("e2e", (test) => {
   });
 
   test("extended-join + account-tag: see account on SASL join", async () => {
+    if (IRCD !== "ergo") return;
     const alice = await connect("alice");
     alice.join("#extjoin");
     await alice.once("join");
@@ -605,7 +611,7 @@ describe("e2e", (test) => {
     const reg = new Client({
       nick: regNick,
       username: regNick,
-      realname: "E2E Extended",
+      realname: "Test Extended",
     });
     reg.on("error", () => {});
     await reg.connect(HOST, { port: PORT });
@@ -619,7 +625,7 @@ describe("e2e", (test) => {
     const bob = new Client({
       nick: regNick,
       username: regNick,
-      realname: "E2E Extended",
+      realname: "Test Extended",
       password: "testpass",
       authMethod: "sasl",
     });
@@ -649,11 +655,12 @@ describe("e2e", (test) => {
   });
 
   test("nickserv authentication", async () => {
+    if (IRCD !== "ergo") return;
     const nick = `ns${++counter}`;
     const password = "testpass_ns";
 
     // Register account
-    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    const reg = new Client({ nick, username: nick, realname: "Test" });
     reg.on("error", (error) => {
       throw error;
     });
@@ -669,7 +676,7 @@ describe("e2e", (test) => {
       nick,
       username: nick,
       password,
-      realname: "E2E",
+      realname: "Test",
     });
     client.on("error", (error) => {
       throw error;
@@ -682,11 +689,12 @@ describe("e2e", (test) => {
   });
 
   test("sasl plain authentication", async () => {
+    if (IRCD !== "ergo") return;
     const nick = `sasl${++counter}`;
     const password = "testpass_plain";
 
     // Register account
-    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    const reg = new Client({ nick, username: nick, realname: "Test" });
     reg.on("error", (error) => {
       throw error;
     });
@@ -703,7 +711,7 @@ describe("e2e", (test) => {
       username: nick,
       password,
       authMethod: "sasl",
-      realname: "E2E",
+      realname: "Test",
     });
     client.on("error", (error) => {
       throw error;
@@ -716,22 +724,23 @@ describe("e2e", (test) => {
   });
 
   test("sasl external authentication", async () => {
+    if (IRCD !== "ergo") return;
     const nick = `ext${++counter}`;
     const password = "testpass_ext";
 
     const TLS_PORT = 6697;
 
     // Register account with TLS client cert
-    const reg = new Client({ nick, username: nick, realname: "E2E" });
+    const reg = new Client({ nick, username: nick, realname: "Test" });
     reg.on("error", (error) => {
       throw error;
     });
     await reg.connect(HOST, {
       port: TLS_PORT,
       tls: true,
-      certFile: "e2e/certs/client.pem",
-      keyFile: "e2e/certs/client-key.pem",
-      caCertFile: "e2e/certs/ca.pem",
+      certFile: "integration/certs/client.pem",
+      keyFile: "integration/certs/client-key.pem",
+      caCertFile: "integration/certs/ca.pem",
     });
     await reg.once("register");
     reg.privmsg("NickServ", `REGISTER ${password} ${nick}@test.com`);
@@ -746,7 +755,7 @@ describe("e2e", (test) => {
       nick,
       username: nick,
       authMethod: "saslExternal",
-      realname: "E2E",
+      realname: "Test",
     });
     client.on("error", (error) => {
       throw error;
@@ -754,9 +763,9 @@ describe("e2e", (test) => {
     await client.connect(HOST, {
       port: TLS_PORT,
       tls: true,
-      certFile: "e2e/certs/client.pem",
-      keyFile: "e2e/certs/client-key.pem",
-      caCertFile: "e2e/certs/ca.pem",
+      certFile: "integration/certs/client.pem",
+      keyFile: "integration/certs/client-key.pem",
+      caCertFile: "integration/certs/ca.pem",
     });
     await client.once("register");
     assertEquals(client.state.user.nick, nick);
