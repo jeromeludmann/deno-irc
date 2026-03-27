@@ -42,7 +42,7 @@ jobs:
 
     strategy:
       matrix:
-        ircd: [ergo, inspircd]
+        ircd: [ergo, inspircd, unrealircd]
       fail-fast: false
 
     steps:
