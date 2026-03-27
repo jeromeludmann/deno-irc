@@ -6,7 +6,10 @@ describe("plugins/account_notify", (test) => {
   test("push 'account-notify' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("account-notify"), true);
+    assertEquals(
+      client.state.caps.requested.includes("account-notify"),
+      true,
+    );
   });
 
   test("emit 'account' on ACCOUNT login", async () => {

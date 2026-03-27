@@ -13,7 +13,7 @@ const plugin: Plugin<AccountTagFeatures, AnyPlugins> = createPlugin(
   "account_tag",
   [cap],
 )((client) => {
-  client.state.capabilities.push("account-tag");
+  client.state.caps.requested.push("account-tag");
 
   client.utils.getAccount = (msg) => {
     return msg.tags?.account;

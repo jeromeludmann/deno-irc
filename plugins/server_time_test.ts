@@ -6,7 +6,10 @@ describe("plugins/server_time", (test) => {
   test("push 'server-time' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("server-time"), true);
+    assertEquals(
+      client.state.caps.requested.includes("server-time"),
+      true,
+    );
   });
 
   test("parse server time from message tags", async () => {

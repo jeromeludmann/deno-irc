@@ -25,7 +25,7 @@ const plugin: Plugin<SetnameFeatures, AnyPlugins> = createPlugin(
   "setname",
   [cap],
 )((client) => {
-  client.state.capabilities.push("setname");
+  client.state.caps.requested.push("setname");
 
   client.setname = (realname) => {
     client.send("SETNAME", realname);

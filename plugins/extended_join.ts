@@ -28,7 +28,7 @@ const plugin: Plugin<ExtendedJoinFeatures, AnyPlugins> = createPlugin(
   "extended_join",
   [cap, join],
 )((client) => {
-  client.state.capabilities.push("extended-join");
+  client.state.caps.requested.push("extended-join");
 
   client.on("raw:join", (msg) => {
     const { source, params } = msg;

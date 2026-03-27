@@ -14,8 +14,7 @@ describe("plugins/registration", (test) => {
       { withConnection: false },
     );
 
-    (client.state as { capabilities: typeof client.state.capabilities })
-      .capabilities = [];
+    (client.state as { caps: typeof client.state.caps }).caps.requested = [];
 
     await client.connect("");
     const raw = server.receive();
@@ -32,8 +31,7 @@ describe("plugins/registration", (test) => {
       { withConnection: false },
     );
 
-    (client.state as { capabilities: typeof client.state.capabilities })
-      .capabilities = [];
+    (client.state as { caps: typeof client.state.caps }).caps.requested = [];
 
     await client.connect("");
     const raw = server.receive();
@@ -172,11 +170,11 @@ describe("plugins/registration", (test) => {
 
   test("initialize capabilities state", async () => {
     const { client } = await mock(options);
-    const { capabilities } = client.state;
+    const { requested } = client.state.caps;
 
-    assertEquals(capabilities.includes("cap-notify"), true);
-    assertEquals(capabilities.includes("multi-prefix"), true);
-    assertEquals(capabilities.length >= 2, true);
+    assertEquals(requested.includes("cap-notify"), true);
+    assertEquals(requested.includes("multi-prefix"), true);
+    assertEquals(requested.length >= 2, true);
   });
 
   test("initialize user state", async () => {

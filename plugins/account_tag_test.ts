@@ -6,7 +6,10 @@ describe("plugins/account_tag", (test) => {
   test("push 'account-tag' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("account-tag"), true);
+    assertEquals(
+      client.state.caps.requested.includes("account-tag"),
+      true,
+    );
   });
 
   test("extract account from message tags", async () => {

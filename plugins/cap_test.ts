@@ -25,22 +25,28 @@ describe("plugins/cap", (test) => {
   test("initialize capabilities state", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("cap-notify"), true);
-    assertEquals(client.state.capabilities.includes("multi-prefix"), true);
+    assertEquals(
+      client.state.caps.requested.includes("cap-notify"),
+      true,
+    );
+    assertEquals(
+      client.state.caps.requested.includes("multi-prefix"),
+      true,
+    );
   });
 
   test("initialize enabledCapabilities state", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.enabledCapabilities instanceof Set, true);
-    assertEquals(client.state.enabledCapabilities.size, 0);
+    assertEquals(client.state.caps.enabled instanceof Set, true);
+    assertEquals(client.state.caps.enabled.size, 0);
   });
 
   test("initialize availableCapabilities state", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.availableCapabilities instanceof Set, true);
-    assertEquals(client.state.availableCapabilities.size, 0);
+    assertEquals(client.state.caps.available instanceof Set, true);
+    assertEquals(client.state.caps.available.size, 0);
   });
 
   test("send CAP", async () => {
@@ -118,9 +124,9 @@ describe("plugins/cap", (test) => {
     const raw = server.receive();
     const capReq = raw.find((r) => r.startsWith("CAP REQ"));
     assertEquals(typeof capReq, "string");
-    assertEquals(client.state.availableCapabilities.has("cap-notify"), true);
+    assertEquals(client.state.caps.available.has("cap-notify"), true);
     assertEquals(
-      client.state.availableCapabilities.has("server-time"),
+      client.state.caps.available.has("server-time"),
       true,
     );
   });
@@ -138,7 +144,7 @@ describe("plugins/cap", (test) => {
     await client.once("raw:cap");
     await tick();
 
-    assertEquals(client.state.availableCapabilities.has("sasl"), true);
+    assertEquals(client.state.caps.available.has("sasl"), true);
     const raw = server.receive();
     const capReq = raw.find((r) => r.startsWith("CAP REQ"));
     assertEquals(capReq!.includes("sasl"), true);
@@ -152,8 +158,8 @@ describe("plugins/cap", (test) => {
     const msg = await ackPromise;
 
     assertEquals(msg.params.caps, ["multi-prefix", "cap-notify"]);
-    assertEquals(client.state.enabledCapabilities.has("multi-prefix"), true);
-    assertEquals(client.state.enabledCapabilities.has("cap-notify"), true);
+    assertEquals(client.state.caps.enabled.has("multi-prefix"), true);
+    assertEquals(client.state.caps.enabled.has("cap-notify"), true);
   });
 
   test("track CAP NAK", async () => {
@@ -165,7 +171,7 @@ describe("plugins/cap", (test) => {
 
     assertEquals(msg.params.caps, ["unsupported-cap"]);
     assertEquals(
-      client.state.enabledCapabilities.has("unsupported-cap"),
+      client.state.caps.enabled.has("unsupported-cap"),
       false,
     );
   });
@@ -179,7 +185,7 @@ describe("plugins/cap", (test) => {
 
     assertEquals(msg.params.caps, ["multi-prefix", "some-other-cap"]);
     assertEquals(
-      client.state.availableCapabilities.has("multi-prefix"),
+      client.state.caps.available.has("multi-prefix"),
       true,
     );
 
@@ -192,16 +198,16 @@ describe("plugins/cap", (test) => {
 
     server.send(":server CAP me ACK :multi-prefix");
     await client.once("cap:ack");
-    assertEquals(client.state.enabledCapabilities.has("multi-prefix"), true);
+    assertEquals(client.state.caps.enabled.has("multi-prefix"), true);
 
     const delPromise = client.once("cap:del");
     server.send(":server CAP me DEL :multi-prefix");
     const msg = await delPromise;
 
     assertEquals(msg.params.caps, ["multi-prefix"]);
-    assertEquals(client.state.enabledCapabilities.has("multi-prefix"), false);
+    assertEquals(client.state.caps.enabled.has("multi-prefix"), false);
     assertEquals(
-      client.state.availableCapabilities.has("multi-prefix"),
+      client.state.caps.available.has("multi-prefix"),
       false,
     );
   });

@@ -20,15 +20,22 @@ export interface CapEventParams {
 /** Emitted when the server acknowledges, rejects, adds or removes capabilities. */
 export type CapEvent = Message<CapEventParams>;
 
+interface Caps {
+  /** Capabilities that plugins want to negotiate. */
+  requested: string[];
+  /** Capabilities advertised by the server via CAP LS. */
+  available: Set<string>;
+  /** Capabilities currently enabled via CAP ACK. */
+  enabled: Set<string>;
+}
+
 interface CapFeatures {
   commands: {
     /** Sends a capability. */
     cap: (command: AnyCapabilityCommand, ...params: string[]) => void;
   };
   state: {
-    capabilities: string[];
-    availableCapabilities: Set<string>;
-    enabledCapabilities: Set<string>;
+    caps: Caps;
   };
   events: {
     "cap:ack": CapEvent;
@@ -52,12 +59,14 @@ interface CapNegotiationOptions {
 }
 
 const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
-  client.state.capabilities = [];
-  client.state.availableCapabilities = new Set();
-  client.state.enabledCapabilities = new Set();
+  client.state.caps = {
+    requested: [],
+    available: new Set(),
+    enabled: new Set(),
+  };
 
   // Always request cap-notify for dynamic cap management.
-  client.state.capabilities.push("cap-notify");
+  client.state.caps.requested.push("cap-notify");
 
   // Sends CAP command.
 
@@ -65,13 +74,11 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
     client.send("CAP", command, ...params);
   };
 
-  // Provides util to send capabilities
-  // (currently triggered by plugins/registration)
   let completeAfterAck = false;
 
   client.utils.negotiateCapabilities = (options?: CapNegotiationOptions) => {
-    const { completeImmediately = false, extraCaps = [] } = options || {};
-    const wanted = [...client.state.capabilities, ...extraCaps];
+    const { completeImmediately = false, extraCaps = [] } = options ?? {};
+    const wanted = [...client.state.caps.requested, ...extraCaps];
     if (wanted.length === 0) return;
 
     completeAfterAck = completeImmediately;
@@ -97,12 +104,12 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
         client.off("raw:cap", onLs);
 
         for (const cap of lsCaps) {
-          client.state.availableCapabilities.add(cap);
+          client.state.caps.available.add(cap);
         }
 
         // Only request caps that the server actually supports.
         const supported = wanted.filter((c) =>
-          client.state.availableCapabilities.has(c)
+          client.state.caps.available.has(c)
         );
         if (supported.length > 0) {
           client.cap("REQ", supported.join(" "));
@@ -130,7 +137,7 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
     if (sub === "ACK") {
       const caps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
       for (const cap of caps) {
-        client.state.enabledCapabilities.add(cap);
+        client.state.caps.enabled.add(cap);
       }
       client.emit("cap:ack", { source: msg.source, params: { caps } });
       if (completeAfterAck) {
@@ -153,11 +160,11 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
       const caps = rawCaps.map((c) => c.split("=")[0]);
       client.emit("cap:new", { source: msg.source, params: { caps } });
       for (const cap of caps) {
-        client.state.availableCapabilities.add(cap);
+        client.state.caps.available.add(cap);
       }
       // Auto-request caps that were declared by plugins.
       for (const cap of caps) {
-        if (client.state.capabilities.includes(cap)) {
+        if (client.state.caps.requested.includes(cap)) {
           client.cap("REQ", cap);
         }
       }
@@ -166,8 +173,8 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
     if (sub === "DEL") {
       const caps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
       for (const cap of caps) {
-        client.state.enabledCapabilities.delete(cap);
-        client.state.availableCapabilities.delete(cap);
+        client.state.caps.enabled.delete(cap);
+        client.state.caps.available.delete(cap);
       }
       client.emit("cap:del", { source: msg.source, params: { caps } });
     }

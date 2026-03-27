@@ -6,7 +6,7 @@ describe("plugins/chghost", (test) => {
   test("push 'chghost' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("chghost"), true);
+    assertEquals(client.state.caps.requested.includes("chghost"), true);
   });
 
   test("emit 'chghost' on CHGHOST", async () => {

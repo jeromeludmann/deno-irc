@@ -6,7 +6,10 @@ describe("plugins/away_notify", (test) => {
   test("push 'away-notify' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("away-notify"), true);
+    assertEquals(
+      client.state.caps.requested.includes("away-notify"),
+      true,
+    );
   });
 
   test("emit 'away_notify' when user goes away", async () => {

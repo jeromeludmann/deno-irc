@@ -400,7 +400,7 @@ describe("integration", (test) => {
 
   test("setname: receive realname changes", async () => {
     const alice = await connect("alice");
-    if (!alice.state.enabledCapabilities.has("setname")) {
+    if (!alice.state.caps.enabled.has("setname")) {
       return await cleanup(alice);
     }
     const bob = await connect("bob");
@@ -511,7 +511,7 @@ describe("integration", (test) => {
     // After registration, the server ACKs the caps we requested.
     // Give a moment for the ACK to be processed.
     await new Promise((r) => setTimeout(r, 500));
-    assertEquals(alice.state.enabledCapabilities.size > 0, true);
+    assertEquals(alice.state.caps.enabled.size > 0, true);
 
     await cleanup(alice);
   });

@@ -34,7 +34,7 @@ const plugin: Plugin<NamesFeatures, AnyPlugins> = createPlugin(
 )((client) => {
   const buffers: Record<string, Names> = {};
 
-  client.state.capabilities.push("multi-prefix");
+  client.state.caps.requested.push("multi-prefix");
 
   // Sends NAMES command.
 

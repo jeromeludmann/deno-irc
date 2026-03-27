@@ -6,7 +6,10 @@ describe("plugins/extended_join", (test) => {
   test("push 'extended-join' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("extended-join"), true);
+    assertEquals(
+      client.state.caps.requested.includes("extended-join"),
+      true,
+    );
   });
 
   test("emit 'extended_join' with account and realname", async () => {
