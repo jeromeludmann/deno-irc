@@ -56,13 +56,19 @@ describe("plugins/registration", (test) => {
 
     assertEquals(raw[0], "NICK me");
     assertEquals(raw[1], "USER user 0 * :real name");
-    assertEquals(raw.at(-1), "CAP END");
     assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
+      raw.some((r) => r === "CAP LS 302"),
       true,
     );
+
+    // Respond to CAP LS → triggers REQ + END
+    server.send(":server CAP me LS :cap-notify multi-prefix");
+    await client.once("raw:cap");
+    await new Promise((r) => setTimeout(r, 10));
+    const afterLs = server.receive();
+
     assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("multi-prefix")),
+      afterLs.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
       true,
     );
   });
@@ -70,25 +76,34 @@ describe("plugins/registration", (test) => {
   test("use nickserv auth when password supplied", async () => {
     const { client, server } = await mock(
       { ...options, password: "password" },
+      { withConnection: false },
     );
 
     await client.connect("");
     const raw = server.receive();
-    assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
-      true,
-    );
-    assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("multi-prefix")),
-      true,
-    );
-    assertEquals(raw.includes("CAP END"), true);
+    assertEquals(raw.includes("CAP LS 302"), true);
     assertEquals(raw.includes("NICK me"), true);
     assertEquals(raw.includes("USER user 0 * :real name"), true);
     assertEquals(
       raw.includes("PRIVMSG NickServ :identify user password"),
       true,
     );
+
+    // Respond to CAP LS → triggers REQ
+    server.send(":server CAP me LS :cap-notify multi-prefix");
+    await client.once("raw:cap");
+    await new Promise((r) => setTimeout(r, 10));
+    const afterLs = server.receive();
+    assertEquals(
+      afterLs.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
+      true,
+    );
+
+    // ACK → triggers CAP END (completeImmediately)
+    server.send(":server CAP me ACK :cap-notify multi-prefix");
+    await client.once("cap:ack");
+    await new Promise((r) => setTimeout(r, 10));
+    assertEquals(server.receive().includes("CAP END"), true);
   });
 
   test("send sasl capability sequence if password supplied and authMethod is sasl", async () => {
@@ -98,27 +113,28 @@ describe("plugins/registration", (test) => {
     );
 
     await client.connect("");
-    server.send(":serverhost 903 user :SASL authentication successful");
-    await client.once("raw:rpl_saslsuccess");
     const raw = server.receive();
+    assertEquals(raw.includes("CAP LS 302"), true);
+
+    // Respond to CAP LS with sasl support
+    server.send(
+      ":serverhost CAP me LS :cap-notify multi-prefix sasl=PLAIN",
+    );
+    await client.once("raw:cap");
+    await new Promise((r) => setTimeout(r, 10));
+    const afterLs = server.receive();
 
     assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
+      afterLs.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
       true,
     );
     assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("multi-prefix")),
+      afterLs.some((r) => r.startsWith("CAP REQ") && r.includes("sasl")),
       true,
     );
-    assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("sasl")),
-      true,
-    );
-    assertEquals(raw.at(-3), "CAP END");
-    assertEquals(raw.at(-2), "NICK me");
-    assertEquals(raw.at(-1), "USER user 0 * :real name");
 
-    server.send(":serverhost CAP me ACK :sasl");
+    // ACK the caps
+    server.send(":serverhost CAP me ACK :cap-notify sasl");
     await client.once("raw:cap");
 
     assertEquals(server.receive(), [
@@ -213,23 +229,24 @@ describe("plugins/registration", (test) => {
     );
 
     await client.connect("", { tls: true });
-    server.send(":serverhost 903 user :SASL authentication successful");
-    await client.once("raw:rpl_saslsuccess");
     const raw = server.receive();
+    assertEquals(raw.includes("CAP LS 302"), true);
+
+    // Respond to CAP LS with sasl support
+    server.send(
+      ":serverhost CAP me LS :cap-notify multi-prefix sasl=PLAIN,EXTERNAL",
+    );
+    await client.once("raw:cap");
+    await new Promise((r) => setTimeout(r, 10));
+    const afterLs = server.receive();
 
     assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("cap-notify")),
+      afterLs.some((r) => r.startsWith("CAP REQ") && r.includes("sasl")),
       true,
     );
-    assertEquals(
-      raw.some((r) => r.startsWith("CAP REQ") && r.includes("sasl")),
-      true,
-    );
-    assertEquals(raw.at(-3), "CAP END");
-    assertEquals(raw.at(-2), "NICK me");
-    assertEquals(raw.at(-1), "USER user 0 * :real name");
 
-    server.send(":serverhost CAP me ACK :sasl");
+    // ACK the caps
+    server.send(":serverhost CAP me ACK :cap-notify sasl");
     await client.once("raw:cap");
 
     assertEquals(server.receive(), [

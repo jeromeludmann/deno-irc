@@ -27,6 +27,7 @@ interface CapFeatures {
   };
   state: {
     capabilities: string[];
+    availableCapabilities: Set<string>;
     enabledCapabilities: Set<string>;
   };
   events: {
@@ -36,9 +37,10 @@ interface CapFeatures {
     "cap:del": CapEvent;
   };
   utils: {
-    /** Sends CAP sequence with existing capabilities.
+    /** Sends CAP LS 302, filters against server-advertised capabilities,
+     * then sends CAP REQ for the intersection.
      *
-     * Optionaly, takes additional capabilities in argument. */
+     * Optionally takes additional capabilities in argument. */
     negotiateCapabilities: (options?: CapNegotiationOptions) => void;
     completeCapNegotiation: () => void;
   };
@@ -51,6 +53,7 @@ interface CapNegotiationOptions {
 
 const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
   client.state.capabilities = [];
+  client.state.availableCapabilities = new Set();
   client.state.enabledCapabilities = new Set();
 
   // Always request cap-notify for dynamic cap management.
@@ -64,20 +67,57 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
 
   // Provides util to send capabilities
   // (currently triggered by plugins/registration)
-  let requestedCaps: string[] = [];
+  let completeAfterAck = false;
 
   client.utils.negotiateCapabilities = (options?: CapNegotiationOptions) => {
     const { completeImmediately = false, extraCaps = [] } = options || {};
-    requestedCaps = [...client.state.capabilities, ...extraCaps];
-    if (requestedCaps.length === 0) return;
+    const wanted = [...client.state.capabilities, ...extraCaps];
+    if (wanted.length === 0) return;
 
-    client.cap("REQ", requestedCaps.join(" "));
+    completeAfterAck = completeImmediately;
 
-    if (completeImmediately) client.cap("END");
+    // Accumulate CAP LS 302 (may be multiline with * marker).
+    const lsCaps: string[] = [];
+
+    const onLs = (msg: { params: string[] }) => {
+      const [, subcommand, ...rest] = msg.params;
+      if (subcommand?.toUpperCase() !== "LS") return;
+
+      // CAP LS 302 multiline: "* :<caps>" for continuation, ":<caps>" for final.
+      const isMultiline = rest[0] === "*";
+      const capString = isMultiline ? rest[1] : rest[0];
+      const caps = (capString ?? "").trim().split(/\s+/).filter(Boolean);
+
+      for (const cap of caps) {
+        // Strip capability values (e.g. "sasl=PLAIN,EXTERNAL" → "sasl").
+        lsCaps.push(cap.split("=")[0]);
+      }
+
+      if (!isMultiline) {
+        client.off("raw:cap", onLs);
+
+        for (const cap of lsCaps) {
+          client.state.availableCapabilities.add(cap);
+        }
+
+        // Only request caps that the server actually supports.
+        const supported = wanted.filter((c) =>
+          client.state.availableCapabilities.has(c)
+        );
+        if (supported.length > 0) {
+          client.cap("REQ", supported.join(" "));
+        } else if (completeAfterAck) {
+          completeAfterAck = false;
+          client.cap("END");
+        }
+      }
+    };
+
+    client.on("raw:cap", onLs);
+    client.cap("LS", "302");
   };
 
   client.utils.completeCapNegotiation = (): void => {
-    if (requestedCaps.length === 0) return;
     client.cap("END");
   };
 
@@ -93,16 +133,28 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
         client.state.enabledCapabilities.add(cap);
       }
       client.emit("cap:ack", { source: msg.source, params: { caps } });
+      if (completeAfterAck) {
+        completeAfterAck = false;
+        client.cap("END");
+      }
     }
 
     if (sub === "NAK") {
       const caps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
       client.emit("cap:nak", { source: msg.source, params: { caps } });
+      if (completeAfterAck) {
+        completeAfterAck = false;
+        client.cap("END");
+      }
     }
 
     if (sub === "NEW") {
-      const caps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
+      const rawCaps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
+      const caps = rawCaps.map((c) => c.split("=")[0]);
       client.emit("cap:new", { source: msg.source, params: { caps } });
+      for (const cap of caps) {
+        client.state.availableCapabilities.add(cap);
+      }
       // Auto-request caps that were declared by plugins.
       for (const cap of caps) {
         if (client.state.capabilities.includes(cap)) {
@@ -115,6 +167,7 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
       const caps = (rest[0] ?? "").trim().split(/\s+/).filter(Boolean);
       for (const cap of caps) {
         client.state.enabledCapabilities.delete(cap);
+        client.state.availableCapabilities.delete(cap);
       }
       client.emit("cap:del", { source: msg.source, params: { caps } });
     }
