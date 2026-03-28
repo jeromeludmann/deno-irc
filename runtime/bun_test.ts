@@ -180,6 +180,12 @@ test("isSilentError recognizes ECONNRESET", () => {
   expect(runtime.isSilentError(err)).toBe(true);
 });
 
+test("isSilentError recognizes ERR_STREAM_DESTROYED", () => {
+  const err = new Error("stream destroyed");
+  (err as NodeJS.ErrnoException).code = "ERR_STREAM_DESTROYED";
+  expect(runtime.isSilentError(err)).toBe(true);
+});
+
 test("isSilentError recognizes ConnectionClosed", () => {
   const err = new Error("ConnectionClosed");
   expect(runtime.isSilentError(err)).toBe(true);
