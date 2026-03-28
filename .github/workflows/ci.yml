@@ -35,6 +35,19 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  test-bun:
+    name: Unit tests · Bun
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run typecheck:bun
+      - run: bun test core/*_test.ts plugins/*_test.ts runtime/bun_test.ts
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
@@ -58,7 +71,7 @@ jobs:
   integration-deno:
     name: Integration · Deno · ${{ matrix.ircd }}
     runs-on: ubuntu-latest
-    needs: [test-deno, test-node]
+    needs: [test-deno, test-node, test-bun]
 
     strategy:
       matrix:
@@ -75,7 +88,7 @@ jobs:
   integration-node:
     name: Integration · Node · ergo
     runs-on: ubuntu-latest
-    needs: [test-deno, test-node]
+    needs: [test-deno, test-node, test-bun]
 
     steps:
       - uses: actions/checkout@v4
@@ -84,3 +97,21 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run test:integration:ergo
+
+  integration-bun:
+    name: Integration · Bun · ergo
+    runs-on: ubuntu-latest
+    needs: [test-deno, test-node, test-bun]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: |
+          docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null
+          docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate
+          sleep 2
+          IRCD=ergo bun test --timeout 30000 integration/integration_test.ts
+          docker compose -f integration/ergo/docker-compose.yml down -v
