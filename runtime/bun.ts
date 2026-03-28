@@ -14,6 +14,7 @@ declare global {
   // deno-lint-ignore no-var
   var Bun: {
     connect(opts: BunConnectOptions): Promise<BunSocket>;
+    listen(opts: BunListenOptions): BunListener;
   };
 }
 
@@ -21,6 +22,11 @@ interface BunSocket {
   write(data: Uint8Array | string): number;
   end(): void;
   terminate(): void;
+}
+
+interface BunListener {
+  port: number;
+  stop(force?: boolean): void;
 }
 
 interface BunSocketHandler {
@@ -42,6 +48,12 @@ interface BunConnectOptions {
     cert?: string;
     key?: string;
   };
+}
+
+interface BunListenOptions {
+  hostname: string;
+  port: number;
+  socket: BunSocketHandler;
 }
 
 class BunConn implements Conn {
@@ -146,10 +158,18 @@ function connectSocket(opts: ConnectOptions): Promise<Conn> {
     let onClose: () => void;
 
     const hooks = {
-      onData: (cb: (data: Uint8Array) => void) => { onData = cb; },
-      onEnd: (cb: () => void) => { onEnd = cb; },
-      onError: (cb: (err: Error) => void) => { onError = cb; },
-      onClose: (cb: () => void) => { onClose = cb; },
+      onData: (cb: (data: Uint8Array) => void) => {
+        onData = cb;
+      },
+      onEnd: (cb: () => void) => {
+        onEnd = cb;
+      },
+      onError: (cb: (err: Error) => void) => {
+        onError = cb;
+      },
+      onClose: (cb: () => void) => {
+        onClose = cb;
+      },
     };
 
     Bun.connect({
@@ -187,10 +207,18 @@ function connectTlsSocket(opts: ConnectTlsOptions): Promise<Conn> {
     let onClose: () => void;
 
     const hooks = {
-      onData: (cb: (data: Uint8Array) => void) => { onData = cb; },
-      onEnd: (cb: () => void) => { onEnd = cb; },
-      onError: (cb: (err: Error) => void) => { onError = cb; },
-      onClose: (cb: () => void) => { onClose = cb; },
+      onData: (cb: (data: Uint8Array) => void) => {
+        onData = cb;
+      },
+      onEnd: (cb: () => void) => {
+        onEnd = cb;
+      },
+      onError: (cb: (err: Error) => void) => {
+        onError = cb;
+      },
+      onClose: (cb: () => void) => {
+        onClose = cb;
+      },
     };
 
     Bun.connect({

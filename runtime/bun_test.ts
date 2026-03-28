@@ -3,7 +3,9 @@
 import { expect, test } from "bun:test";
 import { runtime } from "./bun.ts";
 
-function listen(): Promise<{ port: number; server: ReturnType<typeof Bun.listen> }> {
+function listen(): Promise<
+  { port: number; server: ReturnType<typeof Bun.listen> }
+> {
   return new Promise((resolve) => {
     const server = Bun.listen({
       hostname: "127.0.0.1",
@@ -56,7 +58,10 @@ test("BunConn buffers chunks arriving before read()", async () => {
     },
   });
 
-  const conn = await runtime.connect({ hostname: "127.0.0.1", port: server.port });
+  const conn = await runtime.connect({
+    hostname: "127.0.0.1",
+    port: server.port,
+  });
 
   // Small delay to let both chunks arrive and buffer
   await new Promise((r) => setTimeout(r, 50));
@@ -87,7 +92,10 @@ test("BunConn read() returns null on end", async () => {
     },
   });
 
-  const conn = await runtime.connect({ hostname: "127.0.0.1", port: server.port });
+  const conn = await runtime.connect({
+    hostname: "127.0.0.1",
+    port: server.port,
+  });
 
   const buffer = new Uint8Array(64);
   const read = await conn.read(buffer);
@@ -111,7 +119,10 @@ test("BunConn splits chunk larger than buffer", async () => {
     },
   });
 
-  const conn = await runtime.connect({ hostname: "127.0.0.1", port: server.port });
+  const conn = await runtime.connect({
+    hostname: "127.0.0.1",
+    port: server.port,
+  });
 
   // Small delay to let the chunk arrive
   await new Promise((r) => setTimeout(r, 50));
@@ -144,7 +155,10 @@ test("BunConn read() resolves null on close (disconnect)", async () => {
     },
   });
 
-  const conn = await runtime.connect({ hostname: "127.0.0.1", port: server.port });
+  const conn = await runtime.connect({
+    hostname: "127.0.0.1",
+    port: server.port,
+  });
 
   // Start a read that will be pending
   const buffer = new Uint8Array(64);
