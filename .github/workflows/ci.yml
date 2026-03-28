@@ -32,8 +32,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run typecheck
-      - run: npm test
+      - run: npm run typecheck:node
+      - run: npm run test:node
 
   test-bun:
     name: Unit tests · Bun
@@ -96,7 +96,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run test:integration:ergo
+      - run: npm run test:node:integration:ergo
 
   integration-bun:
     name: Integration · Bun · ergo
