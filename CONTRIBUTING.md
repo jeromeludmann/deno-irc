@@ -281,6 +281,7 @@ Prerequisites:
 - `deno task test:integration` — run integration tests (all ircd)
 - `deno task test:integration:ergo` — run integration tests (Ergo)
 - `deno task test:integration:inspircd` — run integration tests (InspIRCd)
+- `deno task test:integration:unrealircd` — run integration tests (UnrealIRCd)
 
 ### Node.js
 
@@ -288,6 +289,7 @@ Prerequisites:
 - `npm run test:integration` — run integration tests (all ircd)
 - `npm run test:integration:ergo` — run integration tests (Ergo)
 - `npm run test:integration:inspircd` — run integration tests (InspIRCd)
+- `npm run test:integration:unrealircd` — run integration tests (UnrealIRCd)
 
 ## CI testing strategy
 
@@ -301,7 +303,8 @@ Deno job.
 
 **Integration tests** validate the IRC protocol against real ircd over the
 network on Ubuntu (Docker required). Deno runs against every supported ircd
-(Ergo, InspIRCd) to cover protocol variations between implementations. Node runs
+(Ergo, InspIRCd, UnrealIRCd) to cover protocol variations between
+implementations. Node runs
 against Ergo only — the same parser and plugins produce identical bytes on the
 wire regardless of runtime, so one ircd is enough to validate Node's network
 layer.

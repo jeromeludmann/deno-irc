@@ -282,10 +282,9 @@ describe("integration", (test) => {
     await alice.once("mode:channel");
 
     // Bob tries to join — should fail
-    const bobError = bob.once("error_reply");
+    const bobError = bob.once("raw:err_inviteonlychan");
     bob.join("#restricted");
-    const err = await bobError;
-    assertEquals(err.command, "err_inviteonlychan");
+    await bobError;
 
     // Alice invites bob → bob joins
     const bobInvited = bob.once("invite");
@@ -401,6 +400,9 @@ describe("integration", (test) => {
 
   test("setname: receive realname changes", async () => {
     const alice = await connect("alice");
+    if (!alice.state.caps.enabled.has("setname")) {
+      return await cleanup(alice);
+    }
     const bob = await connect("bob");
 
     alice.join("#setname");
@@ -439,6 +441,9 @@ describe("integration", (test) => {
 
   test("MONITOR: track online/offline status", async () => {
     const alice = await connect("alice");
+    if (!("MONITOR" in alice.state.isupport)) {
+      return await cleanup(alice);
+    }
     const monitorNick = `mon${++counter}`;
 
     // Monitor a nick that doesn't exist yet
@@ -506,7 +511,7 @@ describe("integration", (test) => {
     // After registration, the server ACKs the caps we requested.
     // Give a moment for the ACK to be processed.
     await new Promise((r) => setTimeout(r, 500));
-    assertEquals(alice.state.enabledCapabilities.size > 0, true);
+    assertEquals(alice.state.caps.enabled.size > 0, true);
 
     await cleanup(alice);
   });
@@ -592,7 +597,7 @@ describe("integration", (test) => {
     await bob.once("join");
 
     const tagPromise = bob.once("tagmsg");
-    alice.tagmsg("#tagtest", { "+example": "value" });
+    alice.tagmsg("#tagtest", { "+typing": "active" });
     const msg = await tagPromise;
     assertEquals(msg.params.target, "#tagtest");
     assertEquals(typeof msg.params.tags, "object");

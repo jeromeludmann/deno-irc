@@ -37,7 +37,7 @@ const plugin: Plugin<EchoMessageFeatures, AnyPlugins> = createPlugin(
   "echo_message",
   [cap, registration],
 )((client) => {
-  client.state.capabilities.push("echo-message");
+  client.state.caps.requested.push("echo-message");
 
   client.utils.isEcho = (msg) => msg.source?.name === client.state.user.nick;
 

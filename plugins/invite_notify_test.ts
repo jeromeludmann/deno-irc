@@ -6,7 +6,10 @@ describe("plugins/invite_notify", (test) => {
   test("push 'invite-notify' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("invite-notify"), true);
+    assertEquals(
+      client.state.caps.requested.includes("invite-notify"),
+      true,
+    );
   });
 
   test("emit 'invite' for broadcast INVITE", async () => {

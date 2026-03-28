@@ -24,7 +24,7 @@ const plugin: Plugin<ChghostFeatures, AnyPlugins> = createPlugin(
   "chghost",
   [cap],
 )((client) => {
-  client.state.capabilities.push("chghost");
+  client.state.caps.requested.push("chghost");
 
   client.on("raw:chghost", (msg) => {
     const { source, params: [username, hostname] } = msg;

@@ -24,7 +24,7 @@ const plugin: Plugin<AwayNotifyFeatures, AnyPlugins> = createPlugin(
   "away_notify",
   [cap],
 )((client) => {
-  client.state.capabilities.push("away-notify");
+  client.state.caps.requested.push("away-notify");
 
   client.on("raw:away", (msg) => {
     const { source, params } = msg;

@@ -6,7 +6,10 @@ describe("plugins/echo_message", (test) => {
   test("push 'echo-message' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("echo-message"), true);
+    assertEquals(
+      client.state.caps.requested.includes("echo-message"),
+      true,
+    );
   });
 
   test("emit 'echo:privmsg' for self-sent PRIVMSG", async () => {

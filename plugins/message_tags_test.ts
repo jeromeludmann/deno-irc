@@ -6,7 +6,10 @@ describe("plugins/message_tags", (test) => {
   test("push 'message-tags' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("message-tags"), true);
+    assertEquals(
+      client.state.caps.requested.includes("message-tags"),
+      true,
+    );
   });
 
   test("send TAGMSG without tags", async () => {

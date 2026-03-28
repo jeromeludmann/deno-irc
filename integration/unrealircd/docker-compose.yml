@@ -1,0 +1,12 @@
+services:
+  ircd:
+    image: ircd/unrealircd:nightly
+    init: true
+    command: /app/unrealircd/bin/unrealircd -F
+    ports:
+      - "6667:6667"
+      - "6697:6697"
+    volumes:
+      - ../certs/server.pem:/ircd/tls/server.cert.pem:ro
+      - ../certs/server-key.pem:/ircd/tls/server.key.pem:ro
+      - ./unrealircd.conf:/ircd/unrealircd.conf:ro

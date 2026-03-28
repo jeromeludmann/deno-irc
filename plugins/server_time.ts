@@ -13,7 +13,7 @@ const plugin: Plugin<ServerTimeFeatures, AnyPlugins> = createPlugin(
   "server_time",
   [cap],
 )((client) => {
-  client.state.capabilities.push("server-time");
+  client.state.caps.requested.push("server-time");
 
   client.utils.getServerTime = (msg) => {
     const time = msg.tags?.time;

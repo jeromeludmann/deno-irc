@@ -34,7 +34,7 @@ const plugin: Plugin<MessageTagsFeatures, AnyPlugins> = createPlugin(
   "message_tags",
   [cap, chantypes],
 )((client) => {
-  client.state.capabilities.push("message-tags");
+  client.state.caps.requested.push("message-tags");
 
   // Sends TAGMSG command.
 

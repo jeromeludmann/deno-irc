@@ -6,7 +6,7 @@ const plugin: Plugin<Record<never, never>, AnyPlugins> = createPlugin(
   "invite_notify",
   [cap, invite],
 )((client) => {
-  client.state.capabilities.push("invite-notify");
+  client.state.caps.requested.push("invite-notify");
 });
 
 export default plugin;

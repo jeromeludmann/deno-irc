@@ -21,7 +21,7 @@ const plugin: Plugin<AccountNotifyFeatures, AnyPlugins> = createPlugin(
   "account_notify",
   [cap],
 )((client) => {
-  client.state.capabilities.push("account-notify");
+  client.state.caps.requested.push("account-notify");
 
   client.on("raw:account", (msg) => {
     const { source, params: [account] } = msg;

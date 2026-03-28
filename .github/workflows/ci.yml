@@ -35,6 +35,26 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [test-deno]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno task coverage
+      - name: Check coverage threshold (95%)
+        run: |
+          COVERAGE=$(deno coverage --exclude="_test.ts" --exclude="/testing/" coverage/cov_profile 2>&1 | grep "All files" | sed 's/\x1b\[[0-9;]*m//g' | awk -F'|' '{gsub(/ /,"",$5); print $5}')
+          echo "Line coverage: ${COVERAGE}%"
+          if [ "$(echo "$COVERAGE < 95" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${COVERAGE}% is below the 95% threshold"
+            exit 1
+          fi
+
   integration-deno:
     name: Integration · Deno · ${{ matrix.ircd }}
     runs-on: ubuntu-latest
@@ -42,7 +62,7 @@ jobs:
 
     strategy:
       matrix:
-        ircd: [ergo, inspircd]
+        ircd: [ergo, inspircd, unrealircd]
       fail-fast: false
 
     steps:

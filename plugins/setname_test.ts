@@ -6,7 +6,7 @@ describe("plugins/setname", (test) => {
   test("push 'setname' capability", async () => {
     const { client } = await mock();
 
-    assertEquals(client.state.capabilities.includes("setname"), true);
+    assertEquals(client.state.caps.requested.includes("setname"), true);
   });
 
   test("send SETNAME", async () => {
