@@ -5,15 +5,19 @@
     "@types/node": "^24.7.2",
     "@std/assert": "npm:@jsr/std__assert@^1.0.19",
     "@std/fmt": "npm:@jsr/std__fmt@^1.0.9",
+    "bun-types": "latest",
     "typescript": "^5.9.3",
     "tsx": "^4"
   },
   "scripts": {
-    "test": "tsx --test core/*_test.ts plugins/*_test.ts runtime/node_test.ts",
-    "typecheck": "tsc -p tsconfig.node.json --noEmit",
-    "test:integration": "npm run test:integration:ergo && npm run test:integration:inspircd && npm run test:integration:unrealircd",
-    "test:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo tsx --test integration/integration_test.ts; docker compose -f integration/ergo/docker-compose.yml down -v",
-    "test:integration:inspircd": "docker compose -f integration/inspircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/inspircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=inspircd tsx --test integration/integration_test.ts; docker compose -f integration/inspircd/docker-compose.yml down -v",
-    "test:integration:unrealircd": "docker compose -f integration/unrealircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/unrealircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=unrealircd tsx --test integration/integration_test.ts; docker compose -f integration/unrealircd/docker-compose.yml down -v"
+    "test:node": "tsx --test core/*_test.ts plugins/*_test.ts runtime/node_test.ts",
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
+    "test:node:integration": "npm run test:node:integration:ergo && npm run test:node:integration:inspircd && npm run test:node:integration:unrealircd",
+    "test:node:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo tsx --test integration/integration_test.ts; docker compose -f integration/ergo/docker-compose.yml down -v",
+    "test:node:integration:inspircd": "docker compose -f integration/inspircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/inspircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=inspircd tsx --test integration/integration_test.ts; docker compose -f integration/inspircd/docker-compose.yml down -v",
+    "test:node:integration:unrealircd": "docker compose -f integration/unrealircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/unrealircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=unrealircd tsx --test integration/integration_test.ts; docker compose -f integration/unrealircd/docker-compose.yml down -v",
+    "test:bun": "bun test core/*_test.ts plugins/*_test.ts runtime/bun_test.ts",
+    "typecheck:bun": "tsc -p tsconfig.bun.json --noEmit",
+    "test:bun:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo bun test --timeout 30000 integration/integration_test.ts; docker compose -f integration/ergo/docker-compose.yml down -v"
   }
 }

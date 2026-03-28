@@ -136,6 +136,12 @@ test("isSilentError recognizes ECONNRESET", () => {
   strictEqual(runtime.isSilentError(err), true);
 });
 
+test("isSilentError recognizes ERR_STREAM_DESTROYED", () => {
+  const err = new Error("stream destroyed");
+  (err as NodeJS.ErrnoException).code = "ERR_STREAM_DESTROYED";
+  strictEqual(runtime.isSilentError(err), true);
+});
+
 test("isSilentError rejects normal errors", () => {
   strictEqual(runtime.isSilentError(new Error("boom")), false);
 });

@@ -5,6 +5,10 @@ export type Test = (name: string, fn: () => void | Promise<void>) => void;
 const test: Test = typeof Deno !== "undefined"
   // deno-lint-ignore no-explicit-any
   ? Deno.test as any
+  // @ts-ignore: Bun global
+  : typeof Bun !== "undefined"
+  // deno-lint-ignore no-explicit-any
+  ? (await import("bun:test")).test as any
   : (await import("node:test")).default;
 
 export function describe(name: string, fn: (test: Test) => void): void {

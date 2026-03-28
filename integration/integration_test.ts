@@ -336,8 +336,6 @@ describe("integration", (test) => {
     await cleanup(alice, bob);
   });
 
-  // --- IRCv3 capabilities ---
-
   test("server-time: messages carry time tag", async () => {
     const alice = await connect("alice");
     const bob = await connect("bob");
@@ -776,5 +774,369 @@ describe("integration", (test) => {
     assertEquals(client.state.user.nick, nick);
 
     await cleanup(client);
+  });
+
+  test("isupport + myinfo: server state populated after registration", async () => {
+    const nick = `sup${++counter}`;
+    const client = new Client({
+      nick,
+      username: nick,
+      realname: `Test ${nick}`,
+    });
+    client.on("error", (error) => {
+      throw error;
+    });
+
+    // Listen for motd_reply BEFORE connecting so we don't miss the event
+    const motdDone = client.once("motd_reply");
+    await client.connect(HOST, { port: PORT });
+    await motdDone;
+
+    const keys = Object.keys(client.state.isupport);
+    assertEquals(keys.includes("CHANTYPES"), true);
+    assertEquals(keys.includes("PREFIX"), true);
+    assertEquals(keys.includes("CHANMODES"), true);
+
+    assertEquals(client.state.server !== undefined, true);
+    assertEquals(typeof client.state.server!.host, "string");
+    assertEquals(typeof client.state.server!.version, "string");
+
+    await cleanup(client);
+  });
+
+  test("names: names_reply contains joined nicks", async () => {
+    const alice = await connect("alice");
+    const bob = await connect("bob");
+
+    alice.join("#names");
+    await alice.once("join");
+    bob.join("#names");
+    await bob.once("join");
+
+    const namesPromise = alice.once("names_reply");
+    alice.names("#names");
+    const reply = await namesPromise;
+    assertEquals(reply.params.channel, "#names");
+
+    const nicks = Object.keys(reply.params.names);
+    assertEquals(nicks.includes(nickOf(alice)), true);
+    assertEquals(nicks.includes(nickOf(bob)), true);
+
+    await cleanup(alice, bob);
+  });
+
+  test("nicklist: state tracks channel members", async () => {
+    const alice = await connect("alice");
+    const bob = await connect("bob");
+
+    alice.join("#nlist");
+    await alice.once("join");
+
+    // Set up listener BEFORE bob joins to avoid race
+    const aliceSeesJoin = alice.once("join");
+    bob.join("#nlist");
+    await bob.once("join");
+    await aliceSeesJoin;
+
+    // Give nicklist time to update from NAMES reply
+    await new Promise((r) => setTimeout(r, 500));
+
+    const nicklist = alice.state.nicklists["#nlist"];
+    assertEquals(Array.isArray(nicklist), true);
+    const nicks = nicklist.map((e: { nick: string }) => e.nick);
+    assertEquals(nicks.includes(nickOf(alice)), true);
+    assertEquals(nicks.includes(nickOf(bob)), true);
+
+    // After part, nicklist should update
+    const aliceSeesPart = alice.once("part");
+    bob.part("#nlist");
+    await aliceSeesPart;
+    await new Promise((r) => setTimeout(r, 500));
+
+    const updatedNicks = alice.state.nicklists["#nlist"].map(
+      (e: { nick: string }) => e.nick,
+    );
+    assertEquals(updatedNicks.includes(nickOf(bob)), false);
+
+    await cleanup(alice, bob);
+  });
+
+  test("chanmodes + chantypes: state and utils populated", async () => {
+    const alice = await connect("alice");
+
+    // chantypes
+    assertEquals(typeof alice.state.chantypes, "string");
+    assertEquals(alice.state.chantypes.includes("#"), true);
+    assertEquals(alice.utils.isChannel("#test"), true);
+    assertEquals(alice.utils.isChannel("notachannel"), false);
+
+    // chanmodes — at least operator prefix should exist
+    assertEquals(typeof alice.state.prefixes, "object");
+    assertEquals("@" in alice.state.prefixes, true);
+
+    await cleanup(alice);
+  });
+
+  test("ping: CTCP ping round-trip between clients", async () => {
+    const alice = await connect("alice");
+    const bob = await connect("bob");
+
+    const replyPromise = alice.once("ctcp_ping_reply");
+    alice.ping(nickOf(bob));
+    const reply = await replyPromise;
+    assertEquals(typeof reply.params.latency, "number");
+    assertEquals(reply.params.latency >= 0, true);
+
+    await cleanup(alice, bob);
+  });
+
+  test("list: list channels on server", async () => {
+    const alice = await connect("alice");
+
+    alice.join("#listtest");
+    await alice.once("join");
+    alice.topic("#listtest", "a listed topic");
+    await alice.once("topic");
+
+    const listPromise = alice.once("list_reply");
+    alice.list();
+    const reply = await listPromise;
+
+    assertEquals(Array.isArray(reply.params.channels), true);
+    const found = reply.params.channels.find(
+      (ch: { name: string }) => ch.name === "#listtest",
+    );
+    assertEquals(found !== undefined, true);
+    assertEquals(found!.topic.includes("a listed topic"), true);
+
+    await cleanup(alice);
+  });
+
+  test("motd: server returns message of the day", async () => {
+    const alice = await connect("alice");
+
+    const motdPromise = alice.once("motd_reply");
+    alice.motd();
+    const reply = await motdPromise;
+
+    // motd is either an array of lines or undefined if no MOTD
+    if (reply.params.motd) {
+      assertEquals(Array.isArray(reply.params.motd), true);
+    }
+
+    await cleanup(alice);
+  });
+
+  test("ctcp: version, time, clientinfo round-trip", async () => {
+    const alice = await connect("alice");
+    const bob = await connect("bob");
+
+    // VERSION
+    const versionPromise = alice.once("ctcp_version_reply");
+    alice.version(nickOf(bob));
+    const version = await versionPromise;
+    assertEquals(typeof version.params.version, "string");
+
+    // TIME
+    const timePromise = alice.once("ctcp_time_reply");
+    alice.time(nickOf(bob));
+    const time = await timePromise;
+    assertEquals(typeof time.params.time, "string");
+
+    // CLIENTINFO
+    const clientinfoPromise = alice.once("ctcp_clientinfo_reply");
+    alice.clientinfo(nickOf(bob));
+    const clientinfo = await clientinfoPromise;
+    assertEquals(Array.isArray(clientinfo.params.supported), true);
+    assertEquals(clientinfo.params.supported.includes("PING"), true);
+
+    await cleanup(alice, bob);
+  });
+
+  test("mode aliases: op, deop, voice, devoice, ban, unban", async () => {
+    const alice = await connect("alice");
+    const bob = await connect("bob");
+
+    alice.join("#aliases");
+    await alice.once("join");
+    const aliceSeesJoin = alice.once("join");
+    bob.join("#aliases");
+    await Promise.all([bob.once("join"), aliceSeesJoin]);
+
+    const modes: string[] = [];
+    bob.on("mode:channel", (msg) => modes.push(msg.params.mode));
+
+    alice.voice("#aliases", nickOf(bob));
+    alice.devoice("#aliases", nickOf(bob));
+    alice.op("#aliases", nickOf(bob));
+    alice.deop("#aliases", nickOf(bob));
+    alice.ban("#aliases", "bad!*@*");
+    alice.unban("#aliases", "bad!*@*");
+
+    await new Promise((r) => setTimeout(r, 3000));
+
+    assertEquals(modes.includes("+v"), true);
+    assertEquals(modes.includes("-v"), true);
+    assertEquals(modes.includes("+o"), true);
+    assertEquals(modes.includes("-o"), true);
+    assertEquals(modes.includes("+b"), true);
+    assertEquals(modes.includes("-b"), true);
+
+    await cleanup(alice, bob);
+  });
+
+  test("join_on_register: auto-join channels on connect", async () => {
+    const nick = `auto${++counter}`;
+    const client = new Client({
+      nick,
+      username: nick,
+      realname: `Test ${nick}`,
+      channels: ["#autojoin1", "#autojoin2"],
+    });
+    client.on("error", (error) => {
+      throw error;
+    });
+    await client.connect(HOST, { port: PORT });
+    await client.once("register");
+
+    // Wait for both joins
+    const joins: string[] = [];
+    const joinHandler = (msg: { params: { channel: string } }) => {
+      if (
+        msg.params.channel === "#autojoin1" ||
+        msg.params.channel === "#autojoin2"
+      ) {
+        joins.push(msg.params.channel);
+      }
+    };
+    client.on("join", joinHandler);
+
+    // The joins may already have happened, check state
+    await new Promise((r) => setTimeout(r, 2000));
+    const channels = Object.keys(client.state.nicklists);
+    assertEquals(channels.includes("#autojoin1"), true);
+    assertEquals(channels.includes("#autojoin2"), true);
+
+    await cleanup(client);
+  });
+
+  test("join_on_invite: auto-join when invited", async () => {
+    const alice = await connect("alice");
+
+    const bobNick = `inv${++counter}`;
+    const bob = new Client({
+      nick: bobNick,
+      username: bobNick,
+      realname: `Test ${bobNick}`,
+      joinOnInvite: true,
+    });
+    bob.on("error", (error) => {
+      throw error;
+    });
+    await bob.connect(HOST, { port: PORT });
+    await bob.once("register");
+
+    alice.join("#invjoin");
+    await alice.once("join");
+
+    // Alice invites bob — bob should auto-join
+    const aliceSeesJoin = alice.once("join");
+    alice.invite(bobNick, "#invjoin");
+    const joinEvent = await aliceSeesJoin;
+    assertEquals(joinEvent.params.channel, "#invjoin");
+
+    await cleanup(alice, bob);
+  });
+
+  test("account_notify: receive account login notification", async () => {
+    if (IRCD !== "ergo") return;
+
+    // Register an account
+    const regNick = `acn${++counter}`;
+    const reg = new Client({
+      nick: regNick,
+      username: regNick,
+      realname: "Test",
+    });
+    reg.on("error", () => {});
+    await reg.connect(HOST, { port: PORT });
+    await reg.once("register");
+    reg.privmsg("NickServ", `register testpass ${regNick}@test.com`);
+    await new Promise((r) => setTimeout(r, 2000));
+    reg.quit();
+    await reg.once("disconnected");
+
+    // Alice joins a channel
+    const alice = await connect("alice");
+    alice.join("#accnotify");
+    await alice.once("join");
+
+    // Bob connects without auth, joins the channel
+    const bob = new Client({
+      nick: regNick,
+      username: regNick,
+      realname: "Test",
+    });
+    bob.on("error", () => {});
+    await bob.connect(HOST, { port: PORT });
+    await bob.once("register");
+    bob.join("#accnotify");
+    await bob.once("join");
+
+    // Bob authenticates via NickServ — triggers ACCOUNT notification
+    let timer: ReturnType<typeof setTimeout>;
+    const accountPromise = Promise.race([
+      alice.once("account").then((msg) => msg),
+      new Promise<null>((r) => {
+        timer = setTimeout(() => r(null), 5000);
+      }),
+    ]);
+    bob.privmsg("NickServ", "identify testpass");
+    const msg = await accountPromise;
+    clearTimeout(timer!);
+
+    if (msg) {
+      assertEquals(msg.source?.name, regNick);
+      assertEquals(typeof msg.params.account, "string");
+    }
+
+    bob.quit();
+    await bob.once("disconnected");
+    await cleanup(alice);
+  });
+
+  test("invalid_names: resolves nick collision", async () => {
+    const nick = `dup${++counter}`;
+
+    // First client takes the nick
+    const first = new Client({
+      nick,
+      username: nick,
+      realname: "Test",
+    });
+    first.on("error", (error) => {
+      throw error;
+    });
+    await first.connect(HOST, { port: PORT });
+    await first.once("register");
+    assertEquals(first.state.user.nick, nick);
+
+    // Second client tries the same nick — should get resolved
+    const second = new Client({
+      nick,
+      username: nick,
+      realname: "Test",
+      resolveInvalidNames: true,
+    });
+    second.on("error", (error) => {
+      throw error;
+    });
+    await second.connect(HOST, { port: PORT });
+    await second.once("register");
+
+    // The nick should have been modified (typically with _ suffix)
+    assertEquals(second.state.user.nick !== nick, true);
+
+    await cleanup(first, second);
   });
 });

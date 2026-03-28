@@ -14,7 +14,7 @@ feature implementations to decoupled _plugins_ parts.
 
 The core contains some internal parts related to IRC protocol, TCP sockets and
 event system. Plugins contain all the extra features built on top of the core
-client. Runtime-specific code (Deno, Node.js) is isolated in the `runtime/`
+client. Runtime-specific code (Deno, Node.js, Bun) is isolated in the `runtime/`
 directory behind a common interface.
 
 In most of the cases, it is quite handy to add new features using plugins
@@ -271,6 +271,7 @@ Prerequisites:
 
 - [Deno](https://deno.land/) 2+
 - [Node.js](https://nodejs.org/) 22+ (for cross-runtime testing)
+- [Bun](https://bun.sh/) (for cross-runtime testing)
 - [Docker](https://www.docker.com/) (for integration tests)
 
 ### Deno
@@ -285,11 +286,18 @@ Prerequisites:
 
 ### Node.js
 
-- `npm test` — run unit tests
-- `npm run test:integration` — run integration tests (all ircd)
-- `npm run test:integration:ergo` — run integration tests (Ergo)
-- `npm run test:integration:inspircd` — run integration tests (InspIRCd)
-- `npm run test:integration:unrealircd` — run integration tests (UnrealIRCd)
+- `npm run test:node` — run unit tests
+- `npm run typecheck:node` — type-check Node-specific files
+- `npm run test:node:integration` — run integration tests (all ircd)
+- `npm run test:node:integration:ergo` — run integration tests (Ergo)
+- `npm run test:node:integration:inspircd` — run integration tests (InspIRCd)
+- `npm run test:node:integration:unrealircd` — run integration tests (UnrealIRCd)
+
+### Bun
+
+- `bun run test:bun` — run unit tests
+- `bun run typecheck:bun` — type-check Bun-specific files
+- `bun run test:bun:integration:ergo` — run integration tests (Ergo)
 
 ## CI testing strategy
 
@@ -297,17 +305,17 @@ The CI tests the real axes of variation without redundancy. Integration jobs
 depend on unit tests — if parsing is broken, there's no point starting a server.
 
 **Unit tests** validate parsing, plugin logic and events. They run once per
-runtime (Deno, Node) on Ubuntu — unit tests use mocks with no network or
+runtime (Deno, Node, Bun) on Ubuntu — unit tests use mocks with no network or
 filesystem calls, so the OS has no impact. Lint and formatting checks run in the
 Deno job.
 
 **Integration tests** validate the IRC protocol against real ircd over the
 network on Ubuntu (Docker required). Deno runs against every supported ircd
 (Ergo, InspIRCd, UnrealIRCd) to cover protocol variations between
-implementations. Node runs
+implementations. Node and Bun run
 against Ergo only — the same parser and plugins produce identical bytes on the
-wire regardless of runtime, so one ircd is enough to validate Node's network
-layer.
+wire regardless of runtime, so one ircd is enough to validate each runtime's
+network layer.
 
 Ergo is the reference ircd for cross-runtime and cross-OS tests because it's the
 fastest to start (Go, no DH generation) and the most feature-complete (built-in

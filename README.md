@@ -2,15 +2,15 @@
 
 ![ci](https://github.com/jeromeludmann/deno-irc/workflows/ci/badge.svg)
 [![JSR](https://jsr.io/badges/@irc/client)](https://jsr.io/@irc/client)
+![Deno 2+](https://img.shields.io/badge/Deno-2%2B-000?logo=deno)
+![Node.js 20+](https://img.shields.io/badge/Node.js-20%2B-339933?logo=nodedotjs&logoColor=white)
+![Bun 1+](https://img.shields.io/badge/Bun-1%2B-f472b6?logo=bun&logoColor=white)
 
-IRC client protocol module for [Deno](https://deno.land/) 2+ and
-[Node.js](https://nodejs.org/) 20+ which aims to provide an easy way to
-talk with IRC servers.
+IRC client protocol module for [Deno](https://deno.land/) 2+,
+[Node.js](https://nodejs.org/) 20+ and [Bun](https://bun.sh/) 1+ which aims to
+provide an easy way to talk with IRC servers.
 
-> **New:** Node.js is now officially supported. Install via
-> `npx jsr add @irc/client` and use the same API as on Deno.
-
-- **Cross-runtime** — runs on Deno and Node.js with the same API
+- **Cross-runtime** — runs on Deno, Node.js and Bun with the same API
 - **Fully typed** — events, commands and state are inferred from TypeScript, no guessing
 - **Plugin architecture** — 50+ built-in plugins (SASL, DCC, CTCP, reconnect, flood control...)
 - **IRCv3** — server-time, echo-message, message-tags, MONITOR, SASL, and [more](API.md#ircv3-support)
@@ -39,6 +39,16 @@ import { Client } from "jsr:@irc/client";
 
 ```sh
 npx jsr add @irc/client
+```
+
+```ts
+import { Client } from "@irc/client";
+```
+
+**Bun:**
+
+```sh
+bunx jsr add @irc/client
 ```
 
 ```ts
@@ -160,9 +170,13 @@ listener for the `"error"` event name**.
 
 See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#event-error) to learn more about errors.
 
-## Contributing
+## Contributors
 
-See [CONTRIBUTING.md](https://github.com/jeromeludmann/deno-irc/blob/main/CONTRIBUTING.md).
+<a href="https://github.com/jeromeludmann/deno-irc/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=jeromeludmann/deno-irc" />
+</a>
+
+See [CONTRIBUTING.md](https://github.com/jeromeludmann/deno-irc/blob/main/CONTRIBUTING.md) to get started.
 
 ## License
 
