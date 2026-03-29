@@ -5,6 +5,13 @@ import nick from "./nick.ts";
 import privmsg from "./privmsg.ts";
 import register from "./register.ts";
 
+/** The authentication method to use for IRC registration. */
+export type AuthMethod =
+  | "NickServ"
+  | "sasl"
+  | "saslThenNickServ"
+  | "saslExternal";
+
 /** Represents the identity of the connected IRC user. */
 export interface User {
   nick: string;
@@ -36,7 +43,7 @@ export interface RegistrationFeatures {
      * * `saslExternal` - SASL EXTERNAL auth via TLS client certificate.
      *   Must NOT have `password`. Connection must use `{ tls: true }`.
      */
-    authMethod?: "NickServ" | "sasl" | "saslThenNickServ" | "saslExternal";
+    authMethod?: AuthMethod;
 
     /** Timeout in seconds for SASL authentication.
      *
