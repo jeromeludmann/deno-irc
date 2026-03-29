@@ -48,7 +48,7 @@ export type RawCtcpReplyEvent = Message<RawCtcpReplyEventParams> & {
   command: Exclude<AnyCtcpCommand, "dcc">;
 };
 
-interface CtcpFeatures {
+export interface CtcpFeatures {
   commands: {
     /** Sends a CTCP message to a `target` with a `command` and a `param`.
      *

@@ -7,7 +7,7 @@ export interface Modes {
   [mode: string]: { type: string };
 }
 
-interface UsermodesFeatures {
+export interface UsermodesFeatures {
   state: {
     usermodes: Modes;
   };

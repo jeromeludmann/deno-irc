@@ -16,7 +16,7 @@ export interface KickEventParams {
 /** Emitted when a user is kicked from a channel. */
 export type KickEvent = Message<KickEventParams>;
 
-interface KickFeatures {
+export interface KickFeatures {
   commands: {
     /** Kicks a `nick` from a `channel` with an optional `comment`. */
     kick(channel: string, nick: string, comment?: string): void;

@@ -2,7 +2,7 @@ import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import join, { type ChannelDescriptions } from "./join.ts";
 import register from "./register.ts";
 
-interface JoinOnRegisterFeatures {
+export interface JoinOnRegisterFeatures {
   options: {
     /** Channels to join on connect. */
     channels?: ChannelDescriptions;

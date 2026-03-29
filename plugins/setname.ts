@@ -11,7 +11,7 @@ export interface SetnameEventParams {
 /** Emitted when a user changes their real name. */
 export type SetnameEvent = Message<SetnameEventParams>;
 
-interface SetnameFeatures {
+export interface SetnameFeatures {
   commands: {
     /** Changes your real name. */
     setname: (realname: string) => void;

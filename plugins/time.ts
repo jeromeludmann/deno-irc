@@ -20,7 +20,7 @@ export interface CtcpTimeReplyEventParams {
 /** Event emitted when a CTCP TIME reply is received. */
 export type CtcpTimeReplyEvent = Message<CtcpTimeReplyEventParams>;
 
-interface TimeFeatures {
+export interface TimeFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP TIME.

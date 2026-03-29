@@ -29,7 +29,7 @@ interface Caps {
   enabled: Set<string>;
 }
 
-interface CapFeatures {
+export interface CapFeatures {
   commands: {
     /** Sends a capability. */
     cap: (command: AnyCapabilityCommand, ...params: string[]) => void;

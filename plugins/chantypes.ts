@@ -1,7 +1,7 @@
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import isupport from "./isupport.ts";
 
-interface ChantypesFeatures {
+export interface ChantypesFeatures {
   state: {
     chantypes: string;
   };

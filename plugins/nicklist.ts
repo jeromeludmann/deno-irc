@@ -27,7 +27,7 @@ export interface NicklistEventParams {
 /** Emitted when a channel's nicklist is created or updated. */
 export type NicklistEvent = Message<NicklistEventParams>;
 
-interface NicklistFeatures {
+export interface NicklistFeatures {
   commands: {
     /** Gets the nicknames joined to a channel and their prefixes. */
     nicklist(channels: string | string[]): void;

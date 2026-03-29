@@ -2,7 +2,7 @@ import { type Raw } from "../core/parsers.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 
-interface ServerTimeFeatures {
+export interface ServerTimeFeatures {
   utils: {
     /** Extracts the server time from a message's tags, if present. */
     getServerTime: (msg: Raw) => Date | null;

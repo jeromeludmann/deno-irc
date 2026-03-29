@@ -14,7 +14,7 @@ export interface CtcpActionEventParams {
 /** Event emitted when a CTCP ACTION message is received. */
 export type CtcpActionEvent = Message<CtcpActionEventParams>;
 
-interface ActionFeatures {
+export interface ActionFeatures {
   commands: {
     /** Sends an action message `text` to a `target`. */
     action(target: string, text: string): void;

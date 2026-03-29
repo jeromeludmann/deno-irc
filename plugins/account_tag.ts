@@ -2,7 +2,7 @@ import { type Raw } from "../core/parsers.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 
-interface AccountTagFeatures {
+export interface AccountTagFeatures {
   utils: {
     /** Extracts the account name from a message's tags, if present. */
     getAccount: (msg: Raw) => string | undefined;

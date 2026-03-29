@@ -13,7 +13,7 @@ export interface RegisterEventParams {
 /** Event emitted when the client is successfully registered on the server. */
 export type RegisterEvent = Message<RegisterEventParams>;
 
-interface RegisterFeatures {
+export interface RegisterFeatures {
   commands: {
     /** Sets the username and the realname. Registration only. */
     user(username: string, realname: string): void;

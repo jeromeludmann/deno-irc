@@ -2,7 +2,7 @@ import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import ping from "./ping.ts";
 import register from "./register.ts";
 
-interface PingTimeoutFeatures {
+export interface PingTimeoutFeatures {
   options: {
     /** Maximum timeout before to be disconnected from server.
      *
@@ -23,8 +23,8 @@ const plugin: Plugin<PingTimeoutFeatures, AnyPlugins> = createPlugin(
 
   const { pingTimeout = DEFAULT_PING_TIMEOUT } = options;
 
-  let pingTimeoutId: number;
-  let pingServerId: number;
+  let pingTimeoutId: ReturnType<typeof setTimeout>;
+  let pingServerId: ReturnType<typeof setTimeout>;
   let started = false;
 
   function emitPingTimeout() {

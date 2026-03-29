@@ -22,7 +22,7 @@ export interface ListReplyEventParams {
 /** Emitted when the full channel list has been received from the server. */
 export type ListReplyEvent = Message<ListReplyEventParams>;
 
-interface ListFeatures {
+export interface ListFeatures {
   commands: {
     /** Gets the list channels and their topics.
      *

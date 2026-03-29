@@ -10,7 +10,7 @@ export interface NickEventParams {
 /** Emitted when a user changes their nickname. */
 export type NickEvent = Message<NickEventParams>;
 
-interface NickFeatures {
+export interface NickFeatures {
   commands: {
     /** Sets the `nick` of the client (once connected). */
     nick(nick: string): void;

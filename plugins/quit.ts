@@ -10,7 +10,7 @@ export interface QuitEventParams {
 /** Event emitted when a user disconnects from the server. */
 export type QuitEvent = Message<QuitEventParams>;
 
-interface QuitFeatures {
+export interface QuitFeatures {
   commands: {
     /** Leaves the server with an optional `comment`.
      *

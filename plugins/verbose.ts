@@ -39,7 +39,7 @@ type LogPayload =
 
 type LoggerImpl = (payload: LogPayload) => void;
 
-interface VerboseFeatures {
+export interface VerboseFeatures {
   options: {
     /** Prints informations to output.
      *

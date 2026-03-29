@@ -16,7 +16,7 @@ export type ChannelDescriptions = [
   ...channels: (string | [channel: string, key: string])[],
 ];
 
-interface JoinFeatures {
+export interface JoinFeatures {
   commands: {
     /** Joins `channels` with optional keys.
      *

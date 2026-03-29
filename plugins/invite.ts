@@ -13,7 +13,7 @@ export interface InviteEventParams {
 /** Emitted when a user is invited to a channel. */
 export type InviteEvent = Message<InviteEventParams>;
 
-interface InviteFeatures {
+export interface InviteFeatures {
   commands: {
     /** Invites a `nick` to a `channel`. */
     invite(nick: string, channel: string): void;

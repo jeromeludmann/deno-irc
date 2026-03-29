@@ -20,12 +20,12 @@ export interface CtcpVersionReplyEventParams {
 /** Event emitted when a CTCP VERSION reply is received. */
 export type CtcpVersionReplyEvent = Message<CtcpVersionReplyEventParams>;
 
-interface VersionFeatures {
+export interface VersionFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP VERSION with the given string.
        *
-       * Default to `"deno-irc"`. `false` to disable. */
+       * Default to `"jsr:@irc/client | npm:irc-ts"`. `false` to disable. */
       version?: string | false;
     };
   };
@@ -41,7 +41,7 @@ interface VersionFeatures {
   };
 }
 
-const DEFAULT_VERSION = "deno-irc";
+const DEFAULT_VERSION = "jsr:@irc/client | npm:irc-ts";
 
 const plugin: Plugin<VersionFeatures, AnyPlugins> = createPlugin(
   "version",

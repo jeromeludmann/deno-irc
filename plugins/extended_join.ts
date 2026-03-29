@@ -18,7 +18,7 @@ export interface ExtendedJoinEventParams {
 /** Emitted when a user joins a channel with extended-join enabled. */
 export type ExtendedJoinEvent = Message<ExtendedJoinEventParams>;
 
-interface ExtendedJoinFeatures {
+export interface ExtendedJoinFeatures {
   events: {
     "extended_join": ExtendedJoinEvent;
   };

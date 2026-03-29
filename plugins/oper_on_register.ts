@@ -2,7 +2,7 @@ import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import oper from "./oper.ts";
 import register from "./register.ts";
 
-interface OperOnRegisterFeatures {
+export interface OperOnRegisterFeatures {
   options: {
     /** Sets as operator on connect. */
     oper?: {

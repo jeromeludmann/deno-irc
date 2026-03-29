@@ -17,7 +17,7 @@ export interface NoticeEventParams {
 /** Emitted when a NOTICE is received (channel or private). */
 export type NoticeEvent = Message<NoticeEventParams>;
 
-interface NoticeFeatures {
+export interface NoticeFeatures {
   commands: {
     /** Notifies a `target` with a `text`. */
     notice(target: string, text: string): void;

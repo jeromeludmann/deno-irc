@@ -15,7 +15,7 @@ export interface TagmsgEventParams {
 /** Emitted when a TAGMSG (tags-only message) is received. */
 export type TagmsgEvent = Message<TagmsgEventParams>;
 
-interface MessageTagsFeatures {
+export interface MessageTagsFeatures {
   commands: {
     /** Sends a TAGMSG to a target, optionally with client tags. */
     tagmsg: (

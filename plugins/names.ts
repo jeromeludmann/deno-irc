@@ -18,7 +18,7 @@ export interface NamesReplyEventParams {
 /** Emitted when the full NAMES list for a channel has been received. */
 export type NamesReplyEvent = Message<NamesReplyEventParams>;
 
-interface NamesFeatures {
+export interface NamesFeatures {
   commands: {
     /** Gets the nicknames joined to a channel and their prefixes. */
     names(channels: string | string[]): void;

@@ -13,7 +13,7 @@ export interface PartEventParams {
 /** Event emitted when a user leaves a channel. */
 export type PartEvent = Message<PartEventParams>;
 
-interface PartFeatures {
+export interface PartFeatures {
   commands: {
     /** Leaves the `channel` with an optional `comment`. */
     part(channel: string, comment?: string): void;

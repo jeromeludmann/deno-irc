@@ -15,7 +15,7 @@ export interface EchoEventParams {
 /** Emitted when the server echoes back a message sent by the client. */
 export type EchoEvent = Message<EchoEventParams>;
 
-interface EchoMessageFeatures {
+export interface EchoMessageFeatures {
   events: {
     "echo:privmsg": EchoEvent;
     "echo:notice": EchoEvent;

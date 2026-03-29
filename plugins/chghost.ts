@@ -14,7 +14,7 @@ export interface ChghostEventParams {
 /** Emitted when a user's host or ident changes. */
 export type ChghostEvent = Message<ChghostEventParams>;
 
-interface ChghostFeatures {
+export interface ChghostFeatures {
   events: {
     "chghost": ChghostEvent;
   };

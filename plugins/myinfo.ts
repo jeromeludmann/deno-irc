@@ -22,7 +22,7 @@ export interface MyinfoEventParams {
 /** Emitted when the server sends its RPL_MYINFO with server capabilities. */
 export type MyinfoEvent = Message<MyinfoEventParams>;
 
-interface MyinfoFeatures {
+export interface MyinfoFeatures {
   events: {
     "myinfo": MyinfoEvent;
   };

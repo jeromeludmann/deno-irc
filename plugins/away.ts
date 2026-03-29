@@ -13,7 +13,7 @@ export interface AwayReplyEventParams {
 /** Event emitted when a user's away status is returned by the server. */
 export type AwayReplyEvent = Message<AwayReplyEventParams>;
 
-interface AwayFeatures {
+export interface AwayFeatures {
   commands: {
     /** To be marked as being away:
      *

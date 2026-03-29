@@ -31,7 +31,7 @@ export interface TopicWhoTimeReplyEventParams {
 /** Event emitted with metadata about who set the topic and when. */
 export type TopicWhoTimeReplyEvent = Message<TopicWhoTimeReplyEventParams>;
 
-interface TopicFeatures {
+export interface TopicFeatures {
   commands: {
     /** Gets the `topic` of a `channel`. */
     topic(channel: string): void;

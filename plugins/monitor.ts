@@ -29,7 +29,7 @@ export type MonitorOfflineEvent = Message<MonitorOfflineEventParams>;
 /** Emitted with the full list of monitored nicks. */
 export type MonitorListEvent = Message<MonitorListEventParams>;
 
-interface MonitorFeatures {
+export interface MonitorFeatures {
   commands: {
     monitor: {
       /** Adds nicks to the monitor list. */

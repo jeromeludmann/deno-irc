@@ -37,7 +37,7 @@ export interface WhoisReplyEventParams {
 /** Event emitted with complete WHOIS data after RPL_ENDOFWHOIS. */
 export type WhoisReplyEvent = Message<WhoisReplyEventParams>;
 
-interface WhoisFeatures {
+export interface WhoisFeatures {
   commands: {
     /** Gets the WHOIS informations of a `nick`. */
     whois(nick: string): void;

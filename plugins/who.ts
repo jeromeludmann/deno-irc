@@ -38,7 +38,7 @@ export interface WhoReplyEventParams {
 /** Emitted when the full WHO reply for a target has been received. */
 export type WhoReplyEvent = Message<WhoReplyEventParams>;
 
-interface WhoFeatures {
+export interface WhoFeatures {
   commands: {
     /** Sends a WHO query for a target. */
     who(target: string, options?: WhoOptions): void;

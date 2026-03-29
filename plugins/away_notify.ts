@@ -14,7 +14,7 @@ export interface AwayNotifyEventParams {
 /** Emitted when a user's away status changes in a shared channel. */
 export type AwayNotifyEvent = Message<AwayNotifyEventParams>;
 
-interface AwayNotifyFeatures {
+export interface AwayNotifyFeatures {
   events: {
     "away_notify": AwayNotifyEvent;
   };

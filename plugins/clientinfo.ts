@@ -20,7 +20,7 @@ export interface CtcpClientinfoReplyEventParams {
 /** Event emitted when a CTCP CLIENTINFO reply is received. */
 export type CtcpClientinfoReplyEvent = Message<CtcpClientinfoReplyEventParams>;
 
-interface ClientinfoFeatures {
+export interface ClientinfoFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP CLIENTINFO.

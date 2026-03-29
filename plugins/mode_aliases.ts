@@ -1,7 +1,7 @@
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import mode from "./mode.ts";
 
-interface ModeAliasesFeatures {
+export interface ModeAliasesFeatures {
   commands: {
     /** Gives operator to `nick` on `channel`. */
     op(channel: string, nick: string, ...nicks: string[]): void;

@@ -17,7 +17,7 @@ export interface Prefixes {
   };
 }
 
-interface ChanmodesFeatures {
+export interface ChanmodesFeatures {
   state: {
     chanmodes: Modes;
     prefixes: Prefixes;

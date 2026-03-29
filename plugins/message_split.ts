@@ -3,7 +3,7 @@ import privmsg from "./privmsg.ts";
 import notice from "./notice.ts";
 import registration from "./registration.ts";
 
-interface MessageSplitFeatures {
+export interface MessageSplitFeatures {
   options: {
     /** Enable auto-splitting of long messages. Default: `true`. */
     messageSplit?: boolean;

@@ -1,6 +1,27 @@
 {
-  "private": true,
+  "name": "irc-ts",
+  "version": "0.21.0",
+  "description": "IRC client protocol module for Deno, Node.js and Bun",
   "type": "module",
+  "main": "./dist/mod.js",
+  "types": "./dist/mod.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/mod.d.ts",
+      "default": "./dist/mod.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": ["irc", "irc-client", "typescript", "deno", "bun", "nodejs"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeromeludmann/deno-irc.git"
+  },
   "devDependencies": {
     "@types/node": "^24.7.2",
     "@std/assert": "npm:@jsr/std__assert@^1.0.19",
@@ -10,6 +31,7 @@
     "tsx": "^4"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "test:node": "tsx --test core/*_test.ts plugins/*_test.ts runtime/node_test.ts",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "test:node:integration": "npm run test:node:integration:ergo && npm run test:node:integration:inspircd && npm run test:node:integration:unrealircd",

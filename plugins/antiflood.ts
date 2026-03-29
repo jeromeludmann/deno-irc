@@ -1,7 +1,7 @@
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import { newQueue } from "../core/queue.ts";
 
-interface AntiFloodFeatures {
+export interface AntiFloodFeatures {
   options: {
     /** Milliseconds to wait between dispatching private messages.
      *

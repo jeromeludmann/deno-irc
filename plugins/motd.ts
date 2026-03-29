@@ -10,7 +10,7 @@ export interface MotdEventParams {
 /** Emitted when the server's message of the day has been fully received. */
 export type MotdEvent = Message<MotdEventParams>;
 
-interface MotdFeatures {
+export interface MotdFeatures {
   commands: {
     /** Gets the message of the day (MOTD) of the server.
      *

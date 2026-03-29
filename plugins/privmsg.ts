@@ -17,7 +17,7 @@ export interface PrivmsgEventParams {
 /** Event emitted when a PRIVMSG is received. */
 export type PrivmsgEvent = Message<PrivmsgEventParams>;
 
-interface PrivmsgFeatures {
+export interface PrivmsgFeatures {
   commands: {
     /** Sends a message `text` to a `target`. */
     privmsg(target: string, text: string): void;

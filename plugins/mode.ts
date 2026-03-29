@@ -37,7 +37,7 @@ export interface ModeReplyEventParams {
 /** Emitted in response to a mode query, containing all active modes. */
 export type ModeReplyEvent = Message<ModeReplyEventParams>;
 
-interface ModeFeatures {
+export interface ModeFeatures {
   commands: {
     /** Manages modes.
      *

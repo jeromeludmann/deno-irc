@@ -5,6 +5,21 @@ import type {
   Runtime,
 } from "./types.ts";
 
+declare namespace Deno {
+  interface Conn {
+    read(b: Uint8Array): Promise<number | null>;
+    write(b: Uint8Array): Promise<number>;
+    close(): void;
+  }
+  function connect(opts: ConnectOptions): Promise<Conn>;
+  function connectTls(opts: ConnectTlsOptions): Promise<Conn>;
+  function readTextFileSync(path: string): string;
+  namespace errors {
+    class BadResource extends Error {}
+    class Interrupted extends Error {}
+  }
+}
+
 class DenoConn implements Conn {
   constructor(private inner: Deno.Conn) {}
 

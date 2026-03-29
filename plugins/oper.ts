@@ -1,6 +1,6 @@
 import { createPlugin, type Plugin } from "../core/plugins.ts";
 
-interface OperFeatures {
+export interface OperFeatures {
   commands: {
     /** Sets the client as operator with a `user` and a `password`.  */
     oper(user: string, password: string): void;

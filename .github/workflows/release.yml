@@ -52,6 +52,12 @@ jobs:
             Deno.writeTextFileSync('deno.json', JSON.stringify(config, null, 2) + '\n');
           "
 
+          deno eval "
+            const pkg = JSON.parse(Deno.readTextFileSync('package.json'));
+            pkg.version = '${NEW_VERSION}';
+            Deno.writeTextFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
       - name: Generate changelog
         id: changelog
         run: |
@@ -96,7 +102,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add deno.json
+          git add deno.json package.json
           git commit -m "chore: release ${{ steps.bump.outputs.version }}"
           git tag "v${{ steps.bump.outputs.version }}"
           git push origin main
@@ -104,6 +110,18 @@ jobs:
 
       - name: Publish to JSR
         run: deno publish
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish to npm
+        run: |
+          npm ci
+          npm run build
+          npm publish --provenance --access public
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

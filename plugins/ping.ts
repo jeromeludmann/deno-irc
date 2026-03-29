@@ -52,7 +52,7 @@ export interface CtcpPingReplyEventParams {
 /** Event emitted when a CTCP PING reply is received. */
 export type CtcpPingReplyEvent = Message<CtcpPingReplyEventParams>;
 
-interface PingFeatures {
+export interface PingFeatures {
   options: {
     ctcpReplies?: {
       /** Replies to CTCP PING.

@@ -18,7 +18,7 @@ type AnyIsupportParamKey =
   | "MONITOR"
   | "NETWORK";
 
-interface IsupportFeatures {
+export interface IsupportFeatures {
   events: {
     [K in `isupport:${Lowercase<AnyIsupportParamKey>}`]: IsupportEvent;
   };

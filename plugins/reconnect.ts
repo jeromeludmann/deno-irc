@@ -1,8 +1,8 @@
-import { RemoteAddr } from "../core/client.ts";
+import { type RemoteAddr } from "../core/client.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import register from "./register.ts";
 
-interface ReconnectFeatures {
+export interface ReconnectFeatures {
   options: {
     /** Enables auto reconnect.
      *
@@ -54,7 +54,7 @@ const plugin: Plugin<ReconnectFeatures, AnyPlugins> = createPlugin(
   } = config;
 
   let currentAttempts = 0;
-  let timeout: number | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
 
   const backoffFactor = exponentialBackoff
     ? DEFAULT_BACKOFF_FACTOR.EXPONENTIAL

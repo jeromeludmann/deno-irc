@@ -1,4 +1,4 @@
-import { Raw } from "../core/parsers.ts";
+import { type Raw } from "../core/parsers.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import cap from "./cap.ts";
 import nick from "./nick.ts";
@@ -12,7 +12,7 @@ export interface User {
   realname: string;
 }
 
-interface RegistrationFeatures {
+export interface RegistrationFeatures {
   options: {
     /** The nick used to register the client to the server. */
     nick: string;
@@ -124,7 +124,7 @@ const plugin: Plugin<RegistrationFeatures, AnyPlugins> = createPlugin(
     });
   };
 
-  let saslTimeoutId: number | undefined;
+  let saslTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   const clearSaslTimeout = () => clearTimeout(saslTimeoutId);
 

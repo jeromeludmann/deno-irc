@@ -13,7 +13,7 @@ export interface KillEventParams {
 /** Emitted when a user is killed (forcibly disconnected) from the server. */
 export type KillEvent = Message<KillEventParams>;
 
-interface KillFeatures {
+export interface KillFeatures {
   commands: {
     /** Kills a `nick` from the server with a `comment`. */
     kill(nick: string, comment: string): void;

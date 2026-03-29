@@ -17,7 +17,7 @@ export type ErrorReplyEvent = Message<ErrorReplyEventParams> & {
   command: AnyError;
 };
 
-interface ErrorReplyFeatures {
+export interface ErrorReplyFeatures {
   events: {
     "error_reply": ErrorReplyEvent;
   };

@@ -3,7 +3,7 @@ import invite from "./invite.ts";
 import join from "./join.ts";
 import registration from "./registration.ts";
 
-interface JoinOnInviteFeatures {
+export interface JoinOnInviteFeatures {
   options: {
     /** Enables auto join on invite. */
     joinOnInvite?: boolean;

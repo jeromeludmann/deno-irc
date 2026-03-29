@@ -11,7 +11,7 @@ export interface AccountEventParams {
 /** Emitted when a user's account changes (login/logout). */
 export type AccountEvent = Message<AccountEventParams>;
 
-interface AccountNotifyFeatures {
+export interface AccountNotifyFeatures {
   events: {
     "account": AccountEvent;
   };

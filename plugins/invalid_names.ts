@@ -3,7 +3,7 @@ import nick from "./nick.ts";
 import register from "./register.ts";
 import registration from "./registration.ts";
 
-interface InvalidNamesFeatures {
+export interface InvalidNamesFeatures {
   options: {
     /** Auto resolve invalid names (for nick and username). */
     resolveInvalidNames?: boolean;

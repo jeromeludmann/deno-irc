@@ -1,6 +1,6 @@
 import { type Message } from "../core/parsers.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
-import ctcp, { RawCtcpEvent, RawCtcpReplyEvent } from "./ctcp.ts";
+import ctcp, { type RawCtcpEvent, type RawCtcpReplyEvent } from "./ctcp.ts";
 
 /** DCC host kinds. */
 type HostKind = "ipv4" | "ipv6" | "hostname";
@@ -511,7 +511,7 @@ function fmtHost(ip: string): string {
 }
 
 /** Public surface of this plugin. */
-interface DccFeatures {
+export interface DccFeatures {
   commands: {
     /**
      * Send a DCC command to a target user.
