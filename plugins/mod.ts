@@ -58,6 +58,7 @@ export { default as standardReplies } from "./standard_replies.ts";
 export { default as who } from "./who.ts";
 export { default as monitor } from "./monitor.ts";
 export { default as messageSplit } from "./message_split.ts";
+export { default as userhostInNames } from "./userhost_in_names.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -120,6 +121,7 @@ import standardReplies from "./standard_replies.ts";
 import who from "./who.ts";
 import monitor from "./monitor.ts";
 import messageSplit from "./message_split.ts";
+import userhostInNames from "./userhost_in_names.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -183,6 +185,7 @@ const plugins = [
   who,
   monitor,
   messageSplit,
+  userhostInNames,
   whois,
 ];
 

@@ -1223,6 +1223,19 @@ client.on("names_reply", (msg) => {
 
 For a ready to use nicklist, see [`nicklist`](#event-nicklist).
 
+When `userhost-in-names` IRCv3 cap is enabled, `client.state.userhosts`
+contains the user/host masks for each nick per channel:
+
+```ts
+client.on("names_reply", (msg) => {
+  const hosts = client.state.userhosts[msg.params.channel];
+  for (const [nick, mask] of Object.entries(hosts ?? {})) {
+    mask.user; // username
+    mask.host; // hostname
+  }
+});
+```
+
 ### event: nick
 
 User changes its nick.

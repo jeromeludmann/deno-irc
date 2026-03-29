@@ -59,7 +59,9 @@ const plugin: Plugin<NamesFeatures, AnyPlugins> = createPlugin(
         else break; // all prefixes pushed
       }
 
-      const nick = prefixedNick.slice(prefixes.length);
+      const rawNick = prefixedNick.slice(prefixes.length);
+      const bangIndex = rawNick.indexOf("!");
+      const nick = bangIndex !== -1 ? rawNick.slice(0, bangIndex) : rawNick;
 
       // adds prefixes to nick entry
 

@@ -1152,6 +1152,31 @@ describe("integration", (test) => {
     await cleanup(alice);
   });
 
+  test("userhost-in-names: names include user@host", async () => {
+    const alice = await connect("alice");
+
+    if (!alice.state.caps.enabled.has("userhost-in-names")) {
+      return await cleanup(alice);
+    }
+
+    alice.join("#test");
+    await alice.once("join");
+
+    alice.names("#test");
+    await alice.once("names_reply");
+
+    const hosts = alice.state.userhosts["#test"];
+    assertEquals(hosts !== undefined, true);
+    assertEquals(Object.keys(hosts).length > 0, true);
+
+    const nick = nickOf(alice);
+    assertEquals(hosts[nick] !== undefined, true);
+    assertEquals(typeof hosts[nick].user, "string");
+    assertEquals(typeof hosts[nick].host, "string");
+
+    await cleanup(alice);
+  });
+
   test("bot-mode: cap is negotiated", async () => {
     const alice = await connect("alice");
 
