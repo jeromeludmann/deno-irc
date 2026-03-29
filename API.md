@@ -2,6 +2,7 @@
 
 - [Options](#options)
   - [option: authMethod](#option-authmethod)
+  - [option: bot](#option-bot)
   - [option: bufferSize](#option-buffersize)
   - [option: channels](#option-channels)
   - [option: ctcpReplies](#option-ctcpreplies)
@@ -185,6 +186,27 @@ await client.connect("irc.libera.chat", {
   tls: true,
   certFile: "client.pem",
   keyFile: "client-key.pem",
+});
+```
+
+### option: bot
+
+Whether this client is a bot. When `true`, requests the `draft/bot-mode`
+capability and automatically sets user mode `+B` after registration.
+
+Defaults to `false`.
+
+```ts
+const client = new Client({ nick: "mybot", bot: true });
+```
+
+Use `client.utils.isBot(msg)` to check if a message was sent by a bot:
+
+```ts
+client.on("raw:privmsg", (msg) => {
+  if (client.utils.isBot(msg)) {
+    // message was sent by a bot
+  }
 });
 ```
 

@@ -2,6 +2,7 @@ export { default as action } from "./action.ts";
 export { default as antiflood } from "./antiflood.ts";
 export { default as away } from "./away.ts";
 export { default as batch } from "./batch.ts";
+export { default as botMode } from "./bot_mode.ts";
 export { default as cap } from "./cap.ts";
 export { default as chanmodes } from "./chanmodes.ts";
 export { default as chantypes } from "./chantypes.ts";
@@ -63,6 +64,7 @@ import action from "./action.ts";
 import antiflood from "./antiflood.ts";
 import away from "./away.ts";
 import batch from "./batch.ts";
+import botMode from "./bot_mode.ts";
 import cap from "./cap.ts";
 import chanmodes from "./chanmodes.ts";
 import chantypes from "./chantypes.ts";
@@ -125,6 +127,7 @@ const plugins = [
   antiflood,
   away,
   batch,
+  botMode,
   cap,
   chanmodes,
   chantypes,

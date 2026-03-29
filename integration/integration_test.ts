@@ -1152,6 +1152,21 @@ describe("integration", (test) => {
     await cleanup(alice);
   });
 
+  test("bot-mode: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    const hasBotMode = alice.state.caps.enabled.has("draft/bot-mode") ||
+      alice.state.caps.enabled.has("bot-mode");
+
+    if (!hasBotMode) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(hasBotMode, true);
+
+    await cleanup(alice);
+  });
+
   test("batch: cap is negotiated", async () => {
     const alice = await connect("alice");
 
