@@ -25,7 +25,7 @@ export interface VersionFeatures {
     ctcpReplies?: {
       /** Replies to CTCP VERSION with the given string.
        *
-       * Default to `"jsr:@irc/client | npm:irc-ts"`. `false` to disable. */
+       * Default to `"jsr:@irc/client | npm:irc-client-ts"`. `false` to disable. */
       version?: string | false;
     };
   };
@@ -41,7 +41,7 @@ export interface VersionFeatures {
   };
 }
 
-const DEFAULT_VERSION = "jsr:@irc/client | npm:irc-ts";
+const DEFAULT_VERSION = "jsr:@irc/client | npm:irc-client-ts";
 
 const plugin: Plugin<VersionFeatures, AnyPlugins> = createPlugin(
   "version",

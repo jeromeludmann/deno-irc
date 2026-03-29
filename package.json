@@ -1,5 +1,5 @@
 {
-  "name": "irc-ts",
+  "name": "irc-client-ts",
   "version": "0.22.0",
   "description": "IRC client protocol module for Deno, Node.js and Bun",
   "type": "module",
