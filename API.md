@@ -55,6 +55,7 @@
   - [event: error](#event-error)
   - [event: error_reply](#event-error_reply)
   - [event: extended_join](#event-extended_join)
+  - [event: fail](#event-fail)
   - [event: invite](#event-invite)
   - [event: isupport](#event-isupport)
   - [event: join](#event-join)
@@ -71,6 +72,7 @@
   - [event: names_reply](#event-names_reply)
   - [event: nick](#event-nick)
   - [event: nicklist](#event-nicklist)
+  - [event: note](#event-note)
   - [event: notice](#event-notice)
   - [event: part](#event-part)
   - [event: ping](#event-ping)
@@ -85,6 +87,7 @@
   - [event: topic](#event-topic)
   - [event: topic_reply](#event-topic_reply)
   - [event: topic_who_time_reply](#event-topic_who_time_reply)
+  - [event: warn](#event-warn)
   - [event: who_reply](#event-who_reply)
   - [event: whois_reply](#event-whois_reply)
 - [Commands](#commands)
@@ -1006,6 +1009,19 @@ client.on("extended_join", (msg) => {
 });
 ```
 
+### event: fail
+
+Emitted when the server sends a FAIL standard reply. No capability needed.
+
+```ts
+client.on("fail", (msg) => {
+  msg.params.command; // related command (e.g. "CHATHISTORY")
+  msg.params.code; // machine-readable code (e.g. "ACCOUNT_REQUIRED")
+  msg.params.context; // additional context strings (may be empty)
+  msg.params.description; // human-readable description
+});
+```
+
 ### event: invite
 
 User invites the client to a channel.
@@ -1208,6 +1224,20 @@ client.on("nicklist", (msg) => {
     user.prefix; // prefix of the user
     user.nick; // nick of the user
   }
+});
+```
+
+### event: note
+
+Emitted when the server sends a NOTE standard reply. No capability needed.
+Same structure as [`fail`](#event-fail).
+
+```ts
+client.on("note", (msg) => {
+  msg.params.command;
+  msg.params.code;
+  msg.params.context;
+  msg.params.description;
 });
 ```
 
@@ -1479,6 +1509,20 @@ client.on("whois_reply", (msg) => {
   msg.params.serverinfo; // informations of the connected server
   msg.params.operator; // optional user operator message
   msg.params.away; // optional away message
+});
+```
+
+### event: warn
+
+Emitted when the server sends a WARN standard reply. No capability needed.
+Same structure as [`fail`](#event-fail).
+
+```ts
+client.on("warn", (msg) => {
+  msg.params.command;
+  msg.params.code;
+  msg.params.context;
+  msg.params.description;
 });
 ```
 
