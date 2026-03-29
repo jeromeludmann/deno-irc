@@ -8,15 +8,10 @@ import type {
   Runtime,
 } from "./types.ts";
 
-// Minimal Bun type declarations for cross-runtime type-checking (Deno).
-// At runtime under Bun, the real globals are used.
-declare global {
-  // deno-lint-ignore no-var
-  var Bun: {
-    connect(opts: BunConnectOptions): Promise<BunSocket>;
-    listen(opts: BunListenOptions): BunListener;
-  };
-}
+declare const Bun: {
+  connect(opts: BunConnectOptions): Promise<BunSocket>;
+  listen(opts: BunListenOptions): BunListener;
+};
 
 interface BunSocket {
   write(data: Uint8Array | string): number;
