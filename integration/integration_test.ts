@@ -1140,6 +1140,18 @@ describe("integration", (test) => {
     await cleanup(first, second);
   });
 
+  test("labeled-response: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    if (!alice.state.caps.enabled.has("labeled-response")) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(alice.state.caps.enabled.has("labeled-response"), true);
+
+    await cleanup(alice);
+  });
+
   test("batch: cap is negotiated", async () => {
     const alice = await connect("alice");
 

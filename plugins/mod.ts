@@ -16,6 +16,7 @@ export { default as join } from "./join.ts";
 export { default as joinOnInvite } from "./join_on_invite.ts";
 export { default as joinOnRegister } from "./join_on_register.ts";
 export { default as kick } from "./kick.ts";
+export { default as labeledResponse } from "./labeled_response.ts";
 export { default as kill } from "./kill.ts";
 export { default as list } from "./list.ts";
 export { default as mode } from "./mode.ts";
@@ -75,6 +76,7 @@ import join from "./join.ts";
 import joinOnInvite from "./join_on_invite.ts";
 import joinOnRegister from "./join_on_register.ts";
 import kick from "./kick.ts";
+import labeledResponse from "./labeled_response.ts";
 import kill from "./kill.ts";
 import list from "./list.ts";
 import mode from "./mode.ts";
@@ -135,6 +137,7 @@ const plugins = [
   joinOnInvite,
   joinOnRegister,
   kick,
+  labeledResponse,
   kill,
   list,
   motd,

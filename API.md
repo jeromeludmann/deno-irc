@@ -105,6 +105,7 @@
   - [command: join](#command-join)
   - [command: kick](#command-kick)
   - [command: kill](#command-kill)
+  - [command: labeled](#command-labeled)
   - [command: list](#command-list)
   - [command: me](#command-me)
   - [command: mode](#command-mode)
@@ -1797,6 +1798,19 @@ Kills a `nick` from the server with a `comment`.
 
 ```ts
 client.kill("someone", "Boom!");
+```
+
+### command: labeled
+
+Sends a command with an auto-generated label tag. Requires `labeled-response`
+IRCv3 cap. Responses from the server carry the same label in their tags.
+
+`labeled(command: string, ...params: string[]): void`
+
+```ts
+client.labeled("WHOIS", "nick");
+// sends: @label=L1 WHOIS nick
+// responses will have msg.tags.label === "L1"
 ```
 
 ### command: list

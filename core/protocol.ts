@@ -1,4 +1,5 @@
 const COMMANDS = {
+  "ACK": "ack",
   "ADMIN": "admin",
   "AUTHENTICATE": "authenticate",
   "ACCOUNT": "account",
