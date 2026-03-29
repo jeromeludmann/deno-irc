@@ -31,12 +31,12 @@ describe("plugins/version", (test) => {
   test("emit 'ctcp_version_reply' on CTCP VERSION reply", async () => {
     const { client, server } = await mock();
 
-    server.send(":someone!user@host NOTICE me :\x01VERSION deno-irc\x01");
+    server.send(":someone!user@host NOTICE me :\x01VERSION some-client\x01");
     const msg = await client.once("ctcp_version_reply");
 
     assertEquals(msg, {
       source: { name: "someone", mask: { user: "user", host: "host" } },
-      params: { version: "deno-irc" },
+      params: { version: "some-client" },
     });
   });
 

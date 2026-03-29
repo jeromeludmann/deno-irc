@@ -253,7 +253,7 @@ const client = new Client({
     clientinfo: true,
     ping: true,
     time: true,
-    version: "deno-irc",
+    version: "my-irc-bot",
   },
 });
 ```

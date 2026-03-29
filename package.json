@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeromeludmann/deno-irc.git"
+    "url": "https://github.com/jeromeludmann/irc.git"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

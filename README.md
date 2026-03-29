@@ -1,6 +1,6 @@
-# deno-irc
+# irc
 
-![ci](https://github.com/jeromeludmann/deno-irc/workflows/ci/badge.svg)
+![ci](https://github.com/jeromeludmann/irc/workflows/ci/badge.svg)
 [![JSR](https://jsr.io/badges/@irc/client)](https://jsr.io/@irc/client)
 [![npm](https://img.shields.io/npm/v/irc-client-ts)](https://www.npmjs.com/package/irc-client-ts)
 ![Deno 2+](https://img.shields.io/badge/Deno-2%2B-000?logo=deno)
@@ -21,10 +21,12 @@ Any feedback and contributions are welcome.
 
 Available on [JSR](https://jsr.io/@irc/client) and [npm](https://www.npmjs.com/package/irc-client-ts).
 
+Originally built for Deno as `deno-irc`, now also compatible with Node.js and Bun.
+
 ## Documentation
 
 - [Getting Started](#getting-started)
-- [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md)
+- [API Reference](https://github.com/jeromeludmann/irc/blob/main/API.md)
 
 ## Getting Started
 
@@ -70,7 +72,7 @@ const client = new Client({
 One instance manages one connection. If you want to connect to many servers, use
 many instances.
 
-See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#options) to learn more about available options.
+See [API Reference](https://github.com/jeromeludmann/irc/blob/main/API.md#options) to learn more about available options.
 
 Then you can listen to [events](#events) and send [commands](#commands):
 
@@ -143,7 +145,7 @@ client.on(["part", "kick"], (msg) => {
 });
 ```
 
-See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#events) to learn more about events.
+See [API Reference](https://github.com/jeromeludmann/irc/blob/main/API.md#events) to learn more about events.
 
 ### Commands
 
@@ -159,7 +161,7 @@ client.privmsg("#channel", "Hello world!");
 client.quit("Goodbye!");
 ```
 
-See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#commands) to learn more about commands.
+See [API Reference](https://github.com/jeromeludmann/irc/blob/main/API.md#commands) to learn more about commands.
 
 ### Errors
 
@@ -169,15 +171,15 @@ program.
 To avoid the client from crashing, **it is required to have at least one event
 listener for the `"error"` event name**.
 
-See [API Reference](https://github.com/jeromeludmann/deno-irc/blob/main/API.md#event-error) to learn more about errors.
+See [API Reference](https://github.com/jeromeludmann/irc/blob/main/API.md#event-error) to learn more about errors.
 
 ## Contributors
 
-<a href="https://github.com/jeromeludmann/deno-irc/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=jeromeludmann/deno-irc" />
+<a href="https://github.com/jeromeludmann/irc/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=jeromeludmann/irc" />
 </a>
 
-See [CONTRIBUTING.md](https://github.com/jeromeludmann/deno-irc/blob/main/CONTRIBUTING.md) to get started.
+See [CONTRIBUTING.md](https://github.com/jeromeludmann/irc/blob/main/CONTRIBUTING.md) to get started.
 
 ## License
 
