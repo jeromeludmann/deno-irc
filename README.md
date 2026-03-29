@@ -14,7 +14,7 @@ provide an easy way to talk with IRC servers.
 - **Cross-runtime** — runs on Deno, Node.js and Bun with the same API
 - **Fully typed** — events, commands and state are inferred from TypeScript, no guessing
 - **Plugin architecture** — 50+ built-in plugins (SASL, DCC, CTCP, reconnect, flood control...)
-- **IRCv3** — server-time, echo-message, message-tags, MONITOR, SASL, and [more](API.md#ircv3-support)
+- **IRCv3** — server-time, echo-message, message-tags, MONITOR, SASL, and more
 - **Zero dependencies** — no external runtime dependencies
 
 Any feedback and contributions are welcome.

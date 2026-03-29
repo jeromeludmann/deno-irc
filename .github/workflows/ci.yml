@@ -10,7 +10,7 @@ on:
 
 jobs:
   test-deno:
-    name: Unit tests · Deno
+    name: 1 · Unit tests · Deno
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
       - run: deno task test
 
   test-node:
-    name: Unit tests · Node.js
+    name: 1 · Unit tests · Node.js
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
       - run: npm run test:node
 
   test-bun:
-    name: Unit tests · Bun
+    name: 1 · Unit tests · Bun
     runs-on: ubuntu-latest
 
     steps:
@@ -49,7 +49,7 @@ jobs:
       - run: bun test core/*_test.ts plugins/*_test.ts runtime/bun_test.ts
 
   coverage:
-    name: Coverage
+    name: 2 · Coverage
     runs-on: ubuntu-latest
     needs: [test-deno]
 
@@ -69,7 +69,7 @@ jobs:
           fi
 
   integration-deno:
-    name: Integration · Deno · ${{ matrix.ircd }}
+    name: 2 · Integration · Deno · ${{ matrix.ircd }}
     runs-on: ubuntu-latest
     needs: [test-deno, test-node, test-bun]
 
@@ -86,9 +86,9 @@ jobs:
       - run: deno task test:integration:${{ matrix.ircd }}
 
   integration-node:
-    name: Integration · Node.js · ergo
+    name: 3 · Integration · Node.js · ergo
     runs-on: ubuntu-latest
-    needs: [test-deno, test-node, test-bun]
+    needs: [integration-deno]
 
     steps:
       - uses: actions/checkout@v4
@@ -99,9 +99,9 @@ jobs:
       - run: npm run test:node:integration:ergo
 
   integration-bun:
-    name: Integration · Bun · ergo
+    name: 3 · Integration · Bun · ergo
     runs-on: ubuntu-latest
-    needs: [test-deno, test-node, test-bun]
+    needs: [integration-deno]
 
     steps:
       - uses: actions/checkout@v4
