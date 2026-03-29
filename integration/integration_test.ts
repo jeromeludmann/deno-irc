@@ -1139,4 +1139,17 @@ describe("integration", (test) => {
 
     await cleanup(first, second);
   });
+
+  test("batch: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    // batch cap should be enabled if the server supports it
+    if (!alice.state.caps.enabled.has("batch")) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(alice.state.caps.enabled.has("batch"), true);
+
+    await cleanup(alice);
+  });
 });

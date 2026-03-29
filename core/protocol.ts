@@ -3,6 +3,7 @@ const COMMANDS = {
   "AUTHENTICATE": "authenticate",
   "ACCOUNT": "account",
   "AWAY": "away",
+  "BATCH": "batch",
   "CAP": "cap",
   "CHGHOST": "chghost",
   "CONNECT": "connect",

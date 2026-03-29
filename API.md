@@ -22,6 +22,8 @@
   - [option: verbose](#option-verbose)
 - [Events](#events)
   - [event: account](#event-account)
+  - [event: batch_start](#event-batch_start)
+  - [event: batch_end](#event-batch_end)
   - [event: away_notify](#event-away_notify)
   - [event: away_reply](#event-away_reply)
   - [event: connecting](#event-connecting)
@@ -615,6 +617,35 @@ User replies with an away message.
 client.on("away_reply", (msg) => {
   msg.params.nick; // nick of the client who is away
   msg.params.text; // text of away message
+});
+```
+
+### event: batch_start
+
+Emitted when a batch opens. Requires `batch` IRCv3 cap.
+
+```ts
+client.on("batch_start", (msg) => {
+  msg.params.ref; // server-assigned batch reference
+  msg.params.type; // batch type (e.g. "chathistory", "netsplit")
+  msg.params.params; // additional parameters
+});
+```
+
+### event: batch_end
+
+Emitted when a batch closes. Contains all messages collected during the batch.
+Requires `batch` IRCv3 cap.
+
+Messages inside a batch are suppressed from normal `raw:*` event emission
+and delivered together in `batch_end`.
+
+```ts
+client.on("batch_end", (msg) => {
+  msg.params.ref; // batch reference
+  msg.params.type; // batch type
+  msg.params.messages; // all collected Raw messages
+  msg.params.tags; // tags from the opening BATCH line
 });
 ```
 
