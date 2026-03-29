@@ -1,0 +1,26 @@
+name: test-coverage
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  coverage:
+    name: Check threshold
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno task coverage
+      - name: Check coverage threshold (95%)
+        run: |
+          deno coverage --exclude="_test.ts" --exclude="/testing/" --lcov --output=coverage/lcov.info coverage/cov_profile
+          COVERAGE=$(awk -F: '/^LF:/{lf+=$2} /^LH:/{lh+=$2} END{printf "%.1f", (lh/lf)*100}' coverage/lcov.info)
+          echo "Line coverage: ${COVERAGE}%"
+          if [ "$(echo "$COVERAGE < 95" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${COVERAGE}% is below the 95% threshold"
+            exit 1
+          fi

@@ -1,0 +1,82 @@
+name: release-tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: "Release type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+  workflow_call:
+    inputs:
+      release-type:
+        type: string
+        required: true
+    outputs:
+      version:
+        value: ${{ jobs.tag.outputs.version }}
+      tag:
+        value: ${{ jobs.tag.outputs.tag }}
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: v${{ steps.bump.outputs.version }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Bump version
+        id: bump
+        run: |
+          CURRENT=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "${{ inputs.release-type }}" in
+            patch) PATCH=$((PATCH + 1)) ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+          deno eval "
+            const config = JSON.parse(Deno.readTextFileSync('deno.json'));
+            config.version = '${NEW_VERSION}';
+            Deno.writeTextFileSync('deno.json', JSON.stringify(config, null, 2) + '\n');
+          "
+
+          deno eval "
+            const pkg = JSON.parse(Deno.readTextFileSync('package.json'));
+            pkg.version = '${NEW_VERSION}';
+            Deno.writeTextFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add deno.json package.json
+          git commit -m "chore: release ${{ steps.bump.outputs.version }}"
+          git tag "v${{ steps.bump.outputs.version }}"
+          git push origin main
+          git push origin "v${{ steps.bump.outputs.version }}"

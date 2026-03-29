@@ -1,0 +1,53 @@
+name: test-integration
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  deno:
+    name: Deno · ${{ matrix.ircd }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ircd: [ergo, inspircd, unrealircd]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno task test:integration:${{ matrix.ircd }}
+
+  node:
+    name: Node.js · ergo
+    runs-on: ubuntu-latest
+    needs: [deno]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run test:node:integration:ergo
+
+  bun:
+    name: Bun · ergo
+    runs-on: ubuntu-latest
+    needs: [deno]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: |
+          docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null
+          docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate
+          sleep 2
+          IRCD=ergo bun test --timeout 30000 integration/integration_test.ts
+          docker compose -f integration/ergo/docker-compose.yml down -v

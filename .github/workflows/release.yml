@@ -13,118 +13,29 @@ on:
           - major
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  tag:
+    name: Tag
+    uses: ./.github/workflows/release-tag.yml
+    with:
+      release-type: ${{ inputs.release-type }}
 
-    permissions:
-      contents: write
-      id-token: write
+  gh:
+    name: GitHub Release
+    needs: [tag]
+    uses: ./.github/workflows/release-gh.yml
+    with:
+      ref: main
 
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  jsr:
+    name: JSR
+    needs: [tag]
+    uses: ./.github/workflows/release-jsr.yml
+    with:
+      ref: main
 
-      - name: Download Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Bump version
-        id: bump
-        run: |
-          CURRENT=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-
-          case "${{ inputs.release-type }}" in
-            patch) PATCH=$((PATCH + 1)) ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-          esac
-
-          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-
-          deno eval "
-            const config = JSON.parse(Deno.readTextFileSync('deno.json'));
-            config.version = '${NEW_VERSION}';
-            Deno.writeTextFileSync('deno.json', JSON.stringify(config, null, 2) + '\n');
-          "
-
-          deno eval "
-            const pkg = JSON.parse(Deno.readTextFileSync('package.json'));
-            pkg.version = '${NEW_VERSION}';
-            Deno.writeTextFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          VERSION="v${{ steps.bump.outputs.version }}"
-          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-            RANGE="HEAD"
-          else
-            RANGE="${PREV_TAG}..HEAD"
-          fi
-
-          {
-            echo "body<<CHANGELOG_EOF"
-
-            FIXES=$(git log "$RANGE" --pretty=format:"%s (%h)" --grep="^fix" 2>/dev/null || true)
-            FEATS=$(git log "$RANGE" --pretty=format:"%s (%h)" --grep="^feat" 2>/dev/null || true)
-            OTHERS=$(git log "$RANGE" --pretty=format:"%s (%h)" --invert-grep --grep="^fix" --grep="^feat" --grep="^chore: release" 2>/dev/null || true)
-
-            if [ -n "$FEATS" ]; then
-              echo "### Features"
-              echo "$FEATS" | sed 's/^/- /'
-              echo ""
-            fi
-
-            if [ -n "$FIXES" ]; then
-              echo "### Bug Fixes"
-              echo "$FIXES" | sed 's/^/- /'
-              echo ""
-            fi
-
-            if [ -n "$OTHERS" ]; then
-              echo "### Other Changes"
-              echo "$OTHERS" | sed 's/^/- /'
-              echo ""
-            fi
-
-            echo "CHANGELOG_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Commit and tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add deno.json package.json
-          git commit -m "chore: release ${{ steps.bump.outputs.version }}"
-          git tag "v${{ steps.bump.outputs.version }}"
-          git push origin main
-          git push origin "v${{ steps.bump.outputs.version }}"
-
-      - name: Publish to JSR
-        run: deno publish
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
-
-      - name: Publish to npm
-        run: |
-          npm ci
-          npm run build
-          npm publish --provenance --access public
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ steps.bump.outputs.version }}"
-          body: ${{ steps.changelog.outputs.body }}
+  npm:
+    name: npm
+    needs: [tag]
+    uses: ./.github/workflows/release-npm.yml
+    with:
+      ref: main
