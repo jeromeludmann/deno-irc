@@ -4,7 +4,7 @@ import { expect, test } from "bun:test";
 import { runtime } from "./bun.ts";
 
 function listen(): Promise<
-  { port: number; server: ReturnType<typeof Bun.listen> }
+  { port: number; server: { stop(force?: boolean): void } }
 > {
   return new Promise((resolve) => {
     const server = Bun.listen({
