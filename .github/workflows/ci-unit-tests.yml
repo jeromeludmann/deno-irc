@@ -1,12 +1,12 @@
-name: test-coverage
+name: Unit Tests
 
 on:
   workflow_dispatch:
   workflow_call:
 
 jobs:
-  coverage:
-    name: Check threshold
+  deno:
+    name: Deno · coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -24,3 +24,27 @@ jobs:
             echo "::error::Coverage ${COVERAGE}% is below the 95% threshold"
             exit 1
           fi
+
+  node:
+    name: Node.js
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run test:node
+
+  bun:
+    name: Bun
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun test core/*_test.ts plugins/*_test.ts runtime/bun_test.ts

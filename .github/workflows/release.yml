@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
       release-type: ${{ inputs.release-type }}
 
   gh:
-    name: GitHub Release
+    name: GitHub
     needs: [tag]
     uses: ./.github/workflows/release-gh.yml
     with:
