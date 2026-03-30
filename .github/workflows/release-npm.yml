@@ -1,4 +1,4 @@
-name: release-npm
+name: Publish to npm
 
 on:
   workflow_dispatch:

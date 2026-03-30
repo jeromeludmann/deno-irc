@@ -1,4 +1,4 @@
-name: release-jsr
+name: Publish to JSR
 
 on:
   workflow_dispatch:
