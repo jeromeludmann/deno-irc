@@ -448,7 +448,7 @@ describe("integration", (test) => {
     alice.monitor.add(monitorNick);
 
     // Connect the monitored nick -> should trigger online
-    const onlinePromise = alice.once("monitor:online");
+    const onlinePromise = alice.once("monitor_online");
     const bob = new Client({
       nick: monitorNick,
       username: monitorNick,
@@ -464,7 +464,7 @@ describe("integration", (test) => {
     assertEquals(online.params.nicks.includes(monitorNick), true);
 
     // Disconnect bob -> should trigger offline
-    const offlinePromise = alice.once("monitor:offline");
+    const offlinePromise = alice.once("monitor_offline");
     bob.quit();
     await bob.once("disconnected");
     const offline = await offlinePromise;

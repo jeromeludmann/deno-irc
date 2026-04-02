@@ -65,9 +65,9 @@
   - [event: kick](#event-kick)
   - [event: kill](#event-kill)
   - [event: list_reply](#event-list_reply)
-  - [event: monitor:online](#event-monitoronline)
-  - [event: monitor:offline](#event-monitoroffline)
-  - [event: monitor:list](#event-monitorlist)
+  - [event: monitor_online](#event-monitor_online)
+  - [event: monitor_offline](#event-monitor_offline)
+  - [event: monitor_list](#event-monitor_list)
   - [event: mode](#event-mode)
   - [event: mode_reply](#event-mode_reply)
   - [event: motd_reply](#event-motd_reply)
@@ -1165,32 +1165,32 @@ client.on("list_reply", (msg) => {
 });
 ```
 
-### event: monitor:online
+### event: monitor_online
 
 Emitted when monitored nicks come online.
 
 ```ts
-client.on("monitor:online", (msg) => {
+client.on("monitor_online", (msg) => {
   msg.params.nicks; // array of nicks that are now online
 });
 ```
 
-### event: monitor:offline
+### event: monitor_offline
 
 Emitted when monitored nicks go offline.
 
 ```ts
-client.on("monitor:offline", (msg) => {
+client.on("monitor_offline", (msg) => {
   msg.params.nicks; // array of nicks that are now offline
 });
 ```
 
-### event: monitor:list
+### event: monitor_list
 
 Emitted with the full list of currently monitored nicks.
 
 ```ts
-client.on("monitor:list", (msg) => {
+client.on("monitor_list", (msg) => {
   msg.params.nicks; // array of monitored nicks
 });
 ```

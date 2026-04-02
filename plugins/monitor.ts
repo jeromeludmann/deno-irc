@@ -2,19 +2,19 @@ import { type Message } from "../core/parsers.ts";
 import { type AnyPlugins, createPlugin, type Plugin } from "../core/plugins.ts";
 import isupport from "./isupport.ts";
 
-/** Parameters carried by a monitor:online event. */
+/** Parameters carried by a monitor_online event. */
 export interface MonitorOnlineEventParams {
   /** Nicks that are now online. */
   nicks: string[];
 }
 
-/** Parameters carried by a monitor:offline event. */
+/** Parameters carried by a monitor_offline event. */
 export interface MonitorOfflineEventParams {
   /** Nicks that are now offline. */
   nicks: string[];
 }
 
-/** Parameters carried by a monitor:list event. */
+/** Parameters carried by a monitor_list event. */
 export interface MonitorListEventParams {
   /** Nicks currently being monitored. */
   nicks: string[];
@@ -45,9 +45,9 @@ export interface MonitorFeatures {
     };
   };
   events: {
-    "monitor:online": MonitorOnlineEvent;
-    "monitor:offline": MonitorOfflineEvent;
-    "monitor:list": MonitorListEvent;
+    "monitor_online": MonitorOnlineEvent;
+    "monitor_offline": MonitorOfflineEvent;
+    "monitor_list": MonitorListEvent;
   };
   state: {
     monitorList: Set<string>;
@@ -105,7 +105,7 @@ const plugin: Plugin<MonitorFeatures, AnyPlugins> = createPlugin(
   client.on("raw:rpl_mononline", (msg) => {
     const { source, params: [, targets] } = msg;
     const nicks = targets.split(",").map((t) => t.split("!")[0]);
-    client.emit("monitor:online", { source, params: { nicks } });
+    client.emit("monitor_online", { source, params: { nicks } });
   });
 
   // RPL_MONOFFLINE (731) — nicks are offline.
@@ -113,7 +113,7 @@ const plugin: Plugin<MonitorFeatures, AnyPlugins> = createPlugin(
   client.on("raw:rpl_monoffline", (msg) => {
     const { source, params: [, targets] } = msg;
     const nicks = targets.split(",").map((t) => t.split("!")[0]);
-    client.emit("monitor:offline", { source, params: { nicks } });
+    client.emit("monitor_offline", { source, params: { nicks } });
   });
 
   // RPL_MONLIST (732) + RPL_ENDOFMONLIST (733) — buffered list response.
@@ -131,7 +131,7 @@ const plugin: Plugin<MonitorFeatures, AnyPlugins> = createPlugin(
     const { source } = msg;
     const nicks = [...listBuffer];
     listBuffer.length = 0;
-    client.emit("monitor:list", { source, params: { nicks } });
+    client.emit("monitor_list", { source, params: { nicks } });
   });
 
   // ERR_MONLISTFULL (734) — monitor list is full.
