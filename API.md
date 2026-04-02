@@ -52,6 +52,7 @@
   - [event: cap:del](#event-capdel)
   - [event: chghost](#event-chghost)
   - [event: disconnected](#event-disconnected)
+  - [event: echo](#event-echo)
   - [event: echo:privmsg](#event-echoprivmsg)
   - [event: echo:notice](#event-echonotice)
   - [event: error](#event-error)
@@ -938,6 +939,26 @@ Client has been disconnected from the server.
 client.on("disconnected", (remoteAddr) => {
   remoteAddr; // address of the server
 });
+```
+
+### event: echo
+
+Emitted when the server echoes back any message sent by the client. Requires
+`echo-message` IRCv3 cap.
+
+```ts
+client.on("echo", (msg) => {
+  msg.params.target; // target of the echoed message
+  msg.params.text; // text of the echoed message
+});
+```
+
+You can listen for specific echo types:
+
+```ts
+client.on("echo:privmsg", (msg) => {/* only echoed PRIVMSGs */});
+
+client.on("echo:notice", (msg) => {/* only echoed NOTICEs */});
 ```
 
 ### event: echo:privmsg

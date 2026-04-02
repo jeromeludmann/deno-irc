@@ -17,6 +17,7 @@ export type EchoEvent = Message<EchoEventParams>;
 
 export interface EchoMessageFeatures {
   events: {
+    "echo": EchoEvent;
     "echo:privmsg": EchoEvent;
     "echo:notice": EchoEvent;
   };
@@ -38,6 +39,8 @@ const plugin: Plugin<EchoMessageFeatures, AnyPlugins> = createPlugin(
   [cap, registration],
 )((client) => {
   client.state.caps.requested.push("echo-message");
+
+  client.createMultiEvent("echo", ["echo:privmsg", "echo:notice"]);
 
   client.utils.isEcho = (msg) => msg.source?.name === client.state.user.nick;
 
