@@ -38,6 +38,7 @@ export interface CapFeatures {
     caps: Caps;
   };
   events: {
+    "cap": CapEvent;
     "cap:ack": CapEvent;
     "cap:nak": CapEvent;
     "cap:new": CapEvent;
@@ -67,6 +68,8 @@ const plugin: Plugin<CapFeatures> = createPlugin("cap")((client) => {
 
   // Always request cap-notify for dynamic cap management.
   client.state.caps.requested.push("cap-notify");
+
+  client.createMultiEvent("cap", ["cap:ack", "cap:nak", "cap:new", "cap:del"]);
 
   // Sends CAP command.
 

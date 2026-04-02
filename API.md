@@ -45,6 +45,7 @@
   - [event: dcc_resume_reply](#event-dcc_resume_reply)
   - [event: dcc_send](#event-dcc_send)
   - [event: dcc_send_reply](#event-dcc_send_reply)
+  - [event: cap](#event-cap)
   - [event: cap:ack](#event-capack)
   - [event: cap:nak](#event-capnak)
   - [event: cap:new](#event-capnew)
@@ -853,6 +854,28 @@ client.on("dcc_send", (msg) => {
   msg.params.token; // number | undefined
   msg.params.passive; // boolean
 });
+```
+
+### event: cap
+
+Emitted on any capability event (ACK, NAK, NEW, DEL).
+
+```ts
+client.on("cap", (msg) => {
+  msg.params.caps; // array of capability names
+});
+```
+
+You can listen for specific capability events:
+
+```ts
+client.on("cap:ack", (msg) => {/* only acknowledged caps */});
+
+client.on("cap:nak", (msg) => {/* only rejected caps */});
+
+client.on("cap:new", (msg) => {/* only newly advertised caps */});
+
+client.on("cap:del", (msg) => {/* only removed caps */});
 ```
 
 ### event: cap:ack
