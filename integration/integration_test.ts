@@ -9,7 +9,7 @@ const IRCD = typeof Deno !== "undefined"
   // deno-lint-ignore no-process-global
   : process.env.IRCD ?? "ergo";
 
-describe("integration", (test) => {
+describe(`integration/${IRCD}`, (test) => {
   let counter = 0;
 
   const connect = async (base: string) => {

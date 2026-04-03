@@ -30,12 +30,12 @@
     "url": "https://github.com/jeromeludmann/irc.git"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2",
     "@std/assert": "npm:@jsr/std__assert@^1.0.19",
     "@std/fmt": "npm:@jsr/std__fmt@^1.0.9",
+    "@types/node": "^24.7.2",
     "bun-types": "latest",
-    "typescript": "^5.9.3",
-    "tsx": "^4"
+    "tsx": "^4",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
