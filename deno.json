@@ -1,6 +1,6 @@
 {
   "name": "@irc/client",
-  "version": "0.22.2",
+  "version": "0.23.0",
   "exports": "./mod.ts",
   "license": "MIT",
   "nodeModulesDir": "none",
