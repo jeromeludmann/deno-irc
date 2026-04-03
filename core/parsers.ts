@@ -51,15 +51,20 @@ export type Raw = Message<string[]> & {
 
 /** Parses an IRC prefix string (e.g. `nick!user@host`) into a {@link Source}. */
 export function parseSource(prefix: string): Source {
-  const source = {} as Source;
-  const [name, user, host] = prefix.split(/[@!]+/);
+  const bangIdx = prefix.indexOf("!");
+  const atIdx = prefix.indexOf("@");
 
-  source.name = name;
-  if (user !== undefined && host !== undefined) {
-    source.mask = { user, host };
+  if (bangIdx !== -1 && atIdx > bangIdx) {
+    return {
+      name: prefix.slice(0, bangIdx),
+      mask: {
+        user: prefix.slice(bangIdx + 1, atIdx),
+        host: prefix.slice(atIdx + 1),
+      },
+    };
   }
 
-  return source;
+  return { name: prefix };
 }
 
 const UNESCAPE_MAP: Record<string, string> = {
@@ -121,11 +126,15 @@ function parseMessage(raw: string): Raw {
     msg.tags = {};
     while (start < end) {
       let pos = raw.indexOf(";", start);
-      if (pos === -1) pos = end;
-      const [key, rawValue] = raw.slice(start, pos).split("=");
-      msg.tags[key] = rawValue !== undefined
-        ? unescapeTagValue(rawValue)
-        : undefined;
+      if (pos === -1 || pos > end) pos = end;
+      const eqIdx = raw.indexOf("=", start);
+      if (eqIdx !== -1 && eqIdx < pos) {
+        msg.tags[raw.slice(start, eqIdx)] = unescapeTagValue(
+          raw.slice(eqIdx + 1, pos),
+        );
+      } else {
+        msg.tags[raw.slice(start, pos)] = undefined;
+      }
       start = pos + 1;
     }
   }
@@ -165,25 +174,24 @@ function parseMessage(raw: string): Raw {
   return msg;
 }
 
-/** Stateful parser that handles incremental IRC message chunks split across TCP reads. */
-export class Parser {
-  private chunk = "";
+/**
+ * Parses raw IRC messages from `input` and returns parsed messages with any
+ * incomplete trailing chunk.
+ *
+ * `input` is a string of raw messages each ending with `\r\n`. If the last
+ * raw message does not end with `\r\n`, it is returned as the remainder to
+ * be prepended to the next call.
+ */
+export function parseChunk(input: string): [Raw[], string] {
+  const results: Raw[] = [];
 
-  /**
-   * Parses `chunks` of raw messages and provides a `Generator<Raw>`.
-   *
-   * `chunks` is a string of raw messages each ending with `\r\n`. If the last
-   * raw message of the `batch` does not end with `\r\n`, it means the message
-   * is not complete and will be temporarily stored in the `Parser` instance to
-   * be processed on the next call.
-   */
-  *parseMessages(chunks: string): Generator<Raw> {
-    this.chunk += chunks;
-    const batch = this.chunk.split("\r\n");
-    this.chunk = batch.pop()!;
+  let start = 0;
+  let end: number;
 
-    for (const raw of batch) {
-      yield parseMessage(raw);
-    }
+  while ((end = input.indexOf("\r\n", start)) !== -1) {
+    results.push(parseMessage(input.slice(start, end)));
+    start = end + 2; // skip \r\n
   }
+
+  return [results, start < input.length ? input.slice(start) : ""];
 }
