@@ -16,7 +16,8 @@
       "plugins/",
       "runtime/",
       "testing/",
-      "integration/"
+      "integration/",
+      "bench/"
     ],
     "exclude": [
       "integration/ergo/",
@@ -37,7 +38,8 @@
       "plugins",
       "runtime",
       "testing",
-      "integration"
+      "integration",
+      "bench"
     ],
     "exclude": [
       "runtime/node.ts",
@@ -62,7 +64,10 @@
     "test:integration": "deno task test:integration:ergo && deno task test:integration:inspircd && deno task test:integration:unrealircd",
     "test:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/ergo/docker-compose.yml down -v",
     "test:integration:inspircd": "docker compose -f integration/inspircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/inspircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=inspircd deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/inspircd/docker-compose.yml down -v",
-    "test:integration:unrealircd": "docker compose -f integration/unrealircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/unrealircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=unrealircd deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/unrealircd/docker-compose.yml down -v"
+    "test:integration:unrealircd": "docker compose -f integration/unrealircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/unrealircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=unrealircd deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/unrealircd/docker-compose.yml down -v",
+    "bench": "deno bench bench/parser.bench.ts bench/client.bench.ts",
+    "bench:parser": "deno bench bench/parser.bench.ts",
+    "stress": "deno run --allow-read bench/client.flood.ts"
   },
   "publish": {
     "include": [
