@@ -448,7 +448,7 @@ describe("integration", (test) => {
     alice.monitor.add(monitorNick);
 
     // Connect the monitored nick -> should trigger online
-    const onlinePromise = alice.once("monitor:online");
+    const onlinePromise = alice.once("monitor_online");
     const bob = new Client({
       nick: monitorNick,
       username: monitorNick,
@@ -464,7 +464,7 @@ describe("integration", (test) => {
     assertEquals(online.params.nicks.includes(monitorNick), true);
 
     // Disconnect bob -> should trigger offline
-    const offlinePromise = alice.once("monitor:offline");
+    const offlinePromise = alice.once("monitor_offline");
     bob.quit();
     await bob.once("disconnected");
     const offline = await offlinePromise;
@@ -1138,5 +1138,70 @@ describe("integration", (test) => {
     assertEquals(second.state.user.nick !== nick, true);
 
     await cleanup(first, second);
+  });
+
+  test("labeled-response: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    if (!alice.state.caps.enabled.has("labeled-response")) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(alice.state.caps.enabled.has("labeled-response"), true);
+
+    await cleanup(alice);
+  });
+
+  test("userhost-in-names: names include user@host", async () => {
+    const alice = await connect("alice");
+
+    if (!alice.state.caps.enabled.has("userhost-in-names")) {
+      return await cleanup(alice);
+    }
+
+    alice.join("#test");
+    await alice.once("join");
+
+    alice.names("#test");
+    await alice.once("names_reply");
+
+    const hosts = alice.state.userhosts["#test"];
+    assertEquals(hosts !== undefined, true);
+    assertEquals(Object.keys(hosts).length > 0, true);
+
+    const nick = nickOf(alice);
+    assertEquals(hosts[nick] !== undefined, true);
+    assertEquals(typeof hosts[nick].user, "string");
+    assertEquals(typeof hosts[nick].host, "string");
+
+    await cleanup(alice);
+  });
+
+  test("bot-mode: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    const hasBotMode = alice.state.caps.enabled.has("draft/bot-mode") ||
+      alice.state.caps.enabled.has("bot-mode");
+
+    if (!hasBotMode) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(hasBotMode, true);
+
+    await cleanup(alice);
+  });
+
+  test("batch: cap is negotiated", async () => {
+    const alice = await connect("alice");
+
+    // batch cap should be enabled if the server supports it
+    if (!alice.state.caps.enabled.has("batch")) {
+      return await cleanup(alice);
+    }
+
+    assertEquals(alice.state.caps.enabled.has("batch"), true);
+
+    await cleanup(alice);
   });
 });

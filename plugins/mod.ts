@@ -1,6 +1,8 @@
 export { default as action } from "./action.ts";
 export { default as antiflood } from "./antiflood.ts";
 export { default as away } from "./away.ts";
+export { default as batch } from "./batch.ts";
+export { default as botMode } from "./bot_mode.ts";
 export { default as cap } from "./cap.ts";
 export { default as chanmodes } from "./chanmodes.ts";
 export { default as chantypes } from "./chantypes.ts";
@@ -15,6 +17,7 @@ export { default as join } from "./join.ts";
 export { default as joinOnInvite } from "./join_on_invite.ts";
 export { default as joinOnRegister } from "./join_on_register.ts";
 export { default as kick } from "./kick.ts";
+export { default as labeledResponse } from "./labeled_response.ts";
 export { default as kill } from "./kill.ts";
 export { default as list } from "./list.ts";
 export { default as mode } from "./mode.ts";
@@ -51,14 +54,18 @@ export { default as inviteNotify } from "./invite_notify.ts";
 export { default as messageTags } from "./message_tags.ts";
 export { default as serverTime } from "./server_time.ts";
 export { default as setname } from "./setname.ts";
+export { default as standardReplies } from "./standard_replies.ts";
 export { default as who } from "./who.ts";
 export { default as monitor } from "./monitor.ts";
 export { default as messageSplit } from "./message_split.ts";
+export { default as userhostInNames } from "./userhost_in_names.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
 import antiflood from "./antiflood.ts";
 import away from "./away.ts";
+import batch from "./batch.ts";
+import botMode from "./bot_mode.ts";
 import cap from "./cap.ts";
 import chanmodes from "./chanmodes.ts";
 import chantypes from "./chantypes.ts";
@@ -73,6 +80,7 @@ import join from "./join.ts";
 import joinOnInvite from "./join_on_invite.ts";
 import joinOnRegister from "./join_on_register.ts";
 import kick from "./kick.ts";
+import labeledResponse from "./labeled_response.ts";
 import kill from "./kill.ts";
 import list from "./list.ts";
 import mode from "./mode.ts";
@@ -109,15 +117,19 @@ import inviteNotify from "./invite_notify.ts";
 import messageTags from "./message_tags.ts";
 import serverTime from "./server_time.ts";
 import setname from "./setname.ts";
+import standardReplies from "./standard_replies.ts";
 import who from "./who.ts";
 import monitor from "./monitor.ts";
 import messageSplit from "./message_split.ts";
+import userhostInNames from "./userhost_in_names.ts";
 import whois from "./whois.ts";
 
 const plugins = [
   action,
   antiflood,
   away,
+  batch,
+  botMode,
   cap,
   chanmodes,
   chantypes,
@@ -132,6 +144,7 @@ const plugins = [
   joinOnInvite,
   joinOnRegister,
   kick,
+  labeledResponse,
   kill,
   list,
   motd,
@@ -168,9 +181,11 @@ const plugins = [
   messageTags,
   serverTime,
   setname,
+  standardReplies,
   who,
   monitor,
   messageSplit,
+  userhostInNames,
   whois,
 ];
 

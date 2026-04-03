@@ -148,6 +148,12 @@ const plugin: Plugin<ModeFeatures, AnyPlugins> = createPlugin(
     return modes;
   }
 
+  client.createMultiEvent("mode", ["mode:user", "mode:channel"]);
+  client.createMultiEvent("mode_reply", [
+    "mode_reply:user",
+    "mode_reply:channel",
+  ]);
+
   // Sends MODE command.
 
   client.mode = (target, modes, ...args) => {
@@ -172,7 +178,6 @@ const plugin: Plugin<ModeFeatures, AnyPlugins> = createPlugin(
       const payload: ModeEvent = { source, params: { target, mode } };
       if (arg !== undefined) payload.params.arg = arg;
 
-      client.emit("mode", payload);
       client.emit(isChannel ? "mode:channel" : "mode:user", payload);
     }
   });
@@ -192,7 +197,6 @@ const plugin: Plugin<ModeFeatures, AnyPlugins> = createPlugin(
     const modes = parseModes(rawModes, supportedModes);
     const payload: ModeReplyEvent = { source, params: { target, modes } };
 
-    client.emit("mode_reply", payload);
     client.emit(isChannel ? "mode_reply:channel" : "mode_reply:user", payload);
   });
 });

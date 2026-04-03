@@ -66,11 +66,11 @@ describe("plugins/monitor", (test) => {
     assertEquals(server.receive(), ["MONITOR S"]);
   });
 
-  test("emit 'monitor:online' on RPL_MONONLINE", async () => {
+  test("emit 'monitor_online' on RPL_MONONLINE", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 730 me :nick1!user@host,nick2!user@host");
-    const msg = await client.once("monitor:online");
+    const msg = await client.once("monitor_online");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -78,11 +78,11 @@ describe("plugins/monitor", (test) => {
     });
   });
 
-  test("emit 'monitor:offline' on RPL_MONOFFLINE", async () => {
+  test("emit 'monitor_offline' on RPL_MONOFFLINE", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 731 me :nick1,nick2");
-    const msg = await client.once("monitor:offline");
+    const msg = await client.once("monitor_offline");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -90,7 +90,7 @@ describe("plugins/monitor", (test) => {
     });
   });
 
-  test("emit 'monitor:list' on RPL_ENDOFMONLIST with buffered entries", async () => {
+  test("emit 'monitor_list' on RPL_ENDOFMONLIST with buffered entries", async () => {
     const { client, server } = await mock();
 
     server.send([
@@ -99,7 +99,7 @@ describe("plugins/monitor", (test) => {
       ":serverhost 733 me :End of MONITOR list",
     ]);
 
-    const msg = await client.once("monitor:list");
+    const msg = await client.once("monitor_list");
 
     assertEquals(msg, {
       source: { name: "serverhost" },
@@ -107,11 +107,11 @@ describe("plugins/monitor", (test) => {
     });
   });
 
-  test("emit 'monitor:list' for empty list", async () => {
+  test("emit 'monitor_list' for empty list", async () => {
     const { client, server } = await mock();
 
     server.send(":serverhost 733 me :End of MONITOR list");
-    const msg = await client.once("monitor:list");
+    const msg = await client.once("monitor_list");
 
     assertEquals(msg, {
       source: { name: "serverhost" },

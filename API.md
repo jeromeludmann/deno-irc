@@ -2,6 +2,7 @@
 
 - [Options](#options)
   - [option: authMethod](#option-authmethod)
+  - [option: bot](#option-bot)
   - [option: bufferSize](#option-buffersize)
   - [option: channels](#option-channels)
   - [option: ctcpReplies](#option-ctcpreplies)
@@ -22,6 +23,8 @@
   - [option: verbose](#option-verbose)
 - [Events](#events)
   - [event: account](#event-account)
+  - [event: batch_start](#event-batch_start)
+  - [event: batch_end](#event-batch_end)
   - [event: away_notify](#event-away_notify)
   - [event: away_reply](#event-away_reply)
   - [event: connecting](#event-connecting)
@@ -42,26 +45,29 @@
   - [event: dcc_resume_reply](#event-dcc_resume_reply)
   - [event: dcc_send](#event-dcc_send)
   - [event: dcc_send_reply](#event-dcc_send_reply)
+  - [event: cap](#event-cap)
   - [event: cap:ack](#event-capack)
   - [event: cap:nak](#event-capnak)
   - [event: cap:new](#event-capnew)
   - [event: cap:del](#event-capdel)
   - [event: chghost](#event-chghost)
   - [event: disconnected](#event-disconnected)
+  - [event: echo](#event-echo)
   - [event: echo:privmsg](#event-echoprivmsg)
   - [event: echo:notice](#event-echonotice)
   - [event: error](#event-error)
   - [event: error_reply](#event-error_reply)
   - [event: extended_join](#event-extended_join)
+  - [event: fail](#event-fail)
   - [event: invite](#event-invite)
   - [event: isupport](#event-isupport)
   - [event: join](#event-join)
   - [event: kick](#event-kick)
   - [event: kill](#event-kill)
   - [event: list_reply](#event-list_reply)
-  - [event: monitor:online](#event-monitoronline)
-  - [event: monitor:offline](#event-monitoroffline)
-  - [event: monitor:list](#event-monitorlist)
+  - [event: monitor_online](#event-monitor_online)
+  - [event: monitor_offline](#event-monitor_offline)
+  - [event: monitor_list](#event-monitor_list)
   - [event: mode](#event-mode)
   - [event: mode_reply](#event-mode_reply)
   - [event: motd_reply](#event-motd_reply)
@@ -69,6 +75,7 @@
   - [event: names_reply](#event-names_reply)
   - [event: nick](#event-nick)
   - [event: nicklist](#event-nicklist)
+  - [event: note](#event-note)
   - [event: notice](#event-notice)
   - [event: part](#event-part)
   - [event: ping](#event-ping)
@@ -83,6 +90,7 @@
   - [event: topic](#event-topic)
   - [event: topic_reply](#event-topic_reply)
   - [event: topic_who_time_reply](#event-topic_who_time_reply)
+  - [event: warn](#event-warn)
   - [event: who_reply](#event-who_reply)
   - [event: whois_reply](#event-whois_reply)
 - [Commands](#commands)
@@ -103,6 +111,7 @@
   - [command: join](#command-join)
   - [command: kick](#command-kick)
   - [command: kill](#command-kill)
+  - [command: labeled](#command-labeled)
   - [command: list](#command-list)
   - [command: me](#command-me)
   - [command: mode](#command-mode)
@@ -179,6 +188,27 @@ await client.connect("irc.libera.chat", {
   tls: true,
   certFile: "client.pem",
   keyFile: "client-key.pem",
+});
+```
+
+### option: bot
+
+Whether this client is a bot. When `true`, requests the `draft/bot-mode`
+capability and automatically sets user mode `+B` after registration.
+
+Defaults to `false`.
+
+```ts
+const client = new Client({ nick: "mybot", bot: true });
+```
+
+Use `client.utils.isBot(msg)` to check if a message was sent by a bot:
+
+```ts
+client.on("raw:privmsg", (msg) => {
+  if (client.utils.isBot(msg)) {
+    // message was sent by a bot
+  }
 });
 ```
 
@@ -618,6 +648,35 @@ client.on("away_reply", (msg) => {
 });
 ```
 
+### event: batch_start
+
+Emitted when a batch opens. Requires `batch` IRCv3 cap.
+
+```ts
+client.on("batch_start", (msg) => {
+  msg.params.ref; // server-assigned batch reference
+  msg.params.type; // batch type (e.g. "chathistory", "netsplit")
+  msg.params.params; // additional parameters
+});
+```
+
+### event: batch_end
+
+Emitted when a batch closes. Contains all messages collected during the batch.
+Requires `batch` IRCv3 cap.
+
+Messages inside a batch are suppressed from normal `raw:*` event emission
+and delivered together in `batch_end`.
+
+```ts
+client.on("batch_end", (msg) => {
+  msg.params.ref; // batch reference
+  msg.params.type; // batch type
+  msg.params.messages; // all collected Raw messages
+  msg.params.tags; // tags from the opening BATCH line
+});
+```
+
 ### event: connecting
 
 Client is connecting to the server.
@@ -798,6 +857,28 @@ client.on("dcc_send", (msg) => {
 });
 ```
 
+### event: cap
+
+Emitted on any capability event (ACK, NAK, NEW, DEL).
+
+```ts
+client.on("cap", (msg) => {
+  msg.params.caps; // array of capability names
+});
+```
+
+You can listen for specific capability events:
+
+```ts
+client.on("cap:ack", (msg) => {/* only acknowledged caps */});
+
+client.on("cap:nak", (msg) => {/* only rejected caps */});
+
+client.on("cap:new", (msg) => {/* only newly advertised caps */});
+
+client.on("cap:del", (msg) => {/* only removed caps */});
+```
+
 ### event: cap:ack
 
 Emitted when the server acknowledges requested capabilities.
@@ -858,6 +939,26 @@ Client has been disconnected from the server.
 client.on("disconnected", (remoteAddr) => {
   remoteAddr; // address of the server
 });
+```
+
+### event: echo
+
+Emitted when the server echoes back any message sent by the client. Requires
+`echo-message` IRCv3 cap.
+
+```ts
+client.on("echo", (msg) => {
+  msg.params.target; // target of the echoed message
+  msg.params.text; // text of the echoed message
+});
+```
+
+You can listen for specific echo types:
+
+```ts
+client.on("echo:privmsg", (msg) => {/* only echoed PRIVMSGs */});
+
+client.on("echo:notice", (msg) => {/* only echoed NOTICEs */});
 ```
 
 ### event: echo:privmsg
@@ -974,6 +1075,19 @@ client.on("extended_join", (msg) => {
 });
 ```
 
+### event: fail
+
+Emitted when the server sends a FAIL standard reply. No capability needed.
+
+```ts
+client.on("fail", (msg) => {
+  msg.params.command; // related command (e.g. "CHATHISTORY")
+  msg.params.code; // machine-readable code (e.g. "ACCOUNT_REQUIRED")
+  msg.params.context; // additional context strings (may be empty)
+  msg.params.description; // human-readable description
+});
+```
+
 ### event: invite
 
 User invites the client to a channel.
@@ -1051,32 +1165,32 @@ client.on("list_reply", (msg) => {
 });
 ```
 
-### event: monitor:online
+### event: monitor_online
 
 Emitted when monitored nicks come online.
 
 ```ts
-client.on("monitor:online", (msg) => {
+client.on("monitor_online", (msg) => {
   msg.params.nicks; // array of nicks that are now online
 });
 ```
 
-### event: monitor:offline
+### event: monitor_offline
 
 Emitted when monitored nicks go offline.
 
 ```ts
-client.on("monitor:offline", (msg) => {
+client.on("monitor_offline", (msg) => {
   msg.params.nicks; // array of nicks that are now offline
 });
 ```
 
-### event: monitor:list
+### event: monitor_list
 
 Emitted with the full list of currently monitored nicks.
 
 ```ts
-client.on("monitor:list", (msg) => {
+client.on("monitor_list", (msg) => {
   msg.params.nicks; // array of monitored nicks
 });
 ```
@@ -1153,6 +1267,19 @@ client.on("names_reply", (msg) => {
 
 For a ready to use nicklist, see [`nicklist`](#event-nicklist).
 
+When `userhost-in-names` IRCv3 cap is enabled, `client.state.userhosts`
+contains the user/host masks for each nick per channel:
+
+```ts
+client.on("names_reply", (msg) => {
+  const hosts = client.state.userhosts[msg.params.channel];
+  for (const [nick, mask] of Object.entries(hosts ?? {})) {
+    mask.user; // username
+    mask.host; // hostname
+  }
+});
+```
+
 ### event: nick
 
 User changes its nick.
@@ -1176,6 +1303,20 @@ client.on("nicklist", (msg) => {
     user.prefix; // prefix of the user
     user.nick; // nick of the user
   }
+});
+```
+
+### event: note
+
+Emitted when the server sends a NOTE standard reply. No capability needed.
+Same structure as [`fail`](#event-fail).
+
+```ts
+client.on("note", (msg) => {
+  msg.params.command;
+  msg.params.code;
+  msg.params.context;
+  msg.params.description;
 });
 ```
 
@@ -1447,6 +1588,20 @@ client.on("whois_reply", (msg) => {
   msg.params.serverinfo; // informations of the connected server
   msg.params.operator; // optional user operator message
   msg.params.away; // optional away message
+});
+```
+
+### event: warn
+
+Emitted when the server sends a WARN standard reply. No capability needed.
+Same structure as [`fail`](#event-fail).
+
+```ts
+client.on("warn", (msg) => {
+  msg.params.command;
+  msg.params.code;
+  msg.params.context;
+  msg.params.description;
 });
 ```
 
@@ -1766,6 +1921,19 @@ Kills a `nick` from the server with a `comment`.
 
 ```ts
 client.kill("someone", "Boom!");
+```
+
+### command: labeled
+
+Sends a command with an auto-generated label tag. Requires `labeled-response`
+IRCv3 cap. Responses from the server carry the same label in their tags.
+
+`labeled(command: string, ...params: string[]): void`
+
+```ts
+client.labeled("WHOIS", "nick");
+// sends: @label=L1 WHOIS nick
+// responses will have msg.tags.label === "L1"
 ```
 
 ### command: list
