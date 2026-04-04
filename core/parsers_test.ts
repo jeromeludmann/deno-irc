@@ -1,29 +1,23 @@
 import { assertEquals } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
-import { escapeTagValue, Parser, unescapeTagValue } from "./parsers.ts";
+import { escapeTagValue, parseChunk, unescapeTagValue } from "./parsers.ts";
 
 describe("core/parsers", (test) => {
   test("parse message without prefix", () => {
-    const parser = new Parser();
+    const [msgs] = parseChunk("PING :QimVSbibZg\r\n");
 
-    const msg = Array.from(parser.parseMessages("PING :QimVSbibZg\r\n"));
-
-    assertEquals(msg, [{
+    assertEquals(msgs, [{
       command: "ping",
       params: ["QimVSbibZg"],
     }]);
   });
 
   test("parse message with server prefix", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages(
-        ":serverhost NOTICE * :*** Looking up your hostname...\r\n",
-      ),
+    const [msgs] = parseChunk(
+      ":serverhost NOTICE * :*** Looking up your hostname...\r\n",
     );
 
-    assertEquals(msg, [{
+    assertEquals(msgs, [{
       command: "notice",
       params: ["*", "*** Looking up your hostname..."],
       source: { name: "serverhost" },
@@ -31,13 +25,11 @@ describe("core/parsers", (test) => {
   });
 
   test("parse message with user prefix", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages(":someone!user@host JOIN #channel\r\n"),
+    const [msgs] = parseChunk(
+      ":someone!user@host JOIN #channel\r\n",
     );
 
-    assertEquals(msg, [{
+    assertEquals(msgs, [{
       command: "join",
       params: ["#channel"],
       source: { mask: { host: "host", user: "user" }, name: "someone" },
@@ -45,15 +37,11 @@ describe("core/parsers", (test) => {
   });
 
   test("parse message with tags", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages(
-        "@aaa=bbb;ccc;example.com/ddd=eee :someone!user@host JOIN #channel\r\n",
-      ),
+    const [msgs] = parseChunk(
+      "@aaa=bbb;ccc;example.com/ddd=eee :someone!user@host JOIN #channel\r\n",
     );
 
-    assertEquals(msg, [{
+    assertEquals(msgs, [{
       command: "join",
       params: ["#channel"],
       source: { mask: { host: "host", user: "user" }, name: "someone" },
@@ -62,13 +50,11 @@ describe("core/parsers", (test) => {
   });
 
   test("parse message with tags but no source", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages("@time=2026-03-24T12:00:00Z PING :server\r\n"),
+    const [msgs] = parseChunk(
+      "@time=2026-03-24T12:00:00Z PING :server\r\n",
     );
 
-    assertEquals(msg, [{
+    assertEquals(msgs, [{
       command: "ping",
       params: ["server"],
       tags: { "time": "2026-03-24T12:00:00Z" },
@@ -76,53 +62,39 @@ describe("core/parsers", (test) => {
   });
 
   test("parse message with empty tag value", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages("@key= :nick!u@h PRIVMSG #chan :text\r\n"),
+    const [msgs] = parseChunk(
+      "@key= :nick!u@h PRIVMSG #chan :text\r\n",
     );
 
-    assertEquals(msg[0].tags, { "key": "" });
+    assertEquals(msgs[0].tags, { "key": "" });
   });
 
   test("parse message with multiple escaped tags", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages(
-        "@a=1\\s2;b=x\\:y;c :nick!u@h PRIVMSG #chan :text\r\n",
-      ),
+    const [msgs] = parseChunk(
+      "@a=1\\s2;b=x\\:y;c :nick!u@h PRIVMSG #chan :text\r\n",
     );
 
-    assertEquals(msg[0].tags, { "a": "1 2", "b": "x;y", "c": undefined });
+    assertEquals(msgs[0].tags, { "a": "1 2", "b": "x;y", "c": undefined });
   });
 
   test("parse tags split across chunks", () => {
-    const parser = new Parser();
-
-    const raw1 = Array.from(
-      parser.parseMessages("@time=2026-03-24T12:00:00Z :nick!u@h PRI"),
+    const [msgs1, chunk] = parseChunk(
+      "@time=2026-03-24T12:00:00Z :nick!u@h PRI",
     );
-    assertEquals(raw1, []);
+    assertEquals(msgs1, []);
 
-    const raw2 = Array.from(
-      parser.parseMessages("VMSG #chan :hello\r\n"),
-    );
-    assertEquals(raw2.length, 1);
-    assertEquals(raw2[0].tags, { "time": "2026-03-24T12:00:00Z" });
-    assertEquals(raw2[0].params, ["#chan", "hello"]);
+    const [msgs2] = parseChunk(chunk + "VMSG #chan :hello\r\n");
+    assertEquals(msgs2.length, 1);
+    assertEquals(msgs2[0].tags, { "time": "2026-03-24T12:00:00Z" });
+    assertEquals(msgs2[0].params, ["#chan", "hello"]);
   });
 
   test("parse message with escaped tag values", () => {
-    const parser = new Parser();
-
-    const msg = Array.from(
-      parser.parseMessages(
-        "@msg=hello\\sworld\\:test\\\\end :nick!u@h PRIVMSG #chan :text\r\n",
-      ),
+    const [msgs] = parseChunk(
+      "@msg=hello\\sworld\\:test\\\\end :nick!u@h PRIVMSG #chan :text\r\n",
     );
 
-    assertEquals(msg[0].tags, { "msg": "hello world;test\\end" });
+    assertEquals(msgs[0].tags, { "msg": "hello world;test\\end" });
   });
 
   test("unescape tag values", () => {
@@ -150,16 +122,14 @@ describe("core/parsers", (test) => {
   });
 
   test("parse chunks of raw messages", () => {
-    const parser = new Parser();
-
-    const raw1 = Array.from(
-      parser.parseMessages(":serverhost NOTICE Auth :*** Looking up"),
+    const [raw1, chunk1] = parseChunk(
+      ":serverhost NOTICE Auth :*** Looking up",
     );
     assertEquals(raw1, []);
 
-    const raw2 = Array.from(parser.parseMessages(
-      " your hostname...\r\n:serverhost 001 nick :Wel",
-    ));
+    const [raw2, chunk2] = parseChunk(
+      chunk1 + " your hostname...\r\n:serverhost 001 nick :Wel",
+    );
     assertEquals(raw2, [
       {
         source: { name: "serverhost" },
@@ -168,9 +138,9 @@ describe("core/parsers", (test) => {
       },
     ]);
 
-    const raw3 = Array.from(parser.parseMessages(
-      "come to the server\r\n:nick!user@host JOIN #channel\r\n",
-    ));
+    const [raw3, chunk3] = parseChunk(
+      chunk2 + "come to the server\r\n:nick!user@host JOIN #channel\r\n",
+    );
     assertEquals(raw3, [
       {
         source: { name: "serverhost" },
@@ -183,10 +153,11 @@ describe("core/parsers", (test) => {
         params: ["#channel"],
       },
     ]);
+    assertEquals(chunk3, "");
 
-    const raw4 = Array.from(parser.parseMessages(
+    const [raw4] = parseChunk(
       "PING serverhost\r\n:nick!user@host PRIVMSG #channel ::!@ ;\r\n",
-    ));
+    );
     assertEquals(raw4, [
       {
         command: "ping",

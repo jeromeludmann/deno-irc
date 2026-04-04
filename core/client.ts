@@ -1,7 +1,7 @@
 import { type ClientError, type ErrorArgs, toClientError } from "./errors.ts";
 import { EventEmitter, type EventEmitterOptions } from "./events.ts";
 import { Hooks } from "./hooks.ts";
-import { escapeTagValue, Parser, type Raw } from "./parsers.ts";
+import { escapeTagValue, parseChunk, type Raw } from "./parsers.ts";
 import { loadPlugins, type Plugin } from "./plugins.ts";
 import {
   type AnyCommand,
@@ -98,7 +98,7 @@ export class CoreClient<
 
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
-  private parser = new Parser();
+  private chunk = "";
   private buffer: Uint8Array;
 
   constructor(
@@ -211,9 +211,11 @@ export class CoreClient<
       const chunks = await this.read(conn);
       if (chunks === null) break;
 
-      const messageGenerator = this.parser.parseMessages(chunks);
+      const input = this.chunk ? this.chunk + chunks : chunks;
+      const [messages, remainder] = parseChunk(input);
+      this.chunk = remainder;
 
-      for (const msg of messageGenerator) {
+      for (const msg of messages) {
         this.emit(`raw:${msg.command}`, msg);
       }
     }
