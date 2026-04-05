@@ -99,6 +99,34 @@ describe("plugins/who", (test) => {
     assertEquals(msg.params.entries, []);
   });
 
+  test("handle WHO reply without trailing param", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 352 me #channel user host server nick H",
+      ":serverhost 315 me #channel :End of /WHO list",
+    ]);
+
+    const msg = await client.once("who_reply");
+
+    assertEquals(msg.params.entries[0].hopcount, undefined);
+    assertEquals(msg.params.entries[0].realname, undefined);
+  });
+
+  test("handle WHOX reply with unknown token", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 354 me unknown_token nick1 user1 host1",
+      ":serverhost 315 me unknown_token :End of /WHO list",
+    ]);
+
+    const msg = await client.once("who_reply");
+
+    assertEquals(msg.params.target, "unknown_token");
+    assertEquals(msg.params.entries.length, 1);
+  });
+
   test("handle WHO reply with hopcount only (no realname)", async () => {
     const { client, server } = await mock();
 

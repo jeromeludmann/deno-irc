@@ -150,6 +150,39 @@ describe("plugins/cap", (test) => {
     assertEquals(capReq!.includes("sasl"), true);
   });
 
+  test("negotiate sends CAP END when no caps are supported", async () => {
+    const { client, server } = await mockWithCaps("unknown-only");
+
+    client.utils.negotiateCapabilities({
+      completeImmediately: true,
+    });
+    server.receive(); // CAP LS 302
+
+    server.send(":server CAP me LS :still-unknown");
+    await client.once("raw:cap");
+    await tick();
+
+    assertEquals(server.receive(), ["CAP END"]);
+  });
+
+  test("negotiate sends CAP END on NAK with completeImmediately", async () => {
+    const { client, server } = await mockWithCaps();
+
+    client.utils.negotiateCapabilities({ completeImmediately: true });
+    server.receive(); // CAP LS 302
+
+    server.send(":server CAP me LS :cap-notify multi-prefix");
+    await client.once("raw:cap");
+    await tick();
+    server.receive(); // CAP REQ
+
+    server.send(":server CAP me NAK :cap-notify multi-prefix");
+    await client.once("cap:nak");
+    await tick();
+
+    assertEquals(server.receive(), ["CAP END"]);
+  });
+
   test("track CAP ACK", async () => {
     const { client, server } = await mock();
 

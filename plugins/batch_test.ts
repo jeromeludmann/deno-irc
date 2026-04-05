@@ -106,6 +106,29 @@ describe("plugins/batch", (test) => {
     assertEquals(batches[1].count, 0);
   });
 
+  test("ignore BATCH with no ref param", async () => {
+    const { client, server } = await mock();
+
+    let started = false;
+    client.on("batch_start", () => {
+      started = true;
+    });
+
+    server.send(":server BATCH");
+    await delay();
+
+    assertEquals(started, false);
+  });
+
+  test("pass through message with unknown batch tag", async () => {
+    const { client, server } = await mock();
+
+    server.send("@batch=unknown :nick!user@host PRIVMSG #ch :hello");
+    const msg = await client.once("raw:privmsg");
+
+    assertEquals(msg.params, ["#ch", "hello"]);
+  });
+
   test("ignore unknown BATCH -ref", async () => {
     const { client, server } = await mock();
 

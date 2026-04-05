@@ -434,4 +434,130 @@ describe("core/client", (test) => {
 
     assertEquals(triggered, 1);
   });
+
+  test("survive unknown commands from server", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send([
+      "FOOBAR",
+      "BAZQUX param1 param2",
+      "123 me :unknown numeric",
+      "PING :alive",
+    ]);
+
+    const msg = await client.once("raw:ping");
+    assertEquals(msg.params, ["alive"]);
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive empty lines from server", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send([
+      "",
+      "   ",
+      "PING :ok",
+    ]);
+
+    const msg = await client.once("raw:ping");
+    assertEquals(msg.params, ["ok"]);
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive malformed prefix from server", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send([
+      ":!@ PRIVMSG #ch :hello",
+      ":@! PRIVMSG #ch :hello",
+      ": PRIVMSG #ch :hello",
+      "PING :ok",
+    ]);
+
+    const msg = await client.once("raw:ping");
+    assertEquals(msg.params, ["ok"]);
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive malformed tags from server", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send([
+      "@ PING :1",
+      "@=== PING :2",
+      "@;; PING :3",
+      "@key PING :4",
+      "PING :ok",
+    ]);
+
+    const msg = await client.once("raw:ping");
+    assertEquals(msg.command, "ping");
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive server shutdown mid-conversation", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send("PING :before");
+    await client.once("raw:ping");
+
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive null bytes in messages", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    server.send(":nick!u@h PRIVMSG #ch :\x00null\x00bytes");
+    const msg = await client.once("raw:privmsg");
+    assertEquals(msg.params[1], "\x00null\x00bytes");
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive very long message from server", async () => {
+    const { client, server } = mock({ bufferSize: 65536 });
+    await client.connect("host");
+
+    const longText = "A".repeat(10_000);
+    server.send(`:nick!u@h PRIVMSG #ch :${longText}`);
+    const msg = await client.once("raw:privmsg");
+    assertEquals(msg.params[1].length, 10_000);
+    server.shutdown();
+    await client.once("disconnected");
+  });
+
+  test("survive flood of messages", async () => {
+    const { client, server } = mock();
+    await client.connect("host");
+
+    const N = 80;
+    let count = 0;
+    const done = new Promise<void>((resolve) => {
+      const off = client.on("raw:privmsg", () => {
+        if (++count === N) {
+          off();
+          resolve();
+        }
+      });
+    });
+
+    server.send(
+      Array.from({ length: N }, (_, i) => `:nick!u@h PRIVMSG #ch :msg${i}`),
+    );
+    await done;
+    assertEquals(count, N);
+    server.shutdown();
+    await client.once("disconnected");
+  });
 });

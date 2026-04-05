@@ -1,6 +1,11 @@
 import { assertEquals } from "@std/assert";
 import { describe } from "../testing/helpers.ts";
-import { escapeTagValue, parseChunk, unescapeTagValue } from "./parsers.ts";
+import {
+  escapeTagValue,
+  parseChunk,
+  parseSource,
+  unescapeTagValue,
+} from "./parsers.ts";
 
 describe("core/parsers", (test) => {
   test("parse message without prefix", () => {
@@ -169,5 +174,103 @@ describe("core/parsers", (test) => {
         params: ["#channel", ":!@ ;"],
       },
     ]);
+  });
+
+  test("survive empty string", () => {
+    const [msgs, remainder] = parseChunk("");
+    assertEquals(msgs, []);
+    assertEquals(remainder, "");
+  });
+
+  test("survive bare \\r\\n", () => {
+    parseChunk("\r\n");
+    parseChunk("\r\n\r\n\r\n");
+  });
+
+  test("survive only spaces", () => {
+    parseChunk("   \r\n");
+  });
+
+  test("survive unknown command", () => {
+    const [msgs] = parseChunk("FOOBAR\r\n");
+    assertEquals(msgs.length, 1);
+    assertEquals(msgs[0].params, []);
+  });
+
+  test("survive command with no params", () => {
+    const [msgs] = parseChunk("PING\r\n");
+    assertEquals(msgs.length, 1);
+    assertEquals(msgs[0].command, "ping");
+    assertEquals(msgs[0].params, []);
+  });
+
+  test("survive prefix with no command", () => {
+    parseChunk(":server\r\n");
+  });
+
+  test("survive lone @ (tag marker with no data)", () => {
+    parseChunk("@\r\n");
+  });
+
+  test("survive malformed tags", () => {
+    parseChunk("@ PING\r\n");
+    parseChunk("@= PING\r\n");
+    parseChunk("@; PING\r\n");
+    parseChunk("@;; PING\r\n");
+    parseChunk("@=== PING\r\n");
+    parseChunk("@key PING\r\n");
+    parseChunk("@ke=y=z PING\r\n");
+  });
+
+  test("survive prefix with only ! or @", () => {
+    parseChunk(":!@ PING\r\n");
+    parseChunk(":@ PING\r\n");
+    parseChunk(":! PING\r\n");
+    parseChunk(":@! PING\r\n");
+  });
+
+  test("survive null bytes", () => {
+    parseChunk(":n\0ick PRIVMSG #ch :\0\r\n");
+  });
+
+  test("survive unicode and emoji", () => {
+    parseChunk(":nïck!üser@hôst PRIVMSG #chännel :🔥🎉\r\n");
+  });
+
+  test("survive very long message", () => {
+    const longText = "A".repeat(100_000);
+    parseChunk(`:nick!u@h PRIVMSG #ch :${longText}\r\n`);
+  });
+
+  test("survive trailing without colon", () => {
+    const [msgs] = parseChunk(":server 001 nick welcome\r\n");
+    assertEquals(msgs.length, 1);
+  });
+
+  test("survive only \\r or only \\n", () => {
+    const [msgs1, r1] = parseChunk("PING\r");
+    assertEquals(msgs1, []);
+    assertEquals(r1, "PING\r");
+
+    const [msgs2, r2] = parseChunk("PING\n");
+    assertEquals(msgs2, []);
+    assertEquals(r2, "PING\n");
+  });
+
+  test("survive mixed valid and garbage lines", () => {
+    parseChunk(
+      "PING :ok\r\n\r\n:::garbage\r\n@@@\r\n:nick PRIVMSG #ch :hi\r\n",
+    );
+  });
+
+  test("parseSource with empty string", () => {
+    const source = parseSource("");
+    assertEquals(source.name, "");
+  });
+
+  test("parseSource with only special chars", () => {
+    parseSource("!@");
+    parseSource("@!");
+    parseSource("!!!@@@");
   });
 });
