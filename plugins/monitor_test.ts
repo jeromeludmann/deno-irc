@@ -41,6 +41,17 @@ describe("plugins/monitor", (test) => {
     assertEquals(client.state.monitorList.has("nick1"), false);
   });
 
+  test("send MONITOR - with array (remove)", async () => {
+    const { client, server } = await mock();
+
+    client.monitor.add(["nick1", "nick2"]);
+    server.receive();
+
+    client.monitor.remove(["nick1", "nick2"]);
+    assertEquals(server.receive(), ["MONITOR - nick1,nick2"]);
+    assertEquals(client.state.monitorList.size, 0);
+  });
+
   test("send MONITOR L (list)", async () => {
     const { client, server } = await mock();
 
@@ -126,5 +137,26 @@ describe("plugins/monitor", (test) => {
     await client.once("isupport:monitor");
 
     assertEquals(client.state.monitorLimit, 100);
+  });
+
+  test("ignore ISUPPORT MONITOR without value", async () => {
+    const { client, server } = await mock();
+
+    server.send(":serverhost 005 me MONITOR :are supported by this server");
+    await client.once("isupport:monitor");
+
+    assertEquals(client.state.monitorLimit, 0);
+  });
+
+  test("handle RPL_MONLIST with empty targets", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":serverhost 732 me",
+      ":serverhost 733 me :End of MONITOR list",
+    ]);
+
+    const msg = await client.once("monitor_list");
+    assertEquals(msg.params, { nicks: [] });
   });
 });

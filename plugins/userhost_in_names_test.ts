@@ -51,6 +51,21 @@ describe("plugins/userhost_in_names", (test) => {
     assertEquals(client.state.userhosts["#chan"], {});
   });
 
+  test("skip nick with ! but no @", async () => {
+    const { client, server } = await mock();
+
+    server.send([
+      ":server 353 me = #chan :nick1!user1 nick2!user2@host2",
+      ":server 366 me #chan :End of /NAMES list",
+    ]);
+
+    await client.once("names_reply");
+
+    assertEquals(client.state.userhosts["#chan"], {
+      nick2: { user: "user2", host: "host2" },
+    });
+  });
+
   test("accumulate multiple RPL_NAMREPLY lines", async () => {
     const { client, server } = await mock();
 

@@ -54,6 +54,34 @@ describe("plugins/standard_replies", (test) => {
     });
   });
 
+  test("emit 'fail' on FAIL with only command and code", async () => {
+    const { client, server } = await mock();
+
+    server.send(":server FAIL COMMAND CODE");
+    const msg = await client.once("fail");
+
+    assertEquals(msg.params, {
+      command: "COMMAND",
+      code: "CODE",
+      context: [],
+      description: "",
+    });
+  });
+
+  test("emit 'fail' on FAIL with no params", async () => {
+    const { client, server } = await mock();
+
+    server.send(":server FAIL");
+    const msg = await client.once("fail");
+
+    assertEquals(msg.params, {
+      command: "",
+      code: "",
+      context: [],
+      description: "",
+    });
+  });
+
   test("emit 'note' on NOTE", async () => {
     const { client, server } = await mock();
 

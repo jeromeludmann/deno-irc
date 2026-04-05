@@ -60,7 +60,7 @@
     "lint": "deno lint",
     "fmt": "deno fmt",
     "test": "deno test --failfast --allow-net core/*_test.ts plugins/*_test.ts runtime/deno_test.ts --parallel",
-    "coverage": "rm -rf coverage && deno test --allow-net --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts runtime/deno_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"/testing/\" coverage/cov_profile",
+    "coverage": "rm -rf coverage && deno test --allow-net --parallel --coverage=coverage/cov_profile core/*_test.ts plugins/*_test.ts runtime/deno_test.ts && deno coverage --exclude=\"_test.ts\" --exclude=\"testing/\" --exclude=\"runtime/mod.ts\" coverage/cov_profile",
     "test:integration": "deno task test:integration:ergo && deno task test:integration:inspircd && deno task test:integration:unrealircd",
     "test:integration:ergo": "docker compose -f integration/ergo/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/ergo/docker-compose.yml up -d --force-recreate && sleep 2 && IRCD=ergo deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/ergo/docker-compose.yml down -v",
     "test:integration:inspircd": "docker compose -f integration/inspircd/docker-compose.yml down -v 2>/dev/null; docker compose -f integration/inspircd/docker-compose.yml up -d --force-recreate && sleep 3 && IRCD=inspircd deno test --allow-net --allow-read --allow-env integration/integration_test.ts --failfast ; docker compose -f integration/inspircd/docker-compose.yml down -v",
