@@ -59,6 +59,7 @@ export { default as who } from "./who.ts";
 export { default as monitor } from "./monitor.ts";
 export { default as messageSplit } from "./message_split.ts";
 export { default as userhostInNames } from "./userhost_in_names.ts";
+export { default as websocket } from "./websocket.ts";
 export { default as whois } from "./whois.ts";
 
 import action from "./action.ts";
@@ -122,6 +123,7 @@ import who from "./who.ts";
 import monitor from "./monitor.ts";
 import messageSplit from "./message_split.ts";
 import userhostInNames from "./userhost_in_names.ts";
+import websocket from "./websocket.ts";
 import whois from "./whois.ts";
 
 const plugins = [
@@ -186,6 +188,7 @@ const plugins = [
   monitor,
   messageSplit,
   userhostInNames,
+  websocket,
   whois,
 ];
 

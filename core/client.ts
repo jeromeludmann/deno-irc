@@ -52,10 +52,21 @@ const PORT = 6667;
 
 /** Options for connecting to an IRC server. TLS fields only available when `tls` is `true`. */
 export type ConnectOptions =
-  | { tls?: false; port?: number }
+  | {
+    tls?: false;
+    port?: number;
+    /** Enables WebSocket transport instead of TCP. Requires Node 22+. */
+    websocket?: boolean;
+    /** WebSocket endpoint path (e.g. "/webirc"). Only used when `websocket` is `true`. */
+    path?: string;
+  }
   | {
     tls: true;
     port?: number;
+    /** Enables WebSocket transport instead of TCP. Requires Node 22+. */
+    websocket?: boolean;
+    /** WebSocket endpoint path (e.g. "/webirc"). Only used when `websocket` is `true`. */
+    path?: string;
     /** PEM client certificate content. */
     cert?: string;
     /** PEM private key content. */
@@ -75,6 +86,8 @@ export interface RemoteAddr {
   hostname: string;
   port: number;
   tls?: boolean;
+  websocket?: boolean;
+  path?: string;
   cert?: string;
   key?: string;
   caCerts?: string[];
@@ -144,6 +157,8 @@ export class CoreClient<
 
     const { port = PORT } = options;
     const tls = options.tls ?? false;
+    const websocket = options.websocket ?? false;
+    const path = options.path;
 
     let tlsFields: { cert?: string; key?: string; caCerts?: string[] } = {};
     if (options.tls) {
@@ -166,7 +181,14 @@ export class CoreClient<
       };
     }
 
-    this.state.remoteAddr = { hostname, port, tls, ...tlsFields };
+    this.state.remoteAddr = {
+      hostname,
+      port,
+      tls,
+      ...(websocket && { websocket }),
+      ...(path !== undefined && { path }),
+      ...tlsFields,
+    };
 
     if (this.conn !== null) {
       this.close();
@@ -176,20 +198,7 @@ export class CoreClient<
     this.emit("connecting", publicAddr);
 
     try {
-      if (tls) {
-        const { cert, key, caCerts } = this.state.remoteAddr;
-        this.conn = cert && key
-          ? await this.runtime.connectTls({
-            hostname,
-            port,
-            caCerts,
-            cert,
-            key,
-          })
-          : await this.runtime.connectTls({ hostname, port, caCerts });
-      } else {
-        this.conn = await this.runtime.connect({ hostname, port });
-      }
+      this.conn = await this.createConn(hostname, this.state.remoteAddr);
       this.emit("connected", publicAddr);
     } catch (error) {
       this.emitError("connect", error);
@@ -199,6 +208,22 @@ export class CoreClient<
     this.loop(this.conn);
 
     return this.conn;
+  }
+
+  /** Creates the underlying connection. Hookable by plugins to swap transport. */
+  async createConn(
+    hostname: string,
+    remoteAddr: RemoteAddr,
+  ): Promise<Conn> {
+    const { port, tls, cert, key, caCerts } = remoteAddr;
+
+    if (tls) {
+      return cert && key
+        ? await this.runtime!.connectTls({ hostname, port, caCerts, cert, key })
+        : await this.runtime!.connectTls({ hostname, port, caCerts });
+    }
+
+    return await this.runtime!.connect({ hostname, port });
   }
 
   private getPublicAddr(): PublicAddr {

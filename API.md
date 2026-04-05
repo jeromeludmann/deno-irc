@@ -1718,6 +1718,14 @@ client.connect("irc.libera.chat", {
   key: keyContent,
   caCerts: [caContent],
 });
+
+// With WebSocket transport (requires Node 22+)
+client.connect("irc.example.com", {
+  port: 443,
+  tls: true,
+  websocket: true,
+  path: "/webirc",
+});
 ```
 
 ### command: ctcp
