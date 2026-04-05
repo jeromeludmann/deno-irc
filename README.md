@@ -90,6 +90,14 @@ Finally you have to establish a connection with the server:
 await client.connect("irc.libera.chat");
 
 await client.connect("irc.libera.chat", { port: 6697, tls: true });
+
+// WebSocket transport (requires Node 22+, works on all runtimes)
+await client.connect("irc.example.com", {
+  port: 443,
+  tls: true,
+  websocket: true,
+  path: "/webirc",
+});
 ```
 
 When using Deno, connecting to servers requires the `--allow-net` permission:
